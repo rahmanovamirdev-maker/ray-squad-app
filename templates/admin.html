@@ -837,6 +837,9 @@
         <div id="answers-tab" class="tab-content {% if current_tab == 'answers' %}active{% endif %}">
             <div class="actions-bar" style="margin-bottom: 30px;">
                 <h2>Ответы гостей по отбору <span id="answersCount">(0)</span></h2>
+                <button class="btn btn-danger" onclick="deleteAllAnswers()" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);">
+                    🗑️ Очистить все ответы
+                </button>
             </div>
             <div id="answersContainer" class="applicants-list">
                 <p class="loading">Загрузка ответов...</p>
@@ -1199,6 +1202,45 @@
                 }
             } catch (error) {
                 console.error('Ошибка при удалении ответа:', error);
+                alert('Ошибка подключения');
+            }
+        }
+
+        async function deleteAllAnswers() {
+            const answersCount = document.getElementById('answersCount').textContent.match(/\d+/)[0];
+            
+            if (answersCount === '0') {
+                alert('Нет ответов для удаления');
+                return;
+            }
+
+            if (!confirm(`⚠️ ВЫ УВЕРЕНЫ?\n\nЭто действие удалит ВСЕ ${answersCount} ответов гостей безвозвратно!\n\nПродолжить?`)) {
+                return;
+            }
+
+            // Двойное подтверждение для безопасности
+            if (!confirm('⚠️ ПОСЛЕДНЕЕ ПРЕДУПРЕЖДЕНИЕ!\n\nВсе ответы будут удалены навсегда. Это нельзя отменить!\n\nВы точно уверены?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/admin/delete-all-answers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+                console.log('Удаление всех ответов:', data);
+
+                if (data.success) {
+                    console.log('✅ Все ответы удалены');
+                    alert(data.message);
+                    await loadAnswers(); // Перезагружаем список
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка при удалении всех ответов:', error);
                 alert('Ошибка подключения');
             }
         }

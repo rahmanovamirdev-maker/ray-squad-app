@@ -908,6 +908,28 @@ def delete_answer(answer_id):
         return jsonify({'success': False, 'message': str(e)}), 400
 
 
+@app.route('/admin/delete-all-answers', methods=['POST'])
+def admin_delete_all_answers():
+    """Удалить все ответы гостей"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    user = User.query.get(session['user_id'])
+    if not user or not user.is_admin:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    
+    try:
+        count = GuestAnswer.query.count()
+        GuestAnswer.query.delete()
+        db.session.commit()
+        print(f"[INFO] Удалено {count} ответов")
+        flash(f'Удалено ответов: {count}', 'success')
+        return jsonify({'success': True, 'message': f'Удалено ответов: {count}'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] Ошибка при удалении всех ответов: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+
 @app.route('/api/lock-submissions', methods=['POST'])
 def lock_submissions():
     """Блокировка возможности отправлять ответы"""
