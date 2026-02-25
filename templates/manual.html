@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мануал — LiamKing Agency</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .manual-wrapper {
+            display: flex;
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .manual-sidebar {
+            flex: 0 0 280px;
+            background: #1e1e2e;
+            border: 1px solid #2d2d3d;
+            border-radius: 10px;
+            padding: 25px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .manual-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .manual-sidebar::-webkit-scrollbar-track {
+            background: #2d2d3d;
+            border-radius: 10px;
+        }
+
+        .manual-sidebar::-webkit-scrollbar-thumb {
+            background: #6366f1;
+            border-radius: 10px;
+        }
+
+        .manual-section-group {
+            margin-bottom: 30px;
+        }
+
+        .manual-section-title {
+            color: #6366f1;
+            font-weight: 700;
+            font-size: 0.95em;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #2d2d3d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .manual-nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .manual-nav-item {
+            margin-bottom: 8px;
+        }
+
+        .manual-nav-link {
+            color: #b0b0b0;
+            text-decoration: none;
+            display: block;
+            padding: 10px 12px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+            border-left: 3px solid transparent;
+        }
+
+        .manual-nav-link:hover {
+            color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+            border-left-color: #6366f1;
+            padding-left: 15px;
+        }
+
+        .manual-nav-link.active {
+            color: #6366f1;
+            background: rgba(99, 102, 241, 0.15);
+            border-left-color: #6366f1;
+            font-weight: 600;
+        }
+
+        .manual-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .manual-section {
+            background: #1e1e2e;
+            border: 1px solid #2d2d3d;
+            border-radius: 10px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .manual-section h2 {
+            color: #6366f1;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 2em;
+            border-bottom: 2px solid #2d2d3d;
+            padding-bottom: 15px;
+        }
+
+        .manual-section h3 {
+            color: #e0e0e0;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .manual-section p {
+            color: #b0b0b0;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            font-size: 0.98em;
+        }
+
+        .manual-section ul, .manual-section ol {
+            color: #b0b0b0;
+            line-height: 1.9;
+            margin-bottom: 20px;
+            padding-left: 30px;
+        }
+
+        .manual-section li {
+            margin-bottom: 10px;
+        }
+
+        .manual-section code {
+            background: #2a2a3a;
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: #22c55e;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .manual-section .highlight {
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 4px solid #6366f1;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .manual-section .warning {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .manual-section .success {
+            background: rgba(34, 197, 94, 0.1);
+            border-left: 4px solid #22c55e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .section-divider {
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #2d2d3d, transparent);
+            margin: 50px 0;
+        }
+
+        @media (max-width: 1024px) {
+            .manual-wrapper {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .manual-sidebar {
+                flex: 1;
+                position: static;
+                max-height: none;
+            }
+
+            .manual-section {
+                padding: 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .manual-wrapper {
+                padding: 10px;
+            }
+
+            .manual-sidebar {
+                display: none;
+            }
+
+            .manual-section {
+                padding: 20px;
+            }
+
+            .manual-section h2 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-row">
+                <div>
+                    <h1>LiamKing Agency</h1>
+                    <p class="subtitle">Руководство пользователя</p>
+                </div>
+                <button class="nav-burger" type="button" aria-label="Открыть меню" onclick="toggleHeaderNav()">☰</button>
+                <nav class="user-info nav-links" id="topNav">
+                    <a href="{{ url_for('index') }}" class="nav-link">Главная</a>
+                    <a href="{{ url_for('manual') }}" class="nav-link active">Мануал</a>
+                    <a href="{{ url_for('profile') }}" class="nav-link">Профиль</a>
+                    {% if current_user.is_guest %}
+                        <a href="{{ url_for('guest_selection') }}" class="nav-link">Отбор</a>
+                    {% endif %}
+                    {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin_panel') }}" class="nav-link">Админка</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="nav-link danger">Выйти</a>
+                </nav>
+            </div>
+        </header>
+
+        <div class="manual-wrapper">
+            <!-- SIDEBAR NAVIGATION -->
+            <div class="manual-sidebar">
+                <div class="manual-section-group">
+                    <div class="manual-section-title">👨‍💼 Оператор</div>
+                    <ul class="manual-nav-list">
+                        <li class="manual-nav-item"><a href="#op-intro" class="manual-nav-link" onclick="setActive(event)">1. Введение</a></li>
+                        <li class="manual-nav-item"><a href="#op-start" class="manual-nav-link" onclick="setActive(event)">2. Начало работы</a></li>
+                        <li class="manual-nav-item"><a href="#op-applicants" class="manual-nav-link" onclick="setActive(event)">3. Работа с анкетами</a></li>
+                        <li class="manual-nav-item"><a href="#op-profile" class="manual-nav-link" onclick="setActive(event)">4. Профиль и статистика</a></li>
+                        <li class="manual-nav-item"><a href="#op-tips" class="manual-nav-link" onclick="setActive(event)">5. Советы и рекомендации</a></li>
+                        <li class="manual-nav-item"><a href="#op-remote" class="manual-nav-link" onclick="setActive(event)">6. Удаленный оператор</a></li>
+                        <li class="manual-nav-item"><a href="#op-offline" class="manual-nav-link" onclick="setActive(event)">7. Оффлайн-оператор</a></li>
+                        <li class="manual-nav-item"><a href="#op-redflags" class="manual-nav-link" onclick="setActive(event)">8. Красные флаги</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- MAIN CONTENT -->
+            <div class="manual-content">
+                <!-- ==================== ОПЕРАТОР ==================== -->
+
+                <div class="manual-section" id="op-intro">
+                    <h2>👨‍💼 1. Введение</h2>
+                    <p>Добро пожаловать в LiamKing Agency! Вы работаете оператором — сотрудником, ответственным за поиск и отбор кандидатов.</p>
+                    
+                    <div class="highlight">
+                        <strong>🎯 Ваши основные задачи:</strong>
+                        <ul>
+                            <li>Создание и управление анкетами кандидатов</li>
+                            <li>Просмотр и одобрение/отклонение ответов кандидатов</li>
+                            <li>Ведение статистики работы</li>
+                            <li>Отслеживание заработков</li>
+                            <li>Управление крипто-кошельками для выплат</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="manual-section" id="op-start">
+                    <h2>🚀 2. Начало работы</h2>
+                    
+                    <h3>Вход в систему</h3>
+                    <ol>
+                        <li>Перейдите на главную страницу</li>
+                        <li>Введите логин и пароль</li>
+                        <li>Нажмите кнопку "Вход"</li>
+                        <li>После первого входа обновите свой профиль</li>
+                    </ol>
+
+                    <h3>Интерфейс оператора</h3>
+                    <p>После входа вам будет доступно:</p>
+                    <ul>
+                        <li><strong>Главная</strong> - список всех анкет кандидатов</li>
+                        <li><strong>Профиль</strong> - ваша статистика и данные для выплат</li>
+                        <li><strong>Мануал</strong> - справочная информация</li>
+                    </ul>
+
+                    <div class="success">
+                        <strong>✅ Совет:</strong> Первым делом укажите свой крипто-кошелек в профиле для получения выплат.
+                    </div>
+                </div>
+
+                <div class="manual-section" id="op-applicants">
+                    <h2>📋 3. Работа с анкетами</h2>
+                    
+                    <h3>Создание новой анкеты</h3>
+                    <p>Для добавления новой анкеты кандидата:</p>
+                    <ol>
+                        <li>На главной странице найдите форму "Добавить анкету" слева</li>
+                        <li>Заполните все доступные поля</li>
+                        <li>Обязательные поля: <code>Имя</code> и <code>Телефон</code></li>
+                        <li>Нажмите кнопку "Добавить анкету"</li>
+                    </ol>
+
+                    <h3>Основные поля</h3>
+                    <ul>
+                        <li><strong>✓ Имя</strong> - ФИО кандидата (обязательно)</li>
+                        <li><strong>Возраст</strong> - возраст и дата рождения</li>
+                        <li><strong>Уровень английского</strong> - уровень владения языком</li>
+                        <li><strong>Процессор (CPU)</strong> - модель процессора компьютера</li>
+                        <li><strong>Видеокарта (GPU)</strong> - модель видеокарты</li>
+                        <li><strong>Скорость интернета</strong> - скорость подключения</li>
+                        <li><strong>Опыт работы</strong> - предыдущий опыт</li>
+                        <li><strong>Время собеседования</strong> - удобное время</li>
+                        <li><strong>✓ Телефон</strong> - контактный номер (обязательно)</li>
+                        <li><strong>Telegram</strong> - ник в Telegram</li>
+                    </ul>
+
+                    <h3>Статусы анкет</h3>
+                    <ul>
+                        <li><strong style="color: #6366f1;">⏳ Ожидает</strong> - анкета создана, ожидает проверки</li>
+                        <li><strong style="color: #22c55e;">✅ Одобрена</strong> - кандидат прошел отбор</li>
+                        <li><strong style="color: #ef4444;">❌ Отклонена</strong> - кандидат не подходит</li>
+                    </ul>
+
+                    <h3>Управление анкетами</h3>
+                    <p>Для управления анкетом:</p>
+                    <ul>
+                        <li><strong>Одобрить</strong> - нажмите зеленую кнопку ✅</li>
+                        <li><strong>Отклонить</strong> - нажмите красную кнопку ❌</li>
+                        <li><strong>Удалить</strong> - нажмите ✕ в правом углу карточки</li>
+                    </ul>
+
+                    <div class="warning">
+                        <strong>⚠️ Внимание:</strong> Удаленные анкеты восстановить невозможно. Ошибочно одобренные кандидаты влияют на вашу статистику.
+                    </div>
+                </div>
+
+                <div class="manual-section" id="op-profile">
+                    <h2>👤 4. Профиль и статистика</h2>
+                    
+                    <h3>Информация профиля</h3>
+                    <p>В профиле отображается ваша личная информация:</p>
+                    <ul>
+                        <li><strong>Отображаемое имя</strong> - как вас видят кандидаты</li>
+                        <li><strong>Аватар</strong> - ваше фото</li>
+                        <li><strong>Био</strong> - информация о себе</li>
+                        <li><strong>🔐 Крипто-кошелек</strong> - для получения выплат</li>
+                    </ul>
+
+                    <h3>Показатели вашей работы</h3>
+                    <div class="highlight">
+                        <strong>Статистика:</strong>
+                        <ul>
+                            <li><strong>📊 Общее кол-во анкет</strong> - все созданные вами анкеты</li>
+                            <li><strong style="color: #22c55e;">✅ Одобрено</strong> - сколько кандидатов вы одобрили</li>
+                            <li><strong style="color: #ef4444;">❌ Отклонено</strong> - сколько кандидатов вы отклонили</li>
+                            <li><strong style="color: #fbbf24;">💰 Заработано</strong> - ваш доход в долларах</li>
+                        </ul>
+                    </div>
+
+                    <h3>Крипто-кошелек для выплат</h3>
+                    <p>Введите адрес вашего крипто-кошелька для получения выплат:</p>
+                    <ol>
+                        <li>Перейдите в Профиль</li>
+                        <li>Найдите поле "Крипто-кошелек"</li>
+                        <li>Введите адрес вашего кошелька</li>
+                        <li>Нажмите кнопку "Сохранить"</li>
+                    </ol>
+
+                    <div class="success">
+                        <strong>💵 Выплаты:</strong> Администратор видит ваш заработок и может изменять сумму согласно вашему вкладу. Адрес кошелька видит только администратор.
+                    </div>
+                </div>
+
+                <div class="manual-section" id="op-tips">
+                    <h2>💡 5. Советы и рекомендации</h2>
+                    
+                    <h3>Полезные советы для операторов</h3>
+                    <ul>
+                        <li>📝 Всегда заполняйте все данные о кандидате для полноты информации</li>
+                        <li>🔍 Проверяйте корректность номера телефона перед добавлением</li>
+                        <li>✅ Регулярно проверяйте и обновляйте статусы анкет</li>
+                        <li>💼 Ведите чистоту базы - удаляйте дубликаты и неактуальные анкеты</li>
+                        <li>🎯 Фокусируйтесь на качестве, а не на количестве</li>
+                        <li>💰 Помните, что заработок зависит от одобренных кандидатов</li>
+                    </ul>
+
+                    <h3>Часто задаваемые вопросы</h3>
+                    <ul>
+                        <li><strong>Когда я получу деньги?</strong> - Согласно графику выплат, который устанавливает администратор</li>
+                        <li><strong>Какая комиссия за переводы?</strong> - Уточните у администратора</li>
+                        <li><strong>Как изменить адрес кошелька?</strong> - Перейдите в профиль и обновите информацию</li>
+                    </ul>
+                </div>
+
+                <!-- ==================== УДАЛЕННЫЙ ОПЕРАТОР ==================== -->
+                <div class="manual-section" id="op-remote">
+                    <h2>🖥️ 6. Удаленный оператор</h2>
+                    
+                    <h3>💰 Предложение и привлечение внимания</h3>
+                    <div class="highlight">
+                        <p><strong>"Есть удалённая вакансия для тех, кто шарит в компах и хочет на этом зарабатывать, не выходя из дома. Звучит интересно?"</strong></p>
+                    </div>
+
+                    <h3>1️⃣ Три столпа свободы</h3>
+                    <p>После того, как кандидат заинтересовался, включай три аргумента:</p>
+                    
+                    <h4>УДОБСТВО 🏠</h4>
+                    <p><em>"Ты работаешь из своей комнаты, в своей атмосфере. Никаких дресс-кодов, траты времени на дорогу, никаких неудобных офисных стульев. Твоё рабочее место — твоя крепость."</em></p>
+
+                    <h4>ЭКСПЕРТНОСТЬ 💻</h4>
+                    <p><em>"Твои знания железа и софта — это твои деньги. Чем лучше ты настраиваешь стрим, оптимизируешь картинку и звук, тем выше доход модели — и тем выше твоя ценность. Мы платим за твою техническую экспертность, а не за 'просиживание штанов'."</em></p>
+
+                    <h4>ДЕНЬГИ 💵</h4>
+                    <div class="success">
+                        <p><em>"Оклад стабильный — от <strong>$500–600 на старте</strong>. Умелые операторы с опытом выходят на <strong>$1000–1200 в месяц</strong>. Выплаты регулярные, без задержек. Это не фриланс с 'сегодня густо, завтра пусто' — это системная работа с предсказуемым доходом."</em></p>
+                    </div>
+
+                    <h3>🔧 Техническая квалификация (фильтр)</h3>
+                    <div class="warning">
+                        <strong>⚠️ Обязательная проверка оборудования:</strong>
+                        <p>"Перед тем, как говорить дальше, давай проведём быстрый чек-ап твоего оборудования — как в IT-компании. Нам нужно убедиться, что твой сетап потянет софт в высоком качестве. От этого зависит успех трансляции и твой доход. Готов?"</p>
+                    </div>
+
+                    <h4>Вопросы для проверки:</h4>
+                    <ul>
+                        <li>Какой у тебя процессор?</li>
+                        <li>Какая видеокарта?</li>
+                        <li>Сколько оперативной памяти?</li>
+                        <li>Какая скорость интернета?</li>
+                    </ul>
+
+                    <h4>Если техника не подходит:</h4>
+                    <div class="highlight">
+                        <p><em>"К сожалению, для качественных стримов нужно более мощное железо. Если апгрейдишь сетап — возвращайся, с удовольствием запишем на собеседование."</em></p>
+                    </div>
+
+                    <h3>📝 Подведение к заявке</h3>
+                    <div class="success">
+                        <p><strong>"Отлично, твоя техника подходит.</strong> Сейчас запишу тебя на короткое онлайн-собеседование в Telegram с техническим специалистом заказчика. Там тебе подробно объяснят рабочие процессы, софт, который будешь использовать, и ответят на все вопросы. Нужны 2–3 минуты, чтобы оформить заявку — уточню только пару деталей."</p>
+                    </div>
+                </div>
+
+                <!-- ==================== ОФФЛАЙН-ОПЕРАТОР ==================== -->
+                <div class="manual-section" id="op-offline">
+                    <h2>🏢 7. Оффлайн-оператор: карьера в студии</h2>
+                    
+                    <h3>👤 Портрет идеального кандидата</h3>
+                    <ul>
+                        <li><strong>Возраст:</strong> 18-27</li>
+                        <li><strong>Профиль:</strong> человек, который ценит стабильность, коллектив, структуру</li>
+                        <li><strong>Ценности:</strong> карьерный рост, команда, офис</li>
+                    </ul>
+
+                    <h3>✅ Требования и условия работы</h3>
+                    
+                    <h4>Технические требования:</h4>
+                    <ul>
+                        <li>Базовое владение компьютером</li>
+                        <li>Готовность освоить специализированное ПО</li>
+                        <li>Нормальное зрение и слух</li>
+                    </ul>
+
+                    <h4>Документы:</h4>
+                    <div class="warning">
+                        <strong>❗️ ТОЛЬКО ОРИГИНАЛ паспорта (фото, сканы НЕ подходят)</strong>
+                        <p>Без оригинала документа кандидат не будет допущен до собеседования</p>
+                    </div>
+
+                    <h4>География работы:</h4>
+                    <p>Города-миллионики в СНГ, Европе. Открыть доступ для записи можно через администрацию или через лидера команды.</p>
+
+                    <h3>📈 Карьерный рост</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                        <tr style="background: rgba(99, 102, 241, 0.1);">
+                            <th style="padding: 12px; text-align: left; border: 1px solid #2d2d3d;">Позиция</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #2d2d3d;">Описание</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #2d2d3d;">Срок</th>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;"><strong>1. Оператор-стажёр</strong></td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Обучение и начало работы</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">5 дней</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;"><strong>2. Модератор</strong></td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Работа с моделями под контролем наставника</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">3-6 месяцев</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;"><strong>3. Старший модератор</strong></td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Самостоятельная работа с 3-5 моделями</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">6-12 месяцев</td>
+                        </tr>
+                    </table>
+
+                    <h3>🎯 Три столпа карьеры</h3>
+                    <p>Используй эти аргументы при предложении вакансии:</p>
+
+                    <h4>1️⃣ СТАБИЛЬНОСТЬ 📊</h4>
+                    <p><em>"Ты получаешь чёткий график, комфортный офис, еженедельные выплаты. Никаких 'сегодня густо, завтра пусто' — это не фриланс. Это реальная компания с офисом, оборудованием и командой. Ты приходишь, работаешь, получаешь деньги."</em></p>
+
+                    <h4>2️⃣ КОМАНДА 👥</h4>
+                    <p><em>"Ты работаешь среди таких же парней под руководством опытного наставника. Любой вопрос решается на месте — не нужно гуглить или писать в чат поддержки и ждать 3 часа. Живой человек рядом, который покажет, объяснит, поможет."</em></p>
+
+                    <h4>3️⃣ ВОЗМОЖНОСТИ 🚀</h4>
+                    <div class="success">
+                        <p><em>"Это не тупиковая должность 'оператор на всю жизнь'. Ты начинаешь с базовой позиции, осваиваешь процессы, набираешь опыт — и через год можешь стать старшим модератором студии, управлять командой и зарабатывать в 2-3 раза больше."</em></p>
+                    </div>
+
+                    <h3>📝 Подведение к заявке</h3>
+                    <div class="highlight">
+                        <p><strong>"Звучит интересно? Отлично.</strong> Сейчас запишу тебя на короткое собеседование с рекрутером студии. Встреча будет офлайн, в офисе — ты увидишь рабочее место, познакомишься с командой, задашь все вопросы. Нужны 2–3 минуты, чтобы оформить заявку."</p>
+                    </div>
+
+                    <h3>❓ Работа с возражением про паспорт</h3>
+                    <h4>Возражение:</h4>
+                    <p><em>"Почему нужен паспорт? Это какая-то странная компания..."</em></p>
+
+                    <h4>Ответ:</h4>
+                    <div class="warning">
+                        <p>"Смотри, это серьёзная компания с официальными выплатами. <strong>Оригинал паспорта на собеседовании — стандартная процедура верификации</strong>, которая подтверждает, что и мы, и ты относимся к этому серьёзно.</p>
+                        <p><strong>Это наш фильтр от случайных людей.</strong> Если человек боится показать паспорт — значит, у него либо проблемы с документами, либо он вообще не настроен работать, а просто 'смотрит вакансии'. Нам нужны те, кто готов работать по-настоящему.</p>
+                        <p><strong>Никто не будет делать ксерокопии твоего паспорта</strong> без твоего согласия — это просто визуальная проверка личности при встрече. Как в банке, когда открываешь счёт, или в аэропорту. Нормальная практика для нормальной компании."</p>
+                    </div>
+                </div>
+
+                <!-- ==================== КРАСНЫЕ ФЛАГИ ==================== -->
+                <div class="manual-section" id="op-redflags">
+                    <h2>🚩 8. Красные флаги: стоп-факторы</h2>
+                    <p>Это критерии, при которых заявку <strong>НЕ создаём</strong> или <strong>отказываем кандидату</strong>.</p>
+
+                    <h3>🌍 Географические ограничения</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                        <tr style="background: rgba(99, 102, 241, 0.1);">
+                            <th style="padding: 12px; text-align: left; border: 1px solid #2d2d3d;">Стоп-фактор</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #2d2d3d;">Причина</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #2d2d3d;">Действие</th>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Крым, ЛНР, ДНР</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Geo-ограничения по интернету</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;"><strong style="color: #ef4444;">❌ НЕ записываем</strong></td>
+                        </tr>
+                    </table>
+
+                    <h3>👤 Личные и профессиональные ограничения</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                        <tr style="background: rgba(99, 102, 241, 0.1);">
+                            <th style="padding: 12px; text-align: left; border: 1px solid #2d2d3d;">Стоп-фактор</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #2d2d3d;">Причина</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #2d2d3d;">Действие</th>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Очная форма обучения</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Не сможет работать полный день</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;"><strong style="color: #ef4444;">❌ НЕ записываем</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Сотрудник гос. органов</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Конфликт интересов</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;"><strong style="color: #ef4444;">❌ НЕ записываем</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Сильный нерусский акцент</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Проблемы с коммуникацией</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;"><strong style="color: #ef4444;">❌ НЕ записываем</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Ищет подработку</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Нужна полная занятость</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;"><strong style="color: #ef4444;">❌ НЕ записываем</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Нужно отработать на старой работе >7 дней</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;">Не может быстро начать</td>
+                            <td style="padding: 12px; border: 1px solid #2d2d3d;"><strong style="color: #fbbf24;">⚠️ Ставим задачу</strong></td>
+                        </tr>
+                    </table>
+
+                    <h3>✅ Быстрый чек-лист перед созданием заявки</h3>
+                    <p>Проверь все пункты ниже перед тем, как создавать заявку:</p>
+                    <ul style="list-style: none; padding: 0;">
+                        <li>☑️ Возраст подходит</li>
+                        <li>☑️ Техника подходит (для онлайн — обязательно проверить!)</li>
+                        <li>☑️ Не учится очно</li>
+                        <li>☑️ Не работает в гос. органах</li>
+                        <li>☑️ Нет сильного нерусского акцента</li>
+                        <li>☑️ Кандидат адекватен</li>
+                        <li>☑️ Ищет полную занятость (не подработку)</li>
+                        <li>☑️ Может приступить в течение недели</li>
+                        <li>☑️ Для оффлайн: есть оригинал документа</li>
+                    </ul>
+
+                    <div class="warning" style="margin-top: 20px;">
+                        <strong>❌ ВАЖНО:</strong> Если хотя бы один пункт НЕ выполнен — заявку НЕ создаём!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleHeaderNav() {
+            const nav = document.getElementById('topNav');
+            if (nav) {
+                nav.classList.toggle('open');
+            }
+        }
+
+        function setActive(event) {
+            event.preventDefault();
+            
+            // Удаляем активный класс со всех ссылок
+            document.querySelectorAll('.manual-nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Добавляем активный класс на клик ссылку
+            event.target.classList.add('active');
+            
+            // Прокручиваем к секции с плавностью
+            const href = event.target.getAttribute('href');
+            const section = document.querySelector(href);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Установка активной ссылки при прокрутке
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.manual-section');
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 200;
+                const sectionBottom = sectionTop + section.offsetHeight;
+                const scrollPosition = window.scrollY;
+
+                if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
+                    const id = section.getAttribute('id');
+                    document.querySelectorAll('.manual-nav-link').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    const activeLink = document.querySelector(`.manual-nav-link[href="#${id}"]`);
+                    if (activeLink) {
+                        activeLink.classList.add('active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

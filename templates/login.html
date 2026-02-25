@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход — LiamKing Agency</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .auth-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #2d2d3d;
+        }
+
+        .auth-tabs button {
+            padding: 15px 30px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #b0b0b0;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            text-align: center;
+        }
+
+        .auth-tabs button.active {
+            color: #6366f1;
+            border-bottom-color: #6366f1;
+        }
+
+        .auth-tabs button:hover {
+            color: #e0e0e0;
+        }
+
+        .auth-content {
+            display: none;
+        }
+
+        .auth-content.active {
+            display: block;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #2d2d3d;
+            border-radius: 5px;
+            background: #2a2a3a;
+            color: #e0e0e0;
+            font-family: inherit;
+            font-size: 0.95em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+    </style>
+</head>
+<body class="login-page">
+    <div class="container">
+        <section class="form-section" style="background: rgba(30, 30, 46, 0.95); padding: 40px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8); border: 1px solid rgba(45, 45, 61, 0.8); width: 100%; backdrop-filter: blur(10px);">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #6366f1; font-size: 2em; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);">🔐 LiamKing Agency</h1>
+                <p style="color: #b0b0b0;">Управление кандидатами и отбором</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, msg in messages %}
+                  <div class="message {{ 'success' if category=='success' else 'error' }}">{{ msg }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <!-- Вкладки -->
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" onclick="switchAuthTab('login')">🔒 Вход</button>
+                <button class="auth-tab-btn" onclick="switchAuthTab('register')">📝 Регистрация гостя</button>
+            </div>
+
+            <!-- Табло входа -->
+            <div id="login-tab" class="auth-content active">
+                <form method="post" action="{{ url_for('login') }}">
+                    <div class="form-group">
+                        <label for="username" style="color: #d0d0d0; font-weight: 600;">Логин</label>
+                        <input type="text" id="username" name="username" placeholder="Введите логин" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password" style="color: #d0d0d0; font-weight: 600;">Пароль</label>
+                        <input type="password" id="password" name="password" placeholder="Введите пароль" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 20px; width: 100%;">Войти</button>
+                </form>
+            </div>
+
+            <!-- Табло регистрации гостя -->
+            <div id="register-tab" class="auth-content">
+                <form method="post" action="{{ url_for('guest_register') }}">
+                    <div class="form-group">
+                        <label for="reg_username" style="color: #d0d0d0; font-weight: 600;">Логин</label>
+                        <input type="text" id="reg_username" name="username" placeholder="Придумайте логин" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg_password" style="color: #d0d0d0; font-weight: 600;">Пароль</label>
+                        <input type="password" id="reg_password" name="password" placeholder="Придумайте пароль" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg_password_confirm" style="color: #d0d0d0; font-weight: 600;">Подтверждение пароля</label>
+                        <input type="password" id="reg_password_confirm" name="password_confirm" placeholder="Повторите пароль" required>
+                    </div>
+                    <p style="color: #b0b0b0; font-size: 0.9em; margin: 15px 0;">
+                        🔐 После регистрации вы сможете заполнить форму для участия в отборе в академку.
+                    </p>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 20px; width: 100%;">Зарегистрироваться</button>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function switchAuthTab(tabName) {
+            // Скрыть все табы
+            document.getElementById('login-tab').classList.remove('active');
+            document.getElementById('register-tab').classList.remove('active');
+            
+            // Удалить класс active у всех кнопок
+            document.querySelectorAll('.auth-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Показать нужный таб
+            if (tabName === 'login') {
+                document.getElementById('login-tab').classList.add('active');
+                document.querySelectorAll('.auth-tab-btn')[0].classList.add('active');
+            } else {
+                document.getElementById('register-tab').classList.add('active');
+                document.querySelectorAll('.auth-tab-btn')[1].classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>

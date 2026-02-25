@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль — LiamKing Agency</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="profile-page">
+    <div class="profile-shell">
+        <header>
+            <div class="header-row">
+                <div>
+                    <h1>{% if is_admin_view %}Просмотр профиля{% else %}LiamKing Agency{% endif %}</h1>
+                    <p class="subtitle">{% if is_admin_view %}Осмотр в админке{% else %}Личный кабинет{% endif %}</p>
+                </div>
+                <button class="nav-burger" type="button" aria-label="Открыть меню" onclick="toggleHeaderNav()">☰</button>
+                <nav class="user-info nav-links" id="topNav">
+                    <a href="{{ url_for('index') }}" class="nav-link">Главная</a>
+                    {# <a href="{{ url_for('manual') }}" class="nav-link">Мануал</a> #}
+                    {% if is_admin_view %}
+                        <a href="{{ url_for('admin_panel') }}" class="nav-link active">← Вернуться в админку</a>
+                    {% else %}
+                        <a href="{{ url_for('profile') }}" class="nav-link active">Профиль</a>
+                        {% if current_user.is_guest %}
+                            <a href="{{ url_for('guest_selection') }}" class="nav-link">Отбор</a>
+                        {% endif %}
+                        {% if current_user.is_admin %}
+                            <a href="{{ url_for('admin_panel') }}" class="nav-link">Админка</a>
+                        {% endif %}
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="nav-link danger">Выйти</a>
+                </nav>
+            </div>
+        </header>
+
+        <section class="profile-hero">
+            <div class="profile-identity">
+                <div class="profile-avatar">
+                    {% if current_user.avatar_url %}
+                        <img src="{{ current_user.avatar_url }}" alt="Аватар">
+                    {% else %}
+                        <div class="profile-avatar-fallback">{{ current_user.username[:1] | upper }}</div>
+                    {% endif %}
+                </div>
+                <div class="profile-title">
+                    <h1>{{ current_user.display_name if current_user.display_name else current_user.username }}</h1>
+                    <p>@{{ current_user.username }}</p>
+                    <div class="profile-badges">
+                        {% if current_user.is_owner %}
+                            <span class="badge owner">Владелец</span>
+                        {% elif current_user.is_admin %}
+                            <span class="badge admin">Админ</span>
+                        {% elif current_user.is_guest %}
+                            <span class="badge guest">Гость</span>
+                        {% else %}
+                            <span class="badge worker">Рабочий</span>
+                        {% endif %}
+                        {% if current_user.last_login_at %}
+                            <span class="badge muted">Вход: {{ current_user.last_login_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="profile-bio">
+                <h3>О себе</h3>
+                <p>{{ current_user.bio if current_user.bio else 'Пока нет описания. Добавьте пару строк, чтобы выделиться.' }}</p>
+            </div>
+        </section>
+
+        <section class="profile-grid">
+            <div class="profile-card">
+                <h2>Статистика</h2>
+                <div class="stat-grid">
+                    {% if not current_user.is_guest and not current_user.is_admin and not current_user.is_owner %}
+                        <!-- Статистика для рабочих -->
+                        <div class="stat-card">
+                            <span class="stat-label">Всего анкет</span>
+                            <span class="stat-value">{{ stats.applicants_count }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">✅ Одобрено</span>
+                            <span class="stat-value" style="color: #22c55e;">{{ stats.approved_applicants }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">❌ Отклонено</span>
+                            <span class="stat-value" style="color: #ef4444;">{{ stats.rejected_applicants }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">💰 Вы заработали</span>
+                            <span class="stat-value" style="color: #f59e0b; font-size: 1.5em;">${{ current_user.earned_amount if current_user.earned_amount else 0 }}</span>
+                        </div>
+                    {% else %}
+                        <!-- Общая статистика -->
+                        <div class="stat-card">
+                            <span class="stat-label">Анкеты</span>
+                            <span class="stat-value">{{ stats.applicants_count }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Ответы</span>
+                            <span class="stat-value">{{ stats.guest_answers_count }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Одобрено</span>
+                            <span class="stat-value">{{ stats.approved_answers_count }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Сообщения</span>
+                            <span class="stat-value">{{ stats.messages_sent_count }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Входящие</span>
+                            <span class="stat-value">{{ stats.messages_received_count }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Последнее сообщение</span>
+                            <span class="stat-value small">{{ stats.last_message_at if stats.last_message_at else '—' }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="profile-card">
+                <h2>Редактирование профиля</h2>
+                {% if is_admin_view %}
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                      {% if messages %}
+                        {% for category, msg in messages %}
+                          <div class="message {{ 'success' if category=='success' else 'error' }}" style="margin-top: 10px;">{{ msg }}</div>
+                        {% endfor %}
+                      {% endif %}
+                    {% endwith %}
+                    
+                    <p style="color: #b0b0b0; padding: 15px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; margin-bottom: 20px;">
+                        📋 Просмотр профиля: <strong>{{ current_user.username }}</strong>
+                    </p>
+                    
+                    {% if not current_user.is_guest and not current_user.is_admin and not current_user.is_owner %}
+                        <!-- Админ редактирует заработанную сумму для рабочего -->
+                        <form method="post" action="{{ url_for('admin_view_user_profile', user_id=current_user.id) }}" class="profile-form">
+                            <div class="form-group">
+                                <label for="earned_amount">💰 Заработанная сумма ($)</label>
+                                <input type="number" step="0.01" id="earned_amount" name="earned_amount" placeholder="0.00" value="{{ current_user.earned_amount if current_user.earned_amount else 0 }}" style="font-size: 1.1em; font-weight: 600;">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Обновить сумму</button>
+                        </form>
+                        <hr style="border: 1px solid #2d2d3d; margin: 20px 0;">
+                    {% endif %}
+                    
+                    <div style="padding: 15px; background: rgba(100, 100, 100, 0.1); border-radius: 8px;">
+                        <h3 style="color: #e0e0e0; margin-bottom: 10px;">📝 Информация профиля</h3>
+                        <p style="color: #b0b0b0;"><strong>Имя:</strong> {{ current_user.display_name if current_user.display_name else 'Не указано' }}</p>
+                        <p style="color: #b0b0b0;"><strong>Био:</strong> {{ current_user.bio if current_user.bio else 'Не указано' }}</p>
+                        <p style="color: #b0b0b0;"><strong>Крипто кошелек:</strong> {{ current_user.crypto_wallet if current_user.crypto_wallet else 'Не указан' }}</p>
+                    </div>
+                {% else %}
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                      {% if messages %}
+                        {% for category, msg in messages %}
+                          <div class="message {{ 'success' if category=='success' else 'error' }}" style="margin-top: 10px;">{{ msg }}</div>
+                        {% endfor %}
+                      {% endif %}
+                    {% endwith %}
+                    <form method="post" action="{{ url_for('profile') }}" class="profile-form">
+                        <div class="form-group">
+                            <label for="display_name">Отображаемое имя</label>
+                            <input type="text" id="display_name" name="display_name" maxlength="120" placeholder="Например: Liam King" value="{{ current_user.display_name if current_user.display_name else '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="avatar_url">Ссылка на аватар</label>
+                            <input type="text" id="avatar_url" name="avatar_url" maxlength="500" placeholder="https://... или /static/..." value="{{ current_user.avatar_url if current_user.avatar_url else '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="bio">Био</label>
+                            <textarea id="bio" name="bio" rows="4" maxlength="500" placeholder="Коротко о себе...">{{ current_user.bio if current_user.bio else '' }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="crypto_wallet">💎 Крипто кошелек</label>
+                            <input type="text" id="crypto_wallet" name="crypto_wallet" maxlength="200" placeholder="Ваш крипто адрес..." value="{{ current_user.crypto_wallet if current_user.crypto_wallet else '' }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </form>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function toggleHeaderNav() {
+            const nav = document.getElementById('topNav');
+            if (nav) {
+                nav.classList.toggle('open');
+            }
+        }
+    </script>
+</body>
+</html>

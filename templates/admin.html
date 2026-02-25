@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель — LiamKing Agency</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .admin-tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #2d2d3d;
+        }
+
+        .admin-tabs button {
+            padding: 15px 30px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #b0b0b0;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .admin-tabs button.active {
+            color: #6366f1;
+            border-bottom-color: #6366f1;
+        }
+
+        .admin-tabs button:hover {
+            color: #e0e0e0;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .answer-card {
+            background: #1e1e2e;
+            border: 1px solid #2d2d3d;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s;
+        }
+
+        .answer-card.approved {
+            border: 2px solid #22c55e;
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .answer-card.approved::before {
+            content: "✅ ОДОБРЕНО";
+            display: block;
+            color: #22c55e;
+            font-weight: 700;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .answer-card h4 {
+            color: #6366f1;
+            margin-bottom: 10px;
+        }
+
+        .answer-card .meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: #b0b0b0;
+        }
+
+        .answer-card .meta span {
+            display: flex;
+            gap: 5px;
+        }
+
+        .answer-card .question {
+            background: rgba(99, 102, 241, 0.1);
+            padding: 15px;
+            border-left: 3px solid #6366f1;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            color: #e0e0e0;
+        }
+
+        .answer-card .answer {
+            background: rgba(100, 100, 100, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+            color: #d0d0d0;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Стили для гостевого аккаунта чекбокса */
+        .guest-checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(99, 102, 241, 0.1);
+            padding: 16px;
+            border-radius: 8px;
+            border: 2px solid rgba(99, 102, 241, 0.2);
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .guest-checkbox-wrapper:hover {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        .guest-checkbox-wrapper input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: #6366f1;
+        }
+
+        .guest-checkbox-wrapper label {
+            margin: 0;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .guest-checkbox-wrapper span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        /* Теги типа аккаунта */
+        .user-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .user-badge.guest {
+            background: rgba(99, 102, 241, 0.2);
+            color: #6366f1;
+            border: 1px solid #6366f1;
+        }
+
+        .user-badge.worker {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid #22c55e;
+        }
+
+        .user-badge.admin {
+            background: rgba(168, 85, 247, 0.2);
+            color: #d946ef;
+            border: 1px solid #d946ef;
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #1e1e2e;
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #2d2d3d;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            max-width: 450px;
+            text-align: center;
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-content h2 {
+            color: #6366f1;
+            margin-bottom: 15px;
+        }
+
+        .modal-content p {
+            color: #b0b0b0;
+            margin: 10px 0;
+        }
+
+        .password-display {
+            background: #2a2a3a;
+            padding: 15px;
+            border-radius: 5px;
+            border: 2px solid #6366f1;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 1.1em;
+            color: #22c55e;
+            word-break: break-all;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-buttons .btn-copy {
+            background: #6366f1;
+            color: white;
+        }
+
+        .modal-buttons .btn-copy:hover {
+            background: #4f46e5;
+        }
+
+        .modal-buttons .btn-close {
+            background: #3d3d4d;
+            color: #e0e0e0;
+        }
+
+        .modal-buttons .btn-close:hover {
+            background: #4d4d5d;
+        }
+
+        /* Кнопка сброса пароля */
+        .btn-reset-pwd {
+            padding: 6px 12px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: 8px;
+        }
+
+        .btn-reset-pwd:hover {
+            background: #4f46e5;
+        }
+
+        /* Кнопки действий для ответов */
+        .answer-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #2d2d3d;
+        }
+
+        .answer-actions button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            font-size: 0.9em;
+        }
+
+        .btn-approve {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-approve:hover {
+            background: #16a34a;
+        }
+
+        .btn-approve:disabled {
+            background: #16a34a;
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-delete-answer {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-delete-answer:hover {
+            background: #dc2626;
+        }
+
+        /* Боковая панель чата */
+        .chat-sidebar {
+            display: none;
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 350px;
+            height: 100vh;
+            background: #1e1e2e;
+            border-left: 1px solid #2d2d3d;
+            flex-direction: column;
+            z-index: 999;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+            animation: slideInRight 0.3s;
+        }
+
+        .chat-sidebar.active {
+            display: flex;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid #2d2d3d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .chat-header h3 {
+            color: #6366f1;
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .chat-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #b0b0b0;
+            font-size: 1.3em;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-close:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            transform: rotate(90deg);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-width: 70%;
+            animation: messageSlideIn 0.3s ease-out;
+        }
+
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.admin {
+            align-self: flex-start;
+        }
+
+        .message.guest {
+            align-self: flex-end;
+        }
+
+        .message-content {
+            padding: 12px 16px;
+            border-radius: 18px;
+            color: #ffffff;
+            font-size: 0.95em;
+            line-height: 1.4;
+            word-wrap: break-word;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .message.admin .message-content {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.guest .message-content {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-meta {
+            padding: 0 8px;
+            font-size: 0.7em;
+            color: #888;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .message.admin .message-meta {
+            justify-content: flex-start;
+        }
+
+        .message.guest .message-meta {
+            justify-content: flex-end;
+        }
+
+        .message-meta::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.5;
+        }
+
+        .chat-input-area {
+            padding: 15px 20px;
+            border-top: 1px solid #2d2d3d;
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-input-area textarea {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #2d2d3d;
+            border-radius: 20px;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            font-family: inherit;
+            font-size: 0.9em;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input-area textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: #1e1e2e;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .chat-input-area textarea::placeholder {
+            color: #666;
+        }
+
+        .chat-input-area button {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .chat-input-area button:hover {
+            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+        }
+
+        .chat-input-area button:active {
+            transform: translateY(0);
+        }
+
+        /* Слоты собеседований */
+        .slot-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .slot-form input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #2d2d3d;
+            border-radius: 6px;
+            background: #2a2a3a;
+            color: #e0e0e0;
+            font-family: inherit;
+        }
+
+        .slot-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .slot-card {
+            background: #1e1e2e;
+            border: 1px solid #2d2d3d;
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .slot-card.open {
+            border-color: rgba(34, 197, 94, 0.6);
+        }
+
+        .slot-card.closed {
+            border-color: rgba(239, 68, 68, 0.6);
+            opacity: 0.7;
+        }
+
+        .slot-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .slot-meta strong {
+            color: #e0e0e0;
+        }
+
+        .slot-meta span {
+            font-size: 0.85em;
+            color: #b0b0b0;
+        }
+
+        .slot-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-close-slot {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #ffffff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-close-slot:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.35);
+        }
+
+        /* Dropdown меню для действий */
+        .user-actions-menu {
+            position: relative;
+            display: inline-block;
+        }
+
+        .menu-trigger {
+            background: #2d2d3d;
+            border: 1px solid #3d3d4d;
+            color: #e0e0e0;
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        .menu-trigger:hover {
+            background: #3d3d4d;
+            border-color: #6366f1;
+            color: #6366f1;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 8px;
+            background: #2a2a3a;
+            border: 1px solid #3d3d4d;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            min-width: 200px;
+            overflow: hidden;
+            animation: dropdownSlideIn 0.2s ease-out;
+        }
+
+        @keyframes dropdownSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-menu.active {
+            display: block;
+        }
+
+        .dropdown-menu a,
+        .dropdown-menu button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            color: #e0e0e0;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #1e1e2e;
+            gap: 10px;
+        }
+
+        .dropdown-menu a:last-child,
+        .dropdown-menu button:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-menu a:hover,
+        .dropdown-menu button:hover {
+            background: rgba(99, 102, 241, 0.1);
+            color: #6366f1;
+        }
+
+        .dropdown-menu .action-icon {
+            width: 18px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .dropdown-menu .danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .dropdown-menu .success:hover {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-row">
+                <div>
+                    <h1>Админ-панель</h1>
+                    <p class="subtitle">Управление системой</p>
+                </div>
+                <button class="nav-burger" type="button" aria-label="Открыть меню" onclick="toggleHeaderNav()">☰</button>
+                <nav class="user-info nav-links" id="topNav">
+                    <a href="{{ url_for('index') }}" class="nav-link">Главная</a>
+                    {# <a href="{{ url_for('manual') }}" class="nav-link">Мануал</a> #}
+                    <a href="{{ url_for('profile') }}" class="nav-link">Профиль</a>
+                    <a href="{{ url_for('admin_panel') }}" class="nav-link active">Админка</a>
+                    <a href="{{ url_for('logout') }}" class="nav-link danger">Выйти</a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Вкладки навигации -->
+        <div class="admin-tabs">
+            <button class="tab-btn {% if current_tab == 'users' %}active{% endif %}" onclick="switchTab('users')">👤 Создание аккаунта</button>
+            <button class="tab-btn {% if current_tab == 'answers' %}active{% endif %}" onclick="switchTab('answers')">📝 Ответы по отбору</button>
+            <button class="tab-btn {% if current_tab == 'interviews' %}active{% endif %}" onclick="switchTab('interviews')">🗓️ Открытые собеседования</button>
+        </div>
+
+        <!-- Вкладка: Управление пользователями -->
+        <div id="users-tab" class="tab-content {% if current_tab == 'users' %}active{% endif %}">
+            <div class="main-content">
+                <div class="left-column">
+                    <section class="form-section">
+                        <h2>Создать пользователя</h2>
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                          {% if messages %}
+                            {% for category, msg in messages %}
+                              <div class="message {{ 'success' if category=='success' else 'error' }}">{{ msg }}</div>
+                            {% endfor %}
+                          {% endif %}
+                        {% endwith %}
+                        <form method="post" action="{{ url_for('admin_create_user') }}">
+                            <div class="form-group">
+                                <label for="username">Логин</label>
+                                <input type="text" id="username" name="username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Пароль</label>
+                                <input type="text" id="password" name="password" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Тип аккаунта</label>
+                                <div class="guest-checkbox-wrapper">
+                                    <input type="checkbox" id="is_worker" name="is_worker">
+                                    <label for="is_worker">
+                                        <span>💼 Рабочий аккаунт с доступом к анкетам</span>
+                                    </label>
+                                </div>
+                                <div class="guest-checkbox-wrapper" style="margin-top: 10px;">
+                                    <input type="checkbox" id="is_admin" name="is_admin">
+                                    <label for="is_admin">
+                                        <span>👤 Администратор (полный доступ к панели)</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Создать</button>
+                        </form>
+                    </section>
+                </div>
+
+                <div class="right-column">
+                    <div class="actions-bar">
+                        <h2>Пользователи</h2>
+                    </div>
+                    <div class="applicants-list">
+                        {% for u in users %}
+                            <div class="applicant-card">
+                                <div class="applicant-header">
+                                    <h3>{{ u.username }} 
+                                        {% if u.is_owner %}
+                                            <span class="user-badge admin" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">👑 Владелец</span>
+                                        {% elif u.is_admin %}
+                                            <span class="user-badge admin">👤 Админ</span>
+                                        {% elif u.is_guest %}
+                                            <span class="user-badge guest">🎓 Гостевой</span>
+                                        {% else %}
+                                            <span class="user-badge worker">💼 Рабочий</span>
+                                        {% endif %}
+                                    </h3>
+                                    <div class="user-actions-menu">
+                                        <button class="menu-trigger" onclick="toggleUserMenu(this)">⋮</button>
+                                        <div class="dropdown-menu">
+                                            <a href="{{ url_for('admin_view_user_profile', user_id=u.id) }}"><span class="action-icon">👁️</span>Профиль</a>
+                                            {% if not u.is_owner or current_user.is_owner %}
+                                            <button onclick="resetPassword({{ u.id }}, '{{ u.username }}')"><span class="action-icon">🔑</span>Сбросить пароль</button>
+                                            {% endif %}
+                                            {% if u.is_guest %}
+                                            <button id="toggleBtn{{ u.id }}" class="success" onclick="toggleSubmission({{ u.id }}, {{ u.id }})"><span class="action-icon">{% if u.can_submit %}✅{% else %}🔒{% endif %}</span>{% if u.can_submit %}Заблокировать{% else %}Разблокировать{% endif %}</button>
+                                            {% endif %}
+                                            {% if not u.is_owner or current_user.is_owner %}
+                                            <button class="danger" onclick="if (confirm('Удалить пользователя?')) { document.getElementById('deleteForm{{ u.id }}').submit(); }"><span class="action-icon">✕</span>Удалить</button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <form id="deleteForm{{ u.id }}" method="post" action="{{ url_for('admin_delete_user', user_id=u.id) }}" style="display: none;"></form>
+                                </div>
+                                <p>Создан: {{ u.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+                            </div>
+                        {% else %}
+                            <p class="empty">Пользователей нет</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка: Ответы по отбору -->
+        <div id="answers-tab" class="tab-content {% if current_tab == 'answers' %}active{% endif %}">
+            <div class="actions-bar" style="margin-bottom: 30px;">
+                <h2>Ответы гостей по отбору <span id="answersCount">(0)</span></h2>
+            </div>
+            <div id="answersContainer" class="applicants-list">
+                <p class="loading">Загрузка ответов...</p>
+            </div>
+        </div>
+
+        <!-- Вкладка: Открытые собеседования -->
+        <div id="interviews-tab" class="tab-content {% if current_tab == 'interviews' %}active{% endif %}">
+            <div class="actions-bar" style="margin-bottom: 20px;">
+                <h2>Открытые собеседования</h2>
+            </div>
+            <section class="form-section" style="margin-bottom: 20px;">
+                <h2 style="margin-bottom: 15px;">Добавить слот</h2>
+                <div class="slot-form">
+                    <input type="datetime-local" id="slotStart">
+                    <input type="datetime-local" id="slotEnd" placeholder="Окончание (опционально)">
+                    <button class="btn btn-primary" onclick="createInterviewSlot()">Добавить</button>
+                </div>
+                <div id="slotMessage" class="message"></div>
+            </section>
+            <div class="slot-list" id="slotList">
+                <p class="loading">Загрузка слотов...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для отображения нового пароля -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <h2>🔑 Новый пароль</h2>
+            <p>Пользователь: <strong id="modalUsername"></strong></p>
+            <p style="color: #e0e0e0; font-size: 0.9em;">Скопируйте пароль и поделитесь с пользователем:</p>
+            <div class="password-display" id="passwordDisplay"></div>
+            <div class="modal-buttons">
+                <button class="btn-copy" onclick="copyPassword()">📋 Копировать</button>
+                <button class="btn-close" onclick="closePasswordModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Боковая панель чата -->
+    <div class="chat-sidebar" id="chatSidebar">
+        <div class="chat-header">
+            <h3>💬 Чат</h3>
+            <button class="chat-close" onclick="closeChatSidebar()">✕</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <p style="color: #b0b0b0; text-align: center;">Загрузка сообщений...</p>
+        </div>
+        <div class="chat-input-area">
+            <textarea id="messageInput" placeholder="Введите сообщение..." onkeypress="handleMessageKeypress(event)"></textarea>
+            <button onclick="sendChatMessage()">Отправить</button>
+        </div>
+    </div>
+
+    <script>
+        function toggleHeaderNav() {
+            const nav = document.getElementById('topNav');
+            if (nav) {
+                nav.classList.toggle('open');
+            }
+        }
+
+        function toggleUserMenu(button) {
+            const menu = button.nextElementSibling;
+            const allMenus = document.querySelectorAll('.dropdown-menu.active');
+            
+            // Закрываем все остальные меню
+            allMenus.forEach(m => {
+                if (m !== menu) {
+                    m.classList.remove('active');
+                }
+            });
+            
+            // Переключаем текущее меню
+            menu.classList.toggle('active');
+        }
+
+        // Закрываем dropdown при клике вне меню
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.user-actions-menu')) {
+                document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
+                    menu.classList.remove('active');
+                });
+            }
+        });
+
+        function switchTab(tabName) {
+            // Скрываем все табы
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Показываем выбранный таб
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+
+            // Загружаем ответы при переходе на вкладку ответов
+            if (tabName === 'answers') {
+                loadAnswers();
+            }
+
+            if (tabName === 'interviews') {
+                loadInterviewSlotsAdmin();
+            }
+        }
+
+        async function loadAnswers() {
+            try {
+                const response = await fetch('/api/guest-answers');
+                const data = await response.json();
+                console.log('Ответы загружены:', { status: response.status, success: data.success, count: data.answers ? data.answers.length : 0 });
+                const container = document.getElementById('answersContainer');
+                const countEl = document.getElementById('answersCount');
+
+                if (response.ok && data.success && data.answers && data.answers.length > 0) {
+                    countEl.textContent = `(${data.answers.length})`;
+                    container.innerHTML = data.answers.map(answer => `
+                        <div class="answer-card ${answer.approved ? 'approved' : ''}">
+                            <div class="meta">
+                                <span><strong>От:</strong> ${answer.guest_name}</span>
+                                <span><strong>TG:</strong> ${answer.guest_tg || '-'}</span>
+                                <span><strong>Телефон:</strong> ${answer.guest_phone || '-'}</span>
+                                <span><strong>Дата:</strong> ${answer.submitted_at}</span>
+                            </div>
+                            <h4>Вопрос:</h4>
+                            <div class="question">${answer.question_text}</div>
+                            <h4>Ответ:</h4>
+                            <div class="answer">${answer.answer_text}</div>
+                            <div class="answer-actions">
+                                <button class="btn-approve" onclick="openChat(${answer.user_id})">💬 Чат</button>
+                                ${answer.approved ? 
+                                    `<button class="btn-approve" disabled>✅ Одобрено</button>` :
+                                    `<button class="btn-approve" onclick="approveAnswer(${answer.id})">✅ Одобрить</button>`
+                                }
+                                <button class="btn-delete-answer" onclick="deleteAnswer(${answer.id})">🗑️ Удалить</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    countEl.textContent = '(0)';
+                    if (!response.ok) {
+                        container.innerHTML = '<p class="empty">Ошибка сервера: ' + response.status + '</p>';
+                    } else if (!data.success) {
+                        container.innerHTML = '<p class="empty">Ошибка API: ' + (data.message || 'неизвестная') + '</p>';
+                    } else {
+                        container.innerHTML = '<p class="empty">Нет поступивших ответов</p>';
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке ответов:', error);
+                const container = document.getElementById('answersContainer');
+                const countEl = document.getElementById('answersCount');
+                countEl.textContent = '(!)';
+                container.innerHTML = '<p class="empty">Ошибка подключения: ' + error.message + '</p>';
+            }
+        }
+
+        async function loadInterviewSlotsAdmin() {
+            try {
+                const response = await fetch('/api/interview-slots?all=1');
+                const data = await response.json();
+                const container = document.getElementById('slotList');
+
+                if (!response.ok || !data.success) {
+                    container.innerHTML = '<p class="empty">Ошибка загрузки слотов</p>';
+                    return;
+                }
+
+                if (!data.slots || data.slots.length === 0) {
+                    container.innerHTML = '<p class="empty">Слоты пока не добавлены</p>';
+                    return;
+                }
+
+                container.innerHTML = data.slots.map(slot => {
+                    const timeLabel = slot.end_time ? `${slot.start_time} - ${slot.end_time}` : slot.start_time;
+                    return `
+                        <div class="slot-card ${slot.is_open ? 'open' : 'closed'}">
+                            <div class="slot-meta">
+                                <strong>${timeLabel}</strong>
+                                <span>${slot.is_open ? 'Открыто' : 'Закрыто'}</span>
+                            </div>
+                            <div class="slot-actions">
+                                ${slot.is_open ? `<button class="btn-close-slot" onclick="closeInterviewSlot(${slot.id})">Закрыть</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Ошибка при загрузке слотов:', error);
+                const container = document.getElementById('slotList');
+                container.innerHTML = '<p class="empty">Ошибка подключения</p>';
+            }
+        }
+
+        async function createInterviewSlot() {
+            const startInput = document.getElementById('slotStart');
+            const endInput = document.getElementById('slotEnd');
+            const message = document.getElementById('slotMessage');
+
+            const startTime = startInput.value;
+            const endTime = endInput.value;
+
+            if (!startTime) {
+                message.className = 'message error';
+                message.textContent = 'Укажите дату и время начала';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/interview-slots', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        start_time: startTime,
+                        end_time: endTime || null
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    message.className = 'message success';
+                    message.textContent = '✅ Слот добавлен';
+                    startInput.value = '';
+                    endInput.value = '';
+                    loadInterviewSlotsAdmin();
+                } else {
+                    message.className = 'message error';
+                    message.textContent = '❌ ' + data.message;
+                }
+            } catch (error) {
+                console.error('Ошибка при добавлении слота:', error);
+                message.className = 'message error';
+                message.textContent = 'Ошибка подключения';
+            }
+        }
+
+        async function closeInterviewSlot(slotId) {
+            if (!confirm('Закрыть этот слот?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/interview-slots/${slotId}/close`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    loadInterviewSlotsAdmin();
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка при закрытии слота:', error);
+                alert('Ошибка подключения');
+            }
+        }
+
+        // Загружаем ответы если мы на этой вкладке при загрузке страницы
+        if (document.getElementById('answers-tab').classList.contains('active')) {
+            loadAnswers();
+        }
+
+        if (document.getElementById('interviews-tab').classList.contains('active')) {
+            loadInterviewSlotsAdmin();
+        }
+
+        // Функции для сброса пароля
+        async function resetPassword(userId, username) {
+            try {
+                const response = await fetch(`/api/reset-password/${userId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+                console.log('Сброс пароля:', data);
+
+                if (data.success) {
+                    // Показываем модальное окно с новым паролем
+                    document.getElementById('modalUsername').textContent = username;
+                    document.getElementById('passwordDisplay').textContent = data.new_password;
+                    document.getElementById('passwordModal').classList.add('active');
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка при сбросе пароля:', error);
+                alert('Ошибка подключения');
+            }
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.remove('active');
+        }
+
+        function copyPassword() {
+            const passwordText = document.getElementById('passwordDisplay').textContent;
+            navigator.clipboard.writeText(passwordText).then(() => {
+                alert('✅ Пароль скопирован в буфер обмена!');
+            }).catch(() => {
+                alert('Ошибка при копировании');
+            });
+        }
+
+        // Закрыть модал при клике вне его
+        document.getElementById('passwordModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closePasswordModal();
+            }
+        });
+
+        // Функции для управления ответами
+        async function approveAnswer(answerId) {
+            try {
+                const response = await fetch(`/api/approve-answer/${answerId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+                console.log('Одобрение ответа:', data);
+
+                if (data.success) {
+                    console.log('✅ Ответ одобрен');
+                    await loadAnswers(); // Перезагружаем список
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка при одобрении ответа:', error);
+                alert('Ошибка подключения');
+            }
+        }
+
+        async function deleteAnswer(answerId) {
+            if (!confirm('Вы уверены, что хотите удалить этот ответ?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/delete-answer/${answerId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+                console.log('Удаление ответа:', data);
+
+                if (data.success) {
+                    console.log('✅ Ответ удален');
+                    await loadAnswers(); // Перезагружаем список
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка при удалении ответа:', error);
+                alert('Ошибка подключения');
+            }
+        }
+
+        // Переменные для чата
+        let currentGuestUserId = null;
+        let chatUpdateInterval = null;
+
+        // Открыть чат с гостем
+        function openChat(guestUserId) {
+            currentGuestUserId = guestUserId;
+            document.getElementById('chatSidebar').classList.add('active');
+            loadChatMessages();
+            
+            // Автоматическое обновление каждые 3 секунды
+            if (chatUpdateInterval) clearInterval(chatUpdateInterval);
+            chatUpdateInterval = setInterval(() => {
+                if (currentGuestUserId) {
+                    loadChatMessages();
+                }
+            }, 3000);
+        }
+
+        // Закрыть чат
+        function closeChatSidebar() {
+            document.getElementById('chatSidebar').classList.remove('active');
+            currentGuestUserId = null;
+            if (chatUpdateInterval) clearInterval(chatUpdateInterval);
+        }
+
+        // Загрузить сообщения чата
+        async function loadChatMessages() {
+            if (!currentGuestUserId) return;
+
+            try {
+                const response = await fetch(`/api/messages/${currentGuestUserId}`);
+                const data = await response.json();
+
+                if (data.success && data.messages) {
+                    const messagesContainer = document.getElementById('chatMessages');
+                    const isScrolledToBottom = messagesContainer.scrollHeight - messagesContainer.clientHeight <= messagesContainer.scrollTop + 50;
+
+                    messagesContainer.innerHTML = data.messages.map(msg => `
+                        <div class="message ${msg.is_admin ? 'admin' : 'guest'}">
+                            <div class="message-meta">${msg.sender_name} • ${msg.created_at}</div>
+                            <div class="message-content">${msg.message_text}</div>
+                        </div>
+                    `).join('');
+
+                    // Скролл вниз если был внизу
+                    if (isScrolledToBottom) {
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке сообщений:', error);
+            }
+        }
+
+        // Отправить сообщение
+        async function sendChatMessage() {
+            if (!currentGuestUserId) return;
+
+            const messageInput = document.getElementById('messageInput');
+            const messageText = messageInput.value.trim();
+
+            if (!messageText) return;
+
+            try {
+                const response = await fetch('/api/send-message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        guest_user_id: currentGuestUserId,
+                        message_text: messageText
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    messageInput.value = '';
+                    await loadChatMessages();
+                    // Скролл вниз
+                    document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка при отправке сообщения:', error);
+                alert('Ошибка подключения');
+            }
+        }
+
+        // Переключение прав на отправку ответов
+        async function toggleSubmission(userId) {
+            try {
+                const response = await fetch(`/api/toggle-submission/${userId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const btn = document.getElementById(`toggleBtn${userId}`);
+                    if (data.can_submit) {
+                        btn.innerHTML = '<span class="action-icon">✅</span>Заблокировать';
+                    } else {
+                        btn.innerHTML = '<span class="action-icon">🔒</span>Разблокировать';
+                    }
+                    alert('✅ ' + data.message);
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка подключения');
+            }
+        }
+
+        // Enter для отправки сообщения
+        function handleMessageKeypress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendChatMessage();
+            }
+        }
+    </script>
+</body>
+</html>

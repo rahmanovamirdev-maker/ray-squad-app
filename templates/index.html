@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система управления анкетами кандидатов</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-row">
+                <div>
+                    <h1>LiamKing Agency</h1>
+                    <p class="subtitle">Система поиска и управления кандидатами</p>
+                </div>
+                <button class="nav-burger" type="button" aria-label="Открыть меню" onclick="toggleHeaderNav()">☰</button>
+                <nav class="user-info nav-links" id="topNav">
+                    {% if current_user %}
+                        <span class="nav-user">Вход как: <strong>{{ current_user.username }}</strong></span>
+                        <a href="{{ url_for('index') }}" class="nav-link active">Главная</a>
+                        {# <a href="{{ url_for('manual') }}" class="nav-link">Мануал</a> #}
+                        <a href="{{ url_for('profile') }}" class="nav-link">Профиль</a>
+                        {% if current_user.is_admin %}
+                            <a href="{{ url_for('admin_panel') }}" class="nav-link">Админка</a>
+                        {% endif %}
+                        <a href="{{ url_for('logout') }}" class="nav-link danger">Выйти</a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="nav-link active">Войти</a>
+                    {% endif %}
+                </nav>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Левая колонка: Форма -->
+            <div class="left-column">
+                <section class="form-section">
+                    <h2>Добавить новую анкету</h2>
+                    <form id="applicantForm">
+                        <div class="form-group">
+                            <label for="full_name">Имя *</label>
+                            <input type="text" id="full_name" name="full_name" placeholder="Ваше имя" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="date_of_birth">Возраст (и дата рождения)</label>
+                            <input type="text" id="date_of_birth" name="date_of_birth" placeholder="25 лет (10.05.1999)">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="english_level">Знание английского языка</label>
+                            <input type="text" id="english_level" name="english_level" placeholder="A1, A2, B1, B2, выше среднего и т.д.">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cpu_model">Модель процессора</label>
+                            <input type="text" id="cpu_model" name="cpu_model" placeholder="Intel Core i7-11700K, AMD Ryzen 5 5600X">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="gpu_model">Модель видеокарты</label>
+                            <input type="text" id="gpu_model" name="gpu_model" placeholder="NVIDIA RTX 3080, AMD RX 6800 XT">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="internet_speed">Скорость Интернета</label>
+                            <input type="text" id="internet_speed" name="internet_speed" placeholder="300 Мбит/с, 1 Гбит/с">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="work_experience">Где работал/ла (ИМЕННО В АДАЛТ СФЕРЕ)</label>
+                            <textarea id="work_experience" name="work_experience" placeholder="Список компаний и должностей" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="interview_time">Время собеседования</label>
+                            <input type="text" id="interview_time" name="interview_time" placeholder="Например, 15:30 25.02.2026">
+                            <small class="form-hint">Формат: ДД.ММ.ГГГГ ЧЧ:ММ</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Телефон *</label>
+                            <input type="tel" id="phone" name="phone" placeholder="+7 (XXX) XXX-XX-XX" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="telegram">Телега</label>
+                            <input type="text" id="telegram" name="telegram" placeholder="@username">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">✅ Добавить анкету</button>
+                        <div id="formMessage" class="message"></div>
+                    </form>
+                </section>
+            </div>
+
+            <!-- Правая колонка: Список и отчет -->
+            <div class="right-column">
+                <div class="panel-tabs">
+                    <button class="panel-tab active" onclick="switchApplicantTab('applicants')">📋 Анкеты</button>
+                    <button class="panel-tab" onclick="switchApplicantTab('slots')">🗓️ Свободные слоты</button>
+                </div>
+
+                <div id="applicants-tab" class="panel-content active">
+                    <div class="actions-bar">
+                        <h2>Список кандидатов <span id="applicantsCount">(0)</span></h2>
+                        <div class="action-buttons">
+                            <a href="/download-report" class="btn btn-success">⬇️ Скачать отчет (TXT)</a>
+                            <button id="refreshBtn" class="btn btn-secondary">🔄 Обновить</button>
+                            {% if current_user and current_user.is_admin %}
+                                <button id="clearAllBtn" class="btn btn-danger">🗑️ Очистить все</button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div id="applicantsList" class="applicants-list">
+                        <p class="loading">Загрузка кандидатов...</p>
+                    </div>
+                </div>
+
+                <div id="slots-tab" class="panel-content">
+                    <div class="actions-bar">
+                        <h2>Свободные слоты <span id="slotsCount">(0)</span></h2>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" onclick="loadPublicSlots()">🔄 Обновить</button>
+                        </div>
+                    </div>
+                    <div id="slotsList" class="applicants-list">
+                        <p class="loading">Загрузка слотов...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleHeaderNav() {
+            const nav = document.getElementById('topNav');
+            if (nav) {
+                nav.classList.toggle('open');
+            }
+        }
+
+        // Текущий пользователь для JS
+        window.CURRENT_USER = {
+            username: "{{ current_user.username if current_user else '' }}",
+            is_admin: {{ 'true' if current_user and current_user.is_admin else 'false' }}
+        };
+
+        const interviewInput = document.getElementById('interview_time');
+        if (interviewInput) {
+            interviewInput.addEventListener('input', () => {
+                const digits = interviewInput.value.replace(/\D/g, '').slice(0, 12);
+                const parts = [];
+
+                if (digits.length >= 2) {
+                    parts.push(digits.slice(0, 2));
+                } else {
+                    parts.push(digits);
+                }
+
+                if (digits.length >= 4) {
+                    parts.push(digits.slice(2, 4));
+                } else if (digits.length > 2) {
+                    parts.push(digits.slice(2));
+                }
+
+                if (digits.length >= 8) {
+                    parts.push(digits.slice(4, 8));
+                } else if (digits.length > 4) {
+                    parts.push(digits.slice(4));
+                }
+
+                let formatted = parts.join('.');
+
+                if (digits.length > 8) {
+                    const timeDigits = digits.slice(8);
+                    if (timeDigits.length >= 2) {
+                        formatted += ' ' + timeDigits.slice(0, 2);
+                    } else {
+                        formatted += ' ' + timeDigits;
+                    }
+                    if (timeDigits.length > 2) {
+                        formatted += ':' + timeDigits.slice(2, 4);
+                    }
+                }
+
+                interviewInput.value = formatted;
+            });
+        }
+
+        // Загрузка списка кандидатов
+        function loadApplicants() {
+            fetch('/api/applicants')
+                .then(response => response.json())
+                .then(applicants => {
+                    const container = document.getElementById('applicantsList');
+                    const countEl = document.getElementById('applicantsCount');
+                    if (countEl) {
+                        countEl.textContent = `(${applicants.length})`;
+                    }
+                    
+                    if (applicants.length === 0) {
+                        container.innerHTML = '<p class="empty">Нет добавленных кандидатов</p>';
+                        return;
+                    }
+                    
+                    container.innerHTML = applicants.map(app => {
+                        const canDelete = (window.CURRENT_USER.is_admin === true) || (app.owner_username && app.owner_username === window.CURRENT_USER.username);
+                        const isAdmin = window.CURRENT_USER.is_admin === true;
+                        
+                        // Статус анкеты
+                        let statusBadge = '';
+                        if (app.status === 'approved') {
+                            statusBadge = '<span style="background: #22c55e; color: white; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; font-weight: 600;">✅ Одобрена</span>';
+                        } else if (app.status === 'rejected') {
+                            statusBadge = '<span style="background: #ef4444; color: white; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; font-weight: 600;">❌ Отклонена</span>';
+                        } else {
+                            statusBadge = '<span style="background: #6366f1; color: white; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; font-weight: 600;">⏳ Ожидает</span>';
+                        }
+                        
+                        return `
+                        <div class="applicant-card">
+                            <div class="applicant-header">
+                                <div>
+                                    <h3>${app.full_name} ${statusBadge}</h3>
+                                    <small>Добавил: ${app.owner_username || '-'}</small>
+                                </div>
+                                ${canDelete ? `<button class="btn-delete" onclick="deleteApplicant(${app.id})" title="Удалить">✕</button>` : ''}
+                            </div>
+                            <p><strong>Возраст:</strong> ${app.date_of_birth || '-'}</p>
+                            <p><strong>Английский:</strong> ${app.english_level || '-'}</p>
+                            <p><strong>Процессор:</strong> ${app.cpu_model || '-'}</p>
+                            <p><strong>Видеокарта:</strong> ${app.gpu_model || '-'}</p>
+                            <p><strong>Интернет:</strong> ${app.internet_speed || '-'}</p>
+                            <p><strong>Опыт работы:</strong> ${app.work_experience || '-'}</p>
+                            <p><strong>Время собеседования:</strong> ${app.interview_time || '-'}</p>
+                            <p><strong>Телефон:</strong> ${app.phone}</p>
+                            <p><strong>Телега:</strong> ${app.telegram || '-'}</p>
+                            <p class="date">Добавлено: ${app.date_added}</p>
+                            ${isAdmin && app.status !== 'approved' && app.status !== 'rejected' ? `
+                                <div style="display: flex; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #2d2d3d;">
+                                    <button onclick="updateStatus(${app.id}, 'approved')" style="flex: 1; padding: 10px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">✅ Одобрить</button>
+                                    <button onclick="updateStatus(${app.id}, 'rejected')" style="flex: 1; padding: 10px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">❌ Отклонить</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                        `;
+                    }).join('');
+                })
+                .catch(error => console.error('Ошибка при загрузке:', error));
+        }
+
+        // Добавление анкеты
+        document.getElementById('applicantForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                full_name: document.getElementById('full_name').value,
+                phone: document.getElementById('phone').value,
+                date_of_birth: document.getElementById('date_of_birth').value,
+                english_level: document.getElementById('english_level').value,
+                cpu_model: document.getElementById('cpu_model').value,
+                gpu_model: document.getElementById('gpu_model').value,
+                internet_speed: document.getElementById('internet_speed').value,
+                work_experience: document.getElementById('work_experience').value,
+                interview_time: document.getElementById('interview_time').value,
+                telegram: document.getElementById('telegram').value
+            };
+
+            try {
+                const response = await fetch('/api/add-applicant', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                const messageDiv = document.getElementById('formMessage');
+                
+                if (result.success) {
+                    messageDiv.className = 'message success';
+                    messageDiv.textContent = '✅ ' + result.message;
+                    document.getElementById('applicantForm').reset();
+                    loadApplicants();
+                    setTimeout(() => { messageDiv.textContent = ''; }, 3000);
+                } else {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = '❌ Ошибка: ' + result.message;
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                const messageDiv = document.getElementById('formMessage');
+                messageDiv.className = 'message error';
+                messageDiv.textContent = '❌ Ошибка при добавлении анкеты';
+            }
+        });
+
+        // Удаление анкеты
+        async function deleteApplicant(id) {
+            if (confirm('Вы уверены, что хотите удалить эту анкету?')) {
+                try {
+                    const response = await fetch(`/api/delete/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        loadApplicants();
+                    } else {
+                        alert('Ошибка при удалении: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    alert('Ошибка при удалении анкеты');
+                }
+            }
+        }
+
+        async function updateStatus(id, status) {
+            const statusText = status === 'approved' ? 'одобрить' : 'отклонить';
+            if (confirm(`Вы уверены, что хотите ${statusText} эту анкету?`)) {
+                try {
+                    const response = await fetch(`/api/applicant/${id}/status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ status: status })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        loadApplicants();
+                    } else {
+                        alert('Ошибка при обновлении статуса: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    alert('Ошибка при обновлении статуса');
+                }
+            }
+        }
+
+        // Кнопка обновления
+        document.getElementById('refreshBtn').addEventListener('click', loadApplicants);
+
+        function switchApplicantTab(tabName) {
+            document.querySelectorAll('.panel-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.panel-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'slots') {
+                loadPublicSlots();
+            }
+        }
+
+        async function loadPublicSlots() {
+            const container = document.getElementById('slotsList');
+            const countEl = document.getElementById('slotsCount');
+
+            try {
+                const response = await fetch('/api/interview-slots');
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    container.innerHTML = '<p class="empty">Ошибка загрузки слотов</p>';
+                    countEl.textContent = '(0)';
+                    return;
+                }
+
+                if (!data.slots || data.slots.length === 0) {
+                    container.innerHTML = '<p class="empty">Нет доступных слотов</p>';
+                    countEl.textContent = '(0)';
+                    return;
+                }
+
+                countEl.textContent = `(${data.slots.length})`;
+                container.innerHTML = data.slots.map(slot => {
+                    const label = slot.end_time ? `${slot.start_time} - ${slot.end_time}` : slot.start_time;
+                    return `
+                        <div class="slot-card-public">
+                            <div>
+                                <h3>${label}</h3>
+                                <p>Открыто для записи</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Ошибка при загрузке слотов:', error);
+                container.innerHTML = '<p class="empty">Ошибка подключения</p>';
+                countEl.textContent = '(0)';
+            }
+        }
+
+        // Кнопка очистки всех анкет
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', async () => {
+                if (confirm('⚠️ Внимание! Вы уверены, что хотите удалить ВСЕ анкеты? Это не может быть отменено!')) {
+                    try {
+                        const response = await fetch('/api/delete-all', {
+                            method: 'DELETE'
+                        });
+                        
+                        const result = await response.json();
+                        if (result.success) {
+                            alert('✅ ' + result.message);
+                            loadApplicants();
+                        } else {
+                            alert('❌ Ошибка: ' + result.message);
+                        }
+                    } catch (error) {
+                        console.error('Ошибка:', error);
+                        alert('❌ Ошибка при удалении всех анкет');
+                    }
+                }
+            });
+        }
+
+        // Загрузка при открытии страницы
+        loadApplicants();
+    </script>
+</body>
+</html>
