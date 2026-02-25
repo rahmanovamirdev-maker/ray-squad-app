@@ -420,7 +420,7 @@
                 <div class="user-info nav-links" id="topNav" style="justify-content: center; margin-top: 15px;">
                     <span class="nav-user">Вы вошли как: <strong style="color: #6366f1;">{{ current_user.username }}</strong></span>
                     <button class="nav-link" onclick="openChat()">💬 Чат</button>
-                    {% if current_user.role != 'guest' %}
+                    {% if not current_user.is_guest %}
                         <a href="{{ url_for('index') }}" class="nav-link">Главная</a>
                         {# <a href="{{ url_for('manual') }}" class="nav-link">Мануал</a> #}
                         <a href="{{ url_for('profile') }}" class="nav-link">Профиль</a>
