@@ -7,6 +7,7 @@ import string
 import random
 import logging
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from pyngrok import ngrok
 
 app = Flask(__name__)
@@ -630,16 +631,32 @@ def add_model_operator():
         photo_dir = os.path.join('static', 'model_photos')
         os.makedirs(photo_dir, exist_ok=True)
         
+        ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+        
         if 'photos' in files:
             photo_files = files.getlist('photos')
             for idx, photo_file in enumerate(photo_files):
                 if photo_file and photo_file.filename:
+                    # Проверяем расширение файла
+                    filename = secure_filename(photo_file.filename)
+                    if '.' in filename:
+                        ext = filename.rsplit('.', 1)[1].lower()
+                        if ext not in ALLOWED_EXTENSIONS:
+                            continue
+                    else:
+                        continue
+                    
                     # Генерируем уникальное имя файла
                     timestamp = moscow_now().strftime('%Y%m%d_%H%M%S')
-                    filename = f'model_{user.id}_{timestamp}_{idx}_{photo_file.filename}'
-                    filepath = os.path.join(photo_dir, filename)
-                    photo_file.save(filepath)
-                    photos.append(f'/static/model_photos/{filename}')
+                    safe_filename = f'model_{user.id}_{timestamp}_{idx}_{filename}'
+                    filepath = os.path.join(photo_dir, safe_filename)
+                    
+                    try:
+                        photo_file.save(filepath)
+                        photos.append(f'/static/model_photos/{safe_filename}')
+                    except Exception as file_error:
+                        print(f'Ошибка при сохранении файла: {file_error}')
+                        continue
         
         # Создаём анкету
         new_model = ModelOperatorApplication(
@@ -662,7 +679,10 @@ def add_model_operator():
         
         return jsonify({'success': True, 'message': 'Анкета модели/оператора успешно добавлена'}), 201
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 400
+        print(f'[ERROR] Ошибка при добавлении анкеты модели: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Ошибка: {str(e)}'}), 400
 
 @app.route('/api/applicants')
 def get_applicants():
