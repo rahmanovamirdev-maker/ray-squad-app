@@ -1356,7 +1356,8 @@ def delete_all_applicants():
 @app.route('/download-report')
 def download_report():
     try:
-        applicants = Applicant.query.order_by(Applicant.date_added.desc()).all()
+        # Получаем все анкеты, кроме отклоненных (rejected)
+        applicants = Applicant.query.filter(Applicant.status != 'rejected').order_by(Applicant.date_added.desc()).all()
         
         # Создание текстового отчета
         report_content = "=" * 80 + "\n"
