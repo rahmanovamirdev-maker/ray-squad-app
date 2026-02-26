@@ -47,7 +47,9 @@
                     <h1>{{ current_user.display_name if current_user.display_name else current_user.username }}</h1>
                     <p>@{{ current_user.username }}</p>
                     <div class="profile-badges">
-                        {% if current_user.is_owner %}
+                        {% if current_user.prefix %}
+                            <span class="badge owner">{{ current_user.prefix }}</span>
+                        {% elif current_user.is_owner %}
                             <span class="badge owner">Владелец</span>
                         {% elif current_user.is_admin %}
                             <span class="badge admin">Админ</span>
