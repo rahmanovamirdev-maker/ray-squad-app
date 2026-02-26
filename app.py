@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import os
 import io
 import string
@@ -16,6 +16,10 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev_secret_key')
 
 db = SQLAlchemy(app)
 
+# Функция для получения московского времени (UTC+3)
+def moscow_now():
+    return datetime.now(timezone(timedelta(hours=3)))
+
 # Модель для хранения анкет
 class Applicant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -29,7 +33,7 @@ class Applicant(db.Model):
     interview_time = db.Column(db.String(100))
     phone = db.Column(db.String(20), nullable=False)
     telegram = db.Column(db.String(100))
-    date_added = db.Column(db.DateTime, default=datetime.now)
+    date_added = db.Column(db.DateTime, default=moscow_now)
     owner_username = db.Column(db.String(100))
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
 
@@ -66,7 +70,7 @@ class User(db.Model):
     can_submit = db.Column(db.Boolean, default=True)  # Может ли отправлять ответы
     crypto_wallet = db.Column(db.String(200))  # Крипто кошелек
     earned_amount = db.Column(db.Float, default=0.0)  # Заработанная сумма
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=moscow_now)
     last_login_at = db.Column(db.DateTime)
 
     def check_password(self, password):
@@ -77,7 +81,7 @@ class SelectionQuestion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     question_text = db.Column(db.String(1000), nullable=False)
     order = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=moscow_now)
 
     def to_dict(self):
         return {
@@ -95,7 +99,7 @@ class GuestAnswer(db.Model):
     guest_phone = db.Column(db.String(20))
     question_id = db.Column(db.Integer, db.ForeignKey('selection_question.id'), nullable=False)
     answer_text = db.Column(db.String(5000), nullable=False)
-    submitted_at = db.Column(db.DateTime, default=datetime.now)
+    submitted_at = db.Column(db.DateTime, default=moscow_now)
     approved = db.Column(db.Boolean, default=False)
 
     def to_dict(self):
@@ -120,7 +124,7 @@ class Message(db.Model):
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     sender_name = db.Column(db.String(100))
     message_text = db.Column(db.String(2000), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=moscow_now)
     # Оставляем для совместимости со старыми данными
     answer_id = db.Column(db.Integer, db.ForeignKey('guest_answer.id'), nullable=True)
 
@@ -142,7 +146,7 @@ class InterviewSlot(db.Model):
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime)
     is_open = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=moscow_now)
 
     def to_dict(self):
         start_str = self.start_time.strftime('%d.%m.%Y %H:%M')
@@ -514,8 +518,8 @@ def get_calendar_availability():
     
     try:
         # Получаем год и месяц из параметров запроса
-        year = request.args.get('year', datetime.now().year, type=int)
-        month = request.args.get('month', datetime.now().month, type=int)
+        year = request.args.get('year', moscow_now().year, type=int)
+        month = request.args.get('month', moscow_now().month, type=int)
         
         # Получаем все слоты для этого месяца
         all_slots = InterviewSlot.query.all()
@@ -754,7 +758,7 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
             session['user_id'] = user.id
-            user.last_login_at = datetime.now()
+            user.last_login_at = moscow_now()
             db.session.commit()
             flash('Успешный вход', 'success')
             if user.is_admin:
@@ -1357,7 +1361,7 @@ def download_report():
         # Создание текстового отчета
         report_content = "=" * 80 + "\n"
         report_content += "ОТЧЕТ ПО КАНДИДАТАМ\n"
-        report_content += f"Дата создания: {datetime.now().strftime('%d.%m.%Y %H:%M')}\n"
+        report_content += f"Дата создания: {moscow_now().strftime('%d.%m.%Y %H:%M')}\n"
         report_content += f"Всего кандидатов: {len(applicants)}\n"
         report_content += "=" * 80 + "\n\n"
         
@@ -1384,7 +1388,7 @@ def download_report():
             file_stream,
             mimetype='text/plain; charset=utf-8',
             as_attachment=True,
-            download_name=f'report_{datetime.now().strftime("%d_%m_%Y_%H_%M")}.txt'
+            download_name=f'report_{moscow_now().strftime("%d_%m_%Y_%H_%M")}.txt'
         )
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
