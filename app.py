@@ -675,6 +675,16 @@ def get_applicants():
         applicants = Applicant.query.filter_by(owner_username=user.username).order_by(Applicant.date_added.desc()).all()
     return jsonify([a.to_dict() for a in applicants])
 
+@app.route('/api/model-operators')
+def get_model_operators():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    user = User.query.get(session['user_id'])
+    if user.is_admin:
+        models = ModelOperatorApplication.query.order_by(ModelOperatorApplication.date_added.desc()).all()
+    else:
+        models = ModelOperatorApplication.query.filter_by(owner_username=user.username).order_by(ModelOperatorApplication.date_added.desc()).all()
+    return jsonify([m.to_dict() for m in models])
 
 @app.route('/api/interview-slots')
 def get_interview_slots():

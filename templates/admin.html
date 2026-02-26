@@ -1261,6 +1261,8 @@
         <!-- Вкладки навигации -->
         <div class="admin-tabs">
             <button class="tab-btn {% if current_tab == 'users' %}active{% endif %}" onclick="switchTab('users')">👤 Создание аккаунта</button>
+            <button class="tab-btn {% if current_tab == 'operators' %}active{% endif %}" onclick="switchTab('operators')">👨‍💼 Операторы</button>
+            <button class="tab-btn {% if current_tab == 'models' %}active{% endif %}" onclick="switchTab('models')">👩‍🎬 Модели</button>
             <button class="tab-btn {% if current_tab == 'answers' %}active{% endif %}" onclick="switchTab('answers')">📝 Ответы по отбору</button>
             <button class="tab-btn {% if current_tab == 'interviews' %}active{% endif %}" onclick="switchTab('interviews')">🗓️ Открытые собеседования</button>
         </div>
@@ -1352,6 +1354,26 @@
                         {% endfor %}
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Вкладка: Операторы -->
+        <div id="operators-tab" class="tab-content {% if current_tab == 'operators' %}active{% endif %}">
+            <div class="actions-bar">
+                <h2>👨‍💼 Анкеты операторов</h2>
+            </div>
+            <div id="operatorsContainer" class="applicants-list">
+                <p class="loading">Загрузка анкет операторов...</p>
+            </div>
+        </div>
+
+        <!-- Вкладка: Модели -->
+        <div id="models-tab" class="tab-content {% if current_tab == 'models' %}active{% endif %}">
+            <div class="actions-bar">
+                <h2>👩‍🎬 Анкеты моделей</h2>
+            </div>
+            <div id="modelsContainer" class="applicants-list">
+                <p class="loading">Загрузка анкет моделей...</p>
             </div>
         </div>
 
@@ -2422,6 +2444,128 @@
                 sendChatMessage();
             }
         }
+
+        // Загрузить операторов
+        async function loadOperators() {
+            try {
+                const response = await fetch('/api/applicants');
+                const applicants = await response.json();
+                const container = document.getElementById('operatorsContainer');
+                
+                if (!applicants || applicants.length === 0) {
+                    container.innerHTML = '<p class="empty">Анкет операторов нет</p>';
+                    return;
+                }
+
+                container.innerHTML = applicants.map((app, idx) => `
+                    <div class="applicant-card">
+                        <div class="applicant-header">
+                            <h3>#${idx + 1} - ${app.full_name}</h3>
+                            <span class="status-badge ${app.status}">${
+                                app.status === 'approved' ? '✅ Одобрено' :
+                                app.status === 'rejected' ? '❌ Отклонено' :
+                                '⏳ На рассмотрении'
+                            }</span>
+                        </div>
+                        <div class="applicant-details">
+                            <p><strong>Телефон:</strong> ${app.phone}</p>
+                            <p><strong>Английский:</strong> ${app.english_level || '-'}</p>
+                            <p><strong>ПК:</strong> ${app.cpu_model || '-'}</p>
+                            <p><strong>Видеокарта:</strong> ${app.gpu_model || '-'}</p>
+                            <p><strong>Интернет:</strong> ${app.internet_speed || '-'}</p>
+                            <p><strong>Опыт:</strong> ${app.work_experience || '-'}</p>
+                            <p><strong>Собеседование:</strong> ${app.interview_time || '-'}</p>
+                            <p><strong>Телега:</strong> ${app.telegram || '-'}</p>
+                            <p><strong>Дата добавления:</strong> ${app.date_added}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки операторов:', error);
+            }
+        }
+
+        // Загрузить модели
+        async function loadModels() {
+            try {
+                const response = await fetch('/api/model-operators');
+                const models = await response.json();
+                const container = document.getElementById('modelsContainer');
+                
+                if (!models || models.length === 0) {
+                    container.innerHTML = '<p class="empty">Анкет моделей нет</p>';
+                    return;
+                }
+
+                container.innerHTML = models.map((model, idx) => {
+                    const photos = model.photos ? model.photos.split(',').filter(p => p) : [];
+                    return `
+                        <div class="applicant-card">
+                            <div class="applicant-header">
+                                <h3>#${idx + 1} - ${model.full_name}</h3>
+                                <span class="status-badge ${model.status}">${
+                                    model.status === 'approved' ? '✅ Одобрено' :
+                                    model.status === 'rejected' ? '❌ Отклонено' :
+                                    '⏳ На рассмотрении'
+                                }</span>
+                            </div>
+                            <div class="applicant-details">
+                                <p><strong>Город:</strong> ${model.city}</p>
+                                <p><strong>Телефон:</strong> ${model.phone}</p>
+                                <p><strong>Возраст:</strong> ${model.age || '-'}</p>
+                                <p><strong>Проживание:</strong> ${model.residence || '-'}</p>
+                                <p><strong>2 устройства:</strong> ${model.has_dual_devices || '-'}</p>
+                                <p><strong>Модель устройства:</strong> ${model.device_model || '-'}</p>
+                                <p><strong>Часы/дни в неделю:</strong> ${model.work_hours || '-'}</p>
+                                <p><strong>Наушники:</strong> ${model.has_headphones || '-'}</p>
+                                <p><strong>Телега:</strong> ${model.telegram || '-'}</p>
+                                <p><strong>Дата добавления:</strong> ${model.date_added}</p>
+                                ${photos.length > 0 ? `
+                                    <div style="margin-top: 15px;">
+                                        <strong>Фото:</strong>
+                                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px;">
+                                            ${photos.map(photo => `<img src="${photo}" style="max-width: 150px; border-radius: 8px; cursor: pointer;" onclick="openPhotoModal('${photo}')">`).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки моделей:', error);
+            }
+        }
+
+        // Открыть фото в модальном окне
+        function openPhotoModal(photoUrl) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 9999; cursor: pointer;';
+            modal.innerHTML = `<img src="${photoUrl}" style="max-width: 90%; max-height: 90%; border-radius: 8px;">`;
+            modal.onclick = () => modal.remove();
+            document.body.appendChild(modal);
+        }
+
+        // Переопределяем switchTab для загрузки данных
+        const originalSwitchTab = switchTab;
+        window.switchTab = function(tabName) {
+            originalSwitchTab(tabName);
+            if (tabName === 'operators') {
+                loadOperators();
+            } else if (tabName === 'models') {
+                loadModels();
+            }
+        };
+
+        // Загрузить при загрузке страницы если нужно
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentTab = document.querySelector('.tab-content.active');
+            if (currentTab && currentTab.id === 'operators-tab') {
+                loadOperators();
+            } else if (currentTab && currentTab.id === 'models-tab') {
+                loadModels();
+            }
+        });
     </script>
 </body>
 </html>
