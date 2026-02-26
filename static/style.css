@@ -753,6 +753,12 @@ header h1 {
     color: #fca5a5;
 }
 
+.message.warning {
+    background: #78350f;
+    color: #fcd34d;
+    border: 1px solid #f59e0b;
+}
+
 /* Правая колонка - Список */
 .right-column {
     display: flex;

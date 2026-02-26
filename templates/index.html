@@ -5,6 +5,210 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система управления анкетами кандидатов</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Стили для календаря */
+        .calendar-container {
+            background: #1e1e2e;
+            border: 1px solid #2d2d3d;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: 1fr 200px;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .calendar-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .calendar-header h3 {
+            color: #e0e0e0;
+            margin: 0;
+            font-size: 1.3em;
+        }
+
+        .calendar-nav {
+            background: #2d2d3d;
+            border: 1px solid #3d3d4d;
+            color: #e0e0e0;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-nav:hover {
+            background: #3d3d4d;
+            border-color: #6366f1;
+            color: #6366f1;
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .weekday {
+            text-align: center;
+            color: #b0b0b0;
+            font-weight: 600;
+            font-size: 0.9em;
+            padding: 8px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1.1em;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            background: #2a2a3a;
+            color: #b0b0b0;
+        }
+
+        .calendar-day.disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+        }
+
+        .calendar-day.green {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            border-color: #22c55e;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+
+        .calendar-day.red {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border-color: #ef4444;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .calendar-day.selected {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.8), inset 0 0 10px rgba(99, 102, 241, 0.3);
+            border-color: #6366f1;
+            transform: scale(1.05);
+        }
+
+        .calendar-legend {
+            display: flex;
+            gap: 20px;
+            justify-content: flex-start;
+            padding-top: 15px;
+            border-top: 1px solid #2d2d3d;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #b0b0b0;
+            font-size: 0.9em;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 2px solid;
+        }
+
+        .legend-color.green {
+            background: #22c55e;
+            border-color: #22c55e;
+        }
+
+        .legend-color.red {
+            background: #ef4444;
+            border-color: #ef4444;
+        }
+
+        /* Времени справа */
+        .calendar-times {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .calendar-times-header {
+            color: #b0b0b0;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            padding: 0 10px;
+        }
+
+        .time-slot {
+            padding: 10px 12px;
+            background: #2a2a3a;
+            border-radius: 6px;
+            border-left: 3px solid #6366f1;
+            color: #e0e0e0;
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .time-slot:hover {
+            background: #3a3a4a;
+            border-left-color: #ff6b6b;
+        }
+
+        .time-slot.selected {
+            background: #6366f1;
+            border-left-color: #6366f1;
+            color: #ffffff;
+        }
+
+        .time-slot.disabled-time {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #2a2a3a;
+        }
+
+        .time-slot.disabled-time:hover {
+            background: #2a2a3a;
+            border-left-color: #6366f1;
+        }
+
+        .slots-section {
+            margin-top: 30px;
+        }
+
+        .slots-section h3 {
+            color: #e0e0e0;
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -121,13 +325,52 @@
 
                 <div id="slots-tab" class="panel-content">
                     <div class="actions-bar">
-                        <h2>Свободные слоты <span id="slotsCount">(0)</span></h2>
+                        <h2>📅 Календарь собеседований</h2>
                         <div class="action-buttons">
-                            <button class="btn btn-secondary" onclick="loadPublicSlots()">🔄 Обновить</button>
+                            <button class="btn btn-secondary" onclick="loadCalendar()">🔄 Обновить</button>
                         </div>
                     </div>
-                    <div id="slotsList" class="applicants-list">
-                        <p class="loading">Загрузка слотов...</p>
+                    
+                    <!-- Календарь с временами -->
+                    <div class="calendar-container">
+                        <div class="calendar-wrapper">
+                            <div class="calendar-header">
+                                <button class="calendar-nav" onclick="previousMonth()">◀</button>
+                                <h3 id="calendarTitle">Февраль 2026</h3>
+                                <button class="calendar-nav" onclick="nextMonth()">▶</button>
+                            </div>
+                            
+                            <div class="calendar-weekdays">
+                                <div class="weekday">Пн</div>
+                                <div class="weekday">Вт</div>
+                                <div class="weekday">Ср</div>
+                                <div class="weekday">Чт</div>
+                                <div class="weekday">Пт</div>
+                                <div class="weekday">Сб</div>
+                                <div class="weekday">Вс</div>
+                            </div>
+                            
+                            <div class="calendar-grid" id="calendarGrid">
+                                <p class="loading">Загрузка календаря...</p>
+                            </div>
+                            
+                            <div class="calendar-legend">
+                                <div class="legend-item">
+                                    <span class="legend-color green"></span> Есть слоты
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-color red"></span> Занято
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Времена справа -->
+                        <div class="calendar-times">
+                            <div class="calendar-times-header">Время</div>
+                            <div id="timesList">
+                                <p style="text-align: center; color: #b0b0b0; padding: 20px 0;">Выберите день</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -282,11 +525,22 @@
                 const messageDiv = document.getElementById('formMessage');
                 
                 if (result.success) {
-                    messageDiv.className = 'message success';
-                    messageDiv.textContent = '✅ ' + result.message;
+                    let message = '✅ ' + result.message;
+                    
+                    // Если есть предупреждение о конфликтах - показываем warning
+                    if (result.warning) {
+                        messageDiv.className = 'message warning';
+                        message += '\n' + result.warning;
+                        messageDiv.style.whiteSpace = 'pre-wrap';
+                    } else {
+                        messageDiv.className = 'message success';
+                        messageDiv.style.whiteSpace = 'normal';
+                    }
+                    
+                    messageDiv.textContent = message;
                     document.getElementById('applicantForm').reset();
                     loadApplicants();
-                    setTimeout(() => { messageDiv.textContent = ''; }, 3000);
+                    setTimeout(() => { messageDiv.textContent = ''; }, 5000);
                 } else {
                     messageDiv.className = 'message error';
                     messageDiv.textContent = '❌ Ошибка: ' + result.message;
@@ -348,61 +602,6 @@
         // Кнопка обновления
         document.getElementById('refreshBtn').addEventListener('click', loadApplicants);
 
-        function switchApplicantTab(tabName) {
-            document.querySelectorAll('.panel-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.panel-tab').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            document.getElementById(tabName + '-tab').classList.add('active');
-            event.target.classList.add('active');
-
-            if (tabName === 'slots') {
-                loadPublicSlots();
-            }
-        }
-
-        async function loadPublicSlots() {
-            const container = document.getElementById('slotsList');
-            const countEl = document.getElementById('slotsCount');
-
-            try {
-                const response = await fetch('/api/interview-slots');
-                const data = await response.json();
-
-                if (!response.ok || !data.success) {
-                    container.innerHTML = '<p class="empty">Ошибка загрузки слотов</p>';
-                    countEl.textContent = '(0)';
-                    return;
-                }
-
-                if (!data.slots || data.slots.length === 0) {
-                    container.innerHTML = '<p class="empty">Нет доступных слотов</p>';
-                    countEl.textContent = '(0)';
-                    return;
-                }
-
-                countEl.textContent = `(${data.slots.length})`;
-                container.innerHTML = data.slots.map(slot => {
-                    const label = slot.end_time ? `${slot.start_time} - ${slot.end_time}` : slot.start_time;
-                    return `
-                        <div class="slot-card-public">
-                            <div>
-                                <h3>${label}</h3>
-                                <p>Открыто для записи</p>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } catch (error) {
-                console.error('Ошибка при загрузке слотов:', error);
-                container.innerHTML = '<p class="empty">Ошибка подключения</p>';
-                countEl.textContent = '(0)';
-            }
-        }
-
         // Кнопка очистки всех анкет
         const clearAllBtn = document.getElementById('clearAllBtn');
         if (clearAllBtn) {
@@ -430,6 +629,175 @@
 
         // Загрузка при открытии страницы
         loadApplicants();
+
+        // ==================== КАЛЕНДАРЬ ====================
+        let currentCalendarDate = new Date();
+        let selectedCalendarDay = null;
+
+        async function loadCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth() + 1;
+            
+            console.log(`📅 Загрузка календаря для ${month}/${year}`);
+            
+            try {
+                const response = await fetch(`/api/calendar-availability?year=${year}&month=${month}`);
+                const data = await response.json();
+                
+                console.log('✅ Данные календаря получены:', data);
+                
+                if (data.success) {
+                    renderCalendar(data.calendar);
+                } else {
+                    console.error('Ошибка загрузки календаря:', data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке календаря:', error);
+            }
+        }
+
+        function renderCalendar(calendarData) {
+            console.log('🎨 Рисую календарь с данными:', calendarData);
+            
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth() + 1;
+            
+            // Обновляем заголовок
+            const monthNames = ['', 'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
+                              'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+            
+            const titleEl = document.getElementById('calendarTitle');
+            const gridEl = document.getElementById('calendarGrid');
+            
+            if (!titleEl) console.error('❌ Элемент calendarTitle не найден!');
+            if (!gridEl) console.error('❌ Элемент calendarGrid не найден!');
+            
+            if (titleEl) {
+                titleEl.textContent = `${monthNames[month]} ${year}`;
+            }
+            
+            // Первый день месяца
+            const firstDay = new Date(year, month - 1, 1);
+            const startingDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Пн = 0
+            
+            // Последний день месяца
+            const lastDay = new Date(year, month, 0).getDate();
+            
+            let html = '';
+            
+            // Пустые ячейки до первого дня месяца
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                html += '<div class="calendar-day disabled"></div>';
+            }
+            
+            // Дни месяца
+            for (let day = 1; day <= lastDay; day++) {
+                const dayData = calendarData[day];
+                
+                if (dayData) {
+                    const status = dayData.status;
+                    const selected = selectedCalendarDay === day ? 'selected' : '';
+                    const count = dayData.open_slots;
+                    
+                    html += `
+                        <div class="calendar-day ${status} ${selected}" onclick="selectDay(${day})" title="День ${day}${dayData.open_slots > 0 ? ': ' + dayData.open_slots + ' свободных' : ': занято'}">
+                            ${day}
+                        </div>
+                    `;
+                } else {
+                    html += `<div class="calendar-day" onclick="selectDay(${day})">${day}</div>`;
+                }
+            }
+            
+            if (gridEl) {
+                gridEl.innerHTML = html;
+                console.log('✅ Календарь успешно отрисован');
+            }
+        }
+
+        function selectDay(day) {
+            selectedCalendarDay = day;
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth() + 1;
+            
+            // Перезагружаем календарь для выбора дня
+            loadCalendar();
+            
+            // Загружаем времена в правую панель
+            displayTimesForDay(year, month, day);
+        }
+
+        async function displayTimesForDay(year, month, day) {
+            console.log(`⏰ Загружаю времена для ${day}.${month}.${year}`);
+            
+            try {
+                const response = await fetch('/api/interview-slots');
+                const data = await response.json();
+                
+                if (data.success && data.slots) {
+                    const selectedDateStr = `${day}.${String(month).padStart(2, '0')}.${year}`;
+                    
+                    const slotsForDay = data.slots.filter(slot => {
+                        return slot.start_time.includes(selectedDateStr);
+                    });
+                    
+                    const timesList = document.getElementById('timesList');
+                    
+                    if (slotsForDay.length === 0) {
+                        timesList.innerHTML = '<p style="text-align: center; color: #b0b0b0;">Нет слотов</p>';
+                    } else {
+                        timesList.innerHTML = slotsForDay.map(slot => {
+                            const startTime = slot.start_time.split(' ')[1]; // Извлекаем только время
+                            const openClass = slot.is_open ? '' : 'disabled-time';
+                            const title = slot.is_open ? 'Кликните для выбора' : 'Занято';
+                            
+                            return `
+                                <div class="time-slot ${openClass}" 
+                                     title="${title}"
+                                     onclick="${slot.is_open ? `document.getElementById('interview_time').value='${startTime}'; document.querySelector('.left-column').scrollIntoView({behavior:'smooth'});` : ''}">
+                                    ${startTime}
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке времен дня:', error);
+            }
+        }
+
+        function previousMonth() {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            selectedCalendarDay = null;
+            loadCalendar();
+        }
+
+        function nextMonth() {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            selectedCalendarDay = null;
+            loadCalendar();
+        }
+
+        // Загрузить календарь при переходе на вкладку слотов
+        function switchApplicantTab(tabName) {
+            console.log(`🔄 Переключение на вкладку: ${tabName}`);
+            
+            document.querySelectorAll('.panel-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.panel-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'slots') {
+                console.log('📅 Вызываю loadCalendar()');
+                loadCalendar();
+            }
+        }
+
     </script>
 </body>
 </html>

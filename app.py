@@ -346,6 +346,32 @@ def manual():
     user = User.query.get(session['user_id'])
     return render_template('manual.html', current_user=user)
 
+# Функция для проверки занятых слотов между выбранным временем
+def check_conflicting_closed_slots(slot_start, slot_end):
+    """
+    Проверяет, есть ли закрытые (занятые) слоты между start и end временем.
+    Возвращает список конфликтующих слотов или пустой список.
+    """
+    conflicting_slots = []
+    all_slots = InterviewSlot.query.all()
+    
+    for slot in all_slots:
+        # Пропускаем открытые слоты
+        if slot.is_open:
+            continue
+            
+        slot_actual_end = slot.end_time or slot.start_time
+        
+        # Проверяем пересечение между нашим временем и закрытым слотом
+        # Пересечение есть если: start < closed_end AND end > closed_start
+        if slot_start < slot_actual_end and slot_end > slot.start_time:
+            conflicting_slots.append({
+                'start': slot.start_time.strftime('%d.%m.%Y %H:%M'),
+                'end': slot_actual_end.strftime('%d.%m.%Y %H:%M')
+            })
+    
+    return conflicting_slots
+
 @app.route('/api/add-applicant', methods=['POST'])
 def add_applicant():
     try:
@@ -364,6 +390,10 @@ def add_applicant():
         if not slot_id and not interview_time_value:
             return jsonify({'success': False, 'message': 'Укажите время собеседования'}), 400
 
+        slot_start = None
+        slot_end = None
+        warning_message = None
+
         if interview_time_value and not slot_id:
             try:
                 requested_dt = datetime.strptime(interview_time_value, '%d.%m.%Y %H:%M')
@@ -375,11 +405,15 @@ def add_applicant():
 
             open_slots = InterviewSlot.query.filter_by(is_open=True).all()
             slot_match = False
+            matched_slot = None
             for slot in open_slots:
                 start = slot.start_time
                 end = slot.end_time or slot.start_time
                 if start <= requested_dt <= end:
                     slot_match = True
+                    matched_slot = slot
+                    slot_start = start
+                    slot_end = end
                     break
 
             if not slot_match:
@@ -387,17 +421,34 @@ def add_applicant():
                     'success': False,
                     'message': 'Нет свободных слотов на эту дату'
                 }), 400
+            
+            # Проверяем конфликты только если слот имеет диапазон
+            if slot_start and slot_end:
+                conflicting = check_conflicting_closed_slots(slot_start, slot_end)
+                if conflicting:
+                    conflict_times = ', '.join([f"{c['start']} - {c['end']}" for c in conflicting])
+                    warning_message = f"⚠️ Внимание: между выбранным временем обнаружены занятые слоты: {conflict_times}"
 
         if slot_id:
             slot = InterviewSlot.query.get(slot_id)
             if not slot or not slot.is_open:
                 return jsonify({'success': False, 'message': 'Выбранный слот уже закрыт'}), 400
+            
+            slot_start = slot.start_time
+            slot_end = slot.end_time or slot.start_time
+            
             start_str = slot.start_time.strftime('%d.%m.%Y %H:%M')
             if slot.end_time:
                 end_str = slot.end_time.strftime('%d.%m.%Y %H:%M')
                 interview_time_value = f"{start_str} - {end_str}"
             else:
                 interview_time_value = start_str
+            
+            # Проверяем конфликты при выборе слота
+            conflicting = check_conflicting_closed_slots(slot_start, slot_end)
+            if conflicting:
+                conflict_times = ', '.join([f"{c['start']} - {c['end']}" for c in conflicting])
+                warning_message = f"⚠️ Внимание: между выбранным временем обнаружены занятые слоты: {conflict_times}"
 
         new_applicant = Applicant(
             full_name=data.get('full_name', ''),
@@ -416,7 +467,11 @@ def add_applicant():
         db.session.add(new_applicant)
         db.session.commit()
         
-        return jsonify({'success': True, 'message': 'Анкета успешно добавлена'}), 201
+        response = {'success': True, 'message': 'Анкета успешно добавлена'}
+        if warning_message:
+            response['warning'] = warning_message
+        
+        return jsonify(response), 201
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
@@ -447,6 +502,90 @@ def get_interview_slots():
     return jsonify({'success': True, 'slots': [s.to_dict() for s in slots]}), 200
 
 
+@app.route('/api/calendar-availability')
+def get_calendar_availability():
+    """
+    Получение информации о доступности по дням месяца.
+    Возвращает для каждого дня: статус (green/red), кол-во свободных/занятых слотов
+    """
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    
+    try:
+        # Получаем год и месяц из параметров запроса
+        year = request.args.get('year', datetime.now().year, type=int)
+        month = request.args.get('month', datetime.now().month, type=int)
+        
+        # Получаем все слоты для этого месяца
+        all_slots = InterviewSlot.query.all()
+        
+        # Группируем слоты по дням
+        days_status = {}
+        
+        for slot in all_slots:
+            slot_date = slot.start_time
+            
+            # Учитываем только слоты текущего месяца
+            if slot_date.year == year and slot_date.month == month:
+                day = slot_date.day
+                
+                if day not in days_status:
+                    days_status[day] = {
+                        'open_slots': 0,
+                        'closed_slots': 0,
+                        'slots': []
+                    }
+                
+                slot_info = {
+                    'id': slot.id,
+                    'start': slot.start_time.strftime('%H:%M'),
+                    'end': slot.end_time.strftime('%H:%M') if slot.end_time else None,
+                    'is_open': slot.is_open
+                }
+                days_status[day]['slots'].append(slot_info)
+                
+                if slot.is_open:
+                    days_status[day]['open_slots'] += 1
+                else:
+                    days_status[day]['closed_slots'] += 1
+        
+        # Определяем статус для каждого дня
+        calendar_data = {}
+        for day in range(1, 32):  # макс 31 день в месяце
+            if day in days_status:
+                day_info = days_status[day]
+                # Если есть открытые слоты - зелёный
+                # Если нет открытых но есть закрытые - красный
+                # Если есть оба - все равно зелёный (приоритет открытым)
+                if day_info['open_slots'] > 0:
+                    status = 'green'
+                else:
+                    status = 'red'
+                calendar_data[day] = {
+                    'status': status,
+                    'open_slots': day_info['open_slots'],
+                    'closed_slots': day_info['closed_slots'],
+                    'slots': day_info['slots']
+                }
+            else:
+                # Если на день нет слотов - день серый (нет слотов)
+                calendar_data[day] = {
+                    'status': 'gray',
+                    'open_slots': 0,
+                    'closed_slots': 0,
+                    'slots': []
+                }
+        
+        return jsonify({
+            'success': True,
+            'year': year,
+            'month': month,
+            'calendar': calendar_data
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+
 @app.route('/api/interview-slots', methods=['POST'])
 def create_interview_slot():
     if 'user_id' not in session:
@@ -475,6 +614,35 @@ def create_interview_slot():
         return jsonify({'success': False, 'message': str(e)}), 400
 
 
+@app.route('/api/interview-slots/delete-all', methods=['POST'])
+@app.route('/api/slots/clear', methods=['POST'])
+def delete_all_interview_slots():
+    print('🗑️ [API] Запрос на удаление всех слотов')
+    if 'user_id' not in session:
+        print('❌ [API] Unauthorized - нет user_id в сессии')
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    user = User.query.get(session['user_id'])
+    if not user or not user.is_admin:
+        print(f'❌ [API] Forbidden - пользователь {user.username if user else "None"} не админ')
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    try:
+        deleted_count = InterviewSlot.query.count()
+        print(f'📊 [API] Количество слотов для удаления: {deleted_count}')
+        InterviewSlot.query.delete()
+        db.session.commit()
+        print(f'✅ [API] Успешно удалено {deleted_count} слотов')
+        return jsonify({
+            'success': True, 
+            'message': f'Удалено {deleted_count} слотов',
+            'deleted_count': deleted_count
+        }), 200
+    except Exception as e:
+        print(f'❌ [API] Ошибка при удалении: {e}')
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+
 @app.route('/api/interview-slots/<int:slot_id>/close', methods=['POST'])
 def close_interview_slot(slot_id):
     if 'user_id' not in session:
@@ -490,6 +658,91 @@ def close_interview_slot(slot_id):
         return jsonify({'success': True, 'slot': slot.to_dict()}), 200
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
+
+
+@app.route('/api/interview-slots/<int:slot_id>', methods=['DELETE'])
+@app.route('/api/interview-slots/<int:slot_id>/delete', methods=['POST'])
+def delete_interview_slot(slot_id):
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    user = User.query.get(session['user_id'])
+    if not user or not user.is_admin:
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    try:
+        slot = InterviewSlot.query.get_or_404(slot_id)
+        db.session.delete(slot)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Слот удалён'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+
+@app.route('/api/admin/save-hours', methods=['POST'])
+def admin_save_hours():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    user = User.query.get(session['user_id'])
+    if not user or not user.is_admin:
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    try:
+        data = request.get_json(force=True, silent=True)
+        if not data:
+            print(f"❌ [Admin] No JSON data received")
+            return jsonify({'success': False, 'message': 'Invalid data - no JSON'}), 400
+            
+        date_str = data.get('date')
+        hours = data.get('hours', [])
+        
+        print(f"📝 [Admin] Received date_str={date_str}, hours={hours}")
+        
+        if not date_str:
+            return jsonify({'success': False, 'message': 'Date is required'}), 400
+        if not hours or len(hours) == 0:
+            return jsonify({'success': False, 'message': 'At least one hour is required'}), 400
+        
+        # Parse date
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+        
+        # Delete all slots for this date
+        InterviewSlot.query.filter(
+            db.func.date(InterviewSlot.start_time) == date_obj.date()
+        ).delete()
+        
+        # Create new slots for each selected hour (hour:00 to hour+1:00)
+        created_slots = []
+        for hour in hours:
+            try:
+                hour = int(hour)
+                start_time = datetime(date_obj.year, date_obj.month, date_obj.day, hour, 0, 0)
+                end_time = datetime(date_obj.year, date_obj.month, date_obj.day, hour + 1, 0, 0)
+                
+                slot = InterviewSlot(start_time=start_time, end_time=end_time, is_open=True)
+                db.session.add(slot)
+                created_slots.append(slot)
+            except ValueError as e:
+                print(f"❌ [Admin] Invalid hour value: {hour} - {e}")
+                continue
+        
+        db.session.commit()
+        print(f"✅ [Admin] Saved {len(created_slots)} hours for {date_str}")
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Saved {len(created_slots)} time slots',
+            'slots_created': len(created_slots)
+        }), 200
+    except ValueError as e:
+        db.session.rollback()
+        print(f"❌ [Admin] ValueError: {e}")
+        return jsonify({'success': False, 'message': f'Invalid date format: {str(e)}'}), 400
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ [Admin] Error saving hours: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 400
+
 
 
 @app.route('/login', methods=['GET', 'POST'])

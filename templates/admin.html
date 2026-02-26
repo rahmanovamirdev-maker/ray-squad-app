@@ -574,8 +574,18 @@
         }
 
         .slot-card.closed {
-            border-color: rgba(239, 68, 68, 0.6);
-            opacity: 0.7;
+            border-color: rgba(239, 68, 68, 0.8);
+            border-left: 4px solid #ef4444;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .slot-card.closed .slot-meta strong {
+            color: #ff6b6b;
+        }
+
+        .slot-card.closed .slot-meta span {
+            color: #ff8888;
         }
 
         .slot-meta {
@@ -613,6 +623,120 @@
         .btn-close-slot:hover {
             transform: translateY(-1px);
             box-shadow: 0 10px 20px rgba(239, 68, 68, 0.35);
+        }
+
+        /* Аккордион для слотов */
+        .slot-group {
+            margin-bottom: 8px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #1e1e2e;
+            border: 1px solid #2d2d3d;
+        }
+
+        .slot-date-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: #242432;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #e0e0e0;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .slot-date-header:hover {
+            background: #2d2d3d;
+        }
+
+        .slot-count {
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .slot-toggle {
+            color: #6366f1;
+            transition: transform 0.3s ease;
+            font-size: 0.8em;
+            display: inline-flex;
+        }
+
+        .slot-details {
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid #2d2d3d;
+        }
+
+        .slot-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 3px solid #6366f1;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .slot-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .slot-item.closed {
+            background: rgba(239, 68, 68, 0.1);
+            border-left-color: #ef4444;
+        }
+
+        .slot-time {
+            color: #e0e0e0;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .slot-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-slot-action {
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-slot-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-slot-delete {
+            padding: 6px 10px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            border-radius: 5px;
+            color: #ff6b6b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9em;
+        }
+
+        .btn-slot-delete:hover {
+            background: rgba(239, 68, 68, 0.4);
+            color: #ffffff;
         }
 
         /* Dropdown меню для действий */
@@ -716,6 +840,402 @@
         .dropdown-menu .success:hover {
             background: rgba(34, 197, 94, 0.1);
             color: #22c55e;
+        }
+
+        /* Стили для календаря */
+        .calendar-nav {
+            padding: 6px 12px;
+            background: #2a2a3a;
+            border: 1px solid #3d3d4d;
+            color: #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            min-width: 36px;
+        }
+
+        .calendar-nav:hover {
+            background: #3a3a4a;
+            border-color: #6366f1;
+            color: #6366f1;
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 3px;
+            margin-bottom: 8px;
+        }
+
+        .weekday {
+            text-align: center;
+            font-weight: 600;
+            color: #888;
+            font-size: 0.7em;
+            padding: 4px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 3px;
+            margin-bottom: 12px;
+            min-height: auto;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            height: 40px !important;
+            width: 40px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 0.85em;
+            color: white;
+            background: #2a2a3a;
+            border: none;
+            user-select: none;
+            transition: all 0.3s;
+            padding: 0 !important;
+        }
+
+        .calendar-day.empty {
+            background: transparent;
+            border: none;
+            cursor: default;
+        }
+
+        .calendar-day.green {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+        }
+
+        .calendar-day.green:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.6);
+        }
+
+        .calendar-day.red {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            cursor: pointer;
+            opacity: 0.7;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .calendar-day.red:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.6);
+        }
+
+        .calendar-day.gray {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            cursor: pointer;
+            opacity: 0.6;
+            box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
+        }
+
+        .calendar-day.gray:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(107, 114, 128, 0.6);
+        }
+
+        .calendar-legend {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 12px;
+            padding: 8px 0;
+            background: transparent;
+            border-radius: 0;
+            font-size: 0.8em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #b0b0b0;
+            font-size: 0.85em;
+        }
+
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+        }
+
+        .legend-color.green {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        }
+
+        .legend-color.red {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .legend-color.gray {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+
+        /* Стили для слотов */
+        .slot-card {
+            background: #1e1e2e;
+            border: 2px solid #2d2d3d;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .slot-card.open {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .slot-card.closed {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.05);
+            border-left: 4px solid #ef4444;
+        }
+
+        .slot-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex: 1;
+        }
+
+        .slot-meta strong {
+            color: #e0e0e0;
+            font-size: 0.95em;
+        }
+
+        .slot-meta span {
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .slot-card.open .slot-meta span {
+            color: #22c55e;
+        }
+
+        .slot-card.closed .slot-meta span {
+            color: #ef4444;
+        }
+
+        .slot-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-close-slot {
+            padding: 6px 12px;
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85em;
+            transition: all 0.3s;
+        }
+
+        .btn-close-slot:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Контейнерные стили для календаря */
+        .calendar-container {
+            background: #1e1e2e;
+            border: 1px solid #2d2d3d;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: 340px 180px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .calendar-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .calendar-header h3 {
+            color: #e0e0e0;
+            margin: 0;
+            font-size: 1.1em;
+        }
+
+        /* Времена справа */
+        .calendar-times {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .calendar-times-header {
+            color: #b0b0b0;
+            font-weight: 600;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            padding: 0 8px;
+        }
+
+        .time-slot {
+            padding: 8px 10px;
+            background: #2a2a3a;
+            border-radius: 5px;
+            border-left: 3px solid #6366f1;
+            color: #e0e0e0;
+            font-size: 0.85em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .time-slot:hover {
+            background: #3a3a4a;
+            border-left-color: #ff6b6b;
+        }
+
+        .time-slot.selected {
+            background: #6366f1;
+            border-left-color: #6366f1;
+            color: #ffffff;
+        }
+
+        .time-slot.disabled-time {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #2a2a3a;
+        }
+
+        .time-slot.disabled-time:hover {
+            background: #2a2a3a;
+            border-left-color: #6366f1;
+        }
+
+        /* Секция слотов */
+        .slots-section {
+            background: #1e1e2e;
+            border: 1px solid #2d2d3d;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .slots-section h3 {
+            color: #e0e0e0;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+
+        /* Список всех слотов в календаре */
+        .admin-all-slots {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        /* Стили скроллбара для списка слотов */
+        .admin-all-slots::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .admin-all-slots::-webkit-scrollbar-track {
+            background: #1a1a2a;
+            border-radius: 3px;
+        }
+
+        .admin-all-slots::-webkit-scrollbar-thumb {
+            background: #6366f1;
+            border-radius: 3px;
+        }
+
+        .admin-all-slots::-webkit-scrollbar-thumb:hover {
+            background: #7c3aed;
+        }
+
+        .admin-all-slots h3 {
+            color: #b0b0b0;
+            font-weight: 600;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            padding: 0 8px;
+            margin-bottom: 8px;
+        }
+
+        /* Компактные карточки слотов для правой колонки */
+        .admin-all-slots .slot-card {
+            padding: 10px 12px;
+            font-size: 0.85em;
+        }
+
+        .admin-all-slots .slot-meta {
+            gap: 2px;
+        }
+
+        .admin-all-slots .slot-meta strong {
+            font-size: 0.95em;
+        }
+
+        .admin-all-slots .slot-meta span {
+            font-size: 0.8em;
+        }
+
+        .admin-all-slots .btn-close-slot {
+            padding: 6px 10px;
+            font-size: 0.8em;
+        }
+
+        /* Компактные группы слотов */
+        .admin-all-slots .slot-group {
+            margin-bottom: 6px;
+        }
+
+        .admin-all-slots .slot-date-header {
+            padding: 10px 12px;
+            font-size: 0.85em;
+            gap: 8px;
+            justify-content: flex-start;
+        }
+
+        /* Обертка для даты и счетчика */
+        .admin-all-slots .slot-date-header > span:nth-child(2) {
+            display: inline-block;
+            margin-left: 0;
+        }
+
+        .admin-all-slots .slot-toggle {
+            margin-left: auto;
+        }
+
+        .admin-all-slots .accordion-content {
+            padding: 8px;
         }
     </style>
 </head>
@@ -848,20 +1368,64 @@
 
         <!-- Вкладка: Открытые собеседования -->
         <div id="interviews-tab" class="tab-content {% if current_tab == 'interviews' %}active{% endif %}">
-            <div class="actions-bar" style="margin-bottom: 20px;">
-                <h2>Открытые собеседования</h2>
-            </div>
-            <section class="form-section" style="margin-bottom: 20px;">
-                <h2 style="margin-bottom: 15px;">Добавить слот</h2>
-                <div class="slot-form">
-                    <input type="datetime-local" id="slotStart">
-                    <input type="datetime-local" id="slotEnd" placeholder="Окончание (опционально)">
-                    <button class="btn btn-primary" onclick="createInterviewSlot()">Добавить</button>
+            <div class="actions-bar">
+                <h2>📅 Календарь собеседований</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="loadAdminCalendar()">🔄 Обновить</button>
                 </div>
-                <div id="slotMessage" class="message"></div>
-            </section>
-            <div class="slot-list" id="slotList">
-                <p class="loading">Загрузка слотов...</p>
+            </div>
+            
+            <!-- Календарь с временами -->
+            <div class="calendar-container">
+                <div class="calendar-wrapper">
+                    <div class="calendar-header">
+                        <button class="calendar-nav" onclick="adminPreviousMonth()">◀</button>
+                        <h3 id="adminCalendarTitle">Февраль 2026</h3>
+                        <button class="calendar-nav" onclick="adminNextMonth()">▶</button>
+                    </div>
+                    
+                    <div class="calendar-weekdays">
+                        <div class="weekday">Пн</div>
+                        <div class="weekday">Вт</div>
+                        <div class="weekday">Ср</div>
+                        <div class="weekday">Чт</div>
+                        <div class="weekday">Пт</div>
+                        <div class="weekday">Сб</div>
+                        <div class="weekday">Вс</div>
+                    </div>
+                    
+                    <div class="calendar-grid" id="adminCalendarGrid">
+                        <p class="loading">Загрузка календаря...</p>
+                    </div>
+                    
+                    <div class="calendar-legend">
+                        <div class="legend-item">
+                            <span class="legend-color green"></span> Открыто (есть слоты)
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color red"></span> Занято
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color gray"></span> Нет слотов
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Времена справа -->
+                <div class="calendar-times">
+                    <div class="calendar-times-header">Время</div>
+                    <div id="adminTimesPanel">
+                        <p style="text-align: center; color: #b0b0b0; padding: 20px 0;">Выберите день</p>
+                    </div>
+                </div>
+                
+                <!-- Список всех слотов -->
+                <div class="admin-all-slots">
+                    <h3>Все слоты (<span id="adminSlotsCount">0</span>)</h3>
+                    <div id="adminSlotList" style="display: flex; flex-direction: column; gap: 8px;">
+                        <p class="loading" style="text-align: center; color: #b0b0b0; padding: 20px 0;">Загрузка слотов...</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1002,39 +1566,487 @@
         }
 
         async function loadInterviewSlotsAdmin() {
+            console.log('🔄 [ADMIN] Загрузка слотов...');
             try {
                 const response = await fetch('/api/interview-slots?all=1');
                 const data = await response.json();
-                const container = document.getElementById('slotList');
+                const container = document.getElementById('adminSlotList');
 
                 if (!response.ok || !data.success) {
                     container.innerHTML = '<p class="empty">Ошибка загрузки слотов</p>';
+                    console.error('❌ [ADMIN] Ошибка загрузки слотов');
                     return;
                 }
 
                 if (!data.slots || data.slots.length === 0) {
                     container.innerHTML = '<p class="empty">Слоты пока не добавлены</p>';
+                    document.getElementById('adminSlotsCount').textContent = '0';
+                    console.log('ℹ️ [ADMIN] Слоты отсутствуют');
+                } else {
+                    console.log(`✅ [ADMIN] Загружено ${data.slots.length} слотов`);
+                    document.getElementById('adminSlotsCount').textContent = data.slots.length;
+                    
+                    // Группируем слоты по датам
+                    const slotsByDate = {};
+                    data.slots.forEach(slot => {
+                        const date = slot.start_time.split(' ')[0]; // YYYY-MM-DD
+                        if (!slotsByDate[date]) {
+                            slotsByDate[date] = [];
+                        }
+                        slotsByDate[date].push(slot);
+                    });
+                    
+                    // Сортируем даты
+                    const sortedDates = Object.keys(slotsByDate).sort();
+                    console.log('📅 Sorted dates:', sortedDates);
+                    
+                    container.innerHTML = sortedDates.map((date, index) => {
+                        console.log(`Processing date: ${date}`);
+                        const slots = slotsByDate[date];
+                        
+                        // Форматируем дату вручную - поддерживаем оба формата
+                        let year, month, day;
+                        
+                        if (date.includes('-')) {
+                            // Формат YYYY-MM-DD
+                            [year, month, day] = date.split('-').map(Number);
+                        } else if (date.includes('.')) {
+                            // Формат DD.MM.YYYY
+                            [day, month, year] = date.split('.').map(Number);
+                        } else {
+                            console.error(`Unknown date format: ${date}`);
+                            return '';
+                        }
+                        
+                        console.log(`Parsed: year=${year}, month=${month}, day=${day}`);
+                        
+                        const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+                        const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+                        
+                        const dateObj = new Date(year, month - 1, day);
+                        const dayOfWeek = dayNames[dateObj.getDay()];
+                        const monthName = monthNames[month - 1];
+                        
+                        const dateStr = `${dayOfWeek}, ${day} ${monthName} ${year}`;
+                        console.log(`Formatted date: ${dateStr}`);
+                        const uniqueId = `slot-group-${index}`;
+                        
+                        return `
+                            <div class="slot-group">
+                                <button class="slot-date-header" onclick="toggleSlotGroup('${uniqueId}')">
+                                    <span>${dateStr}</span>
+                                    <span class="slot-count">${slots.length}ч</span>
+                                    <span class="slot-toggle">▼</span>
+                                </button>
+                                <div class="slot-details" id="${uniqueId}" style="display: none;">
+                                    ${slots.map(slot => {
+                                        const time = slot.start_time.split(' ')[1]?.slice(0, 5) || '';
+                                        const statusBadge = slot.is_open ? '✅' : '🔴';
+                                        
+                                        return `
+                                            <div class="slot-item ${slot.is_open ? 'open' : 'closed'}">
+                                                <span class="slot-time">${time} ${statusBadge}</span>
+                                                <div class="slot-btns">
+                                                    ${slot.is_open ? `<button class="btn-slot-action" onclick="closeInterviewSlot(${slot.id})">Закрыть</button>` : ''}
+                                                    <button class="btn-slot-delete" onclick="deleteSlot(${slot.id})">🗑️</button>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error('❌ [ADMIN] Ошибка при загрузке слотов:', error);
+                const container = document.getElementById('adminSlotList');
+                container.innerHTML = '<p class="empty">Ошибка подключения</p>';
+            }
+            
+            // Загружаем календарь
+            console.log('🔄 [ADMIN] Вызов loadAdminCalendar()...');
+            await loadAdminCalendar();
+        }
+        
+        function toggleSlotGroup(id) {
+            const element = document.getElementById(id);
+            const isHidden = element.style.display === 'none';
+            element.style.display = isHidden ? 'block' : 'none';
+            
+            // Поворачиваем стрелку
+            const button = element.previousElementSibling;
+            const arrow = button.querySelector('.slot-toggle');
+            if (arrow) {
+                arrow.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-180deg)';
+            }
+        }
+
+        // Переменные состояния для админского календаря
+        let adminCurrentDate = new Date();
+        let adminCalendarData = {};
+
+        // Загрузить данные календаря для админа
+        async function loadAdminCalendar() {
+            console.log('📅 [ADMIN] Загрузка календаря...');
+            try {
+                const year = adminCurrentDate.getFullYear();
+                const month = adminCurrentDate.getMonth() + 1;
+                console.log(`📅 [ADMIN] Год: ${year}, Месяц: ${month}`);
+
+                const response = await fetch(`/api/calendar-availability?year=${year}&month=${month}`);
+                const data = await response.json();
+                console.log('📅 [ADMIN] Данные получены:', data);
+
+                if (!data.success) {
+                    console.error('❌ [ADMIN] Ошибка загрузки календаря:', data.message);
                     return;
                 }
 
-                container.innerHTML = data.slots.map(slot => {
-                    const timeLabel = slot.end_time ? `${slot.start_time} - ${slot.end_time}` : slot.start_time;
-                    return `
-                        <div class="slot-card ${slot.is_open ? 'open' : 'closed'}">
-                            <div class="slot-meta">
-                                <strong>${timeLabel}</strong>
-                                <span>${slot.is_open ? 'Открыто' : 'Закрыто'}</span>
-                            </div>
-                            <div class="slot-actions">
-                                ${slot.is_open ? `<button class="btn-close-slot" onclick="closeInterviewSlot(${slot.id})">Закрыть</button>` : ''}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                adminCalendarData = data.calendar || {};
+                console.log('📅 [ADMIN] Данные календаря:', adminCalendarData);
+                renderAdminCalendar();
             } catch (error) {
-                console.error('Ошибка при загрузке слотов:', error);
-                const container = document.getElementById('slotList');
-                container.innerHTML = '<p class="empty">Ошибка подключения</p>';
+                console.error('❌ [ADMIN] Ошибка при загрузке календаря админа:', error);
+            }
+        }
+
+        // Отрендерить админский календарь
+        function renderAdminCalendar() {
+            console.log('🎨 [ADMIN] Рендеринг календаря...');
+            const year = adminCurrentDate.getFullYear();
+            const month = adminCurrentDate.getMonth();
+
+            // Обновляем заголовок
+            const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+            const titleElement = document.getElementById('adminCalendarTitle');
+            if (titleElement) {
+                titleElement.textContent = `${monthNames[month]} ${year}`;
+                console.log(`📅 [ADMIN] Заголовок обновлен: ${monthNames[month]} ${year}`);
+            } else {
+                console.error('❌ [ADMIN] Элемент adminCalendarTitle не найден!');
+            }
+
+            // Получаем первый день месяца и количество дней
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+
+            // Создаем сетку календаря
+            const calendarGrid = document.getElementById('adminCalendarGrid');
+            if (!calendarGrid) {
+                console.error('❌ [ADMIN] Элемент adminCalendarGrid не найден!');
+                return;
+            }
+            
+            console.log(`🎨 [ADMIN] Дней в месяце: ${daysInMonth}, Начало недели: ${startingDayOfWeek}`);
+            calendarGrid.innerHTML = '';
+
+            // Добавляем пустые ячейки до первого дня месяца
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-day empty';
+                calendarGrid.appendChild(emptyCell);
+            }
+
+            // Добавляем дни месяца
+            let greenDays = 0;
+            let redDays = 0;
+            let grayDays = 0;
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                
+                const dayData = adminCalendarData[day] || { status: 'gray' };
+                if (dayData.status === 'green') {
+                    dayElement.classList.add('green');
+                    greenDays++;
+                } else if (dayData.status === 'red') {
+                    dayElement.classList.add('red');
+                    redDays++;
+                } else {
+                    dayElement.classList.add('gray');
+                    grayDays++;
+                }
+
+                dayElement.textContent = day;
+                dayElement.style.cursor = 'pointer';
+                dayElement.onclick = () => adminSelectDay(day, year, month + 1);
+                calendarGrid.appendChild(dayElement);
+            }
+            console.log(`✅ [ADMIN] Календарь отрисован! Зелёных дней: ${greenDays}, Красных: ${redDays}, Серых: ${grayDays}, Всего элементов в grid: ${calendarGrid.children.length}`);
+        }
+
+        // Выбрать день в админском календаре
+        // Хранилище выбранных часов
+        let adminSelectedHours = {};
+        let adminCurrentSelectedDate = null;
+
+        async function adminSelectDay(day, year, month) {
+            console.log(`📅 Выбран день: ${day}.${month}.${year}`);
+            const isoDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            adminCurrentSelectedDate = isoDate;
+            console.log(`📝 ISO Date: ${isoDate}`);
+            
+            // Подсвечиваем день в календаре
+            const dayCells = document.querySelectorAll('#adminCalendarGrid .calendar-day');
+            dayCells.forEach(cell => {
+                if (cell.textContent === String(day)) {
+                    cell.style.boxShadow = '0 0 10px rgba(99, 102, 241, 0.6)';
+                    cell.style.transform = 'scale(1.1)';
+                } else {
+                    cell.style.boxShadow = 'none';
+                    cell.style.transform = 'scale(1)';
+                }
+            });
+            
+            // Загружаем существующие слоты для этого дня
+            try {
+                const response = await fetch('/api/interview-slots?all=1');
+                const data = await response.json();
+                
+                if (!data.success || !data.slots) {
+                    console.error('Ошибка загрузки слотов');
+                    return;
+                }
+                
+                // Фильтруем слоты на выбранный день
+                const slotsForDay = data.slots.filter(slot => {
+                    let slotDate = slot.start_time.split(' ')[0];
+                    
+                    // Нормализируем дату slot'а в формат YYYY-MM-DD если нужно
+                    if (slotDate.includes('.')) {
+                        // Формат DD.MM.YYYY -> YYYY-MM-DD
+                        const [day, month, year] = slotDate.split('.');
+                        slotDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    }
+                    
+                    console.log(`✅ Сравниваем: slotDate=${slotDate}, isoDate=${isoDate}, match=${slotDate === isoDate}`);
+                    return slotDate === isoDate;
+                });
+                
+                console.log(`Слоты на ${isoDate}:`, slotsForDay);
+                
+                // Инициализируем статусы часов для этого дня
+                // Status: 'free' (серый), 'selected' (зеленый - открыт для бронирования), 'booked' (красный - занят)
+                adminSelectedHours[isoDate] = {};
+                
+                // Сначала все часы - свободные (серые)
+                for (let h = 12; h <= 18; h++) {
+                    adminSelectedHours[isoDate][h] = 'free';
+                }
+                
+                // Потом обновляем в зависимости от слотов
+                slotsForDay.forEach(slot => {
+                    const hour = parseInt(slot.start_time.split(' ')[1].split(':')[0]);
+                    if (slot.is_open) {
+                        adminSelectedHours[isoDate][hour] = 'selected'; // Зеленый - выбран админом
+                    } else {
+                        adminSelectedHours[isoDate][hour] = 'booked';   // Красный - забронирован
+                    }
+                });
+                
+                // Отображаем часы 12-18 в панели справа
+                const timesPanel = document.getElementById('adminTimesPanel');
+                let hoursHTML = '';
+                
+                for (let hour = 12; hour <= 18; hour++) {
+                    const status = adminSelectedHours[isoDate][hour];
+                    const timeStr = String(hour).padStart(2, '0') + ':00';
+                    
+                    let bgColor, opacity, cursor;
+                    if (status === 'selected') {
+                        bgColor = '#22c55e';  // Зеленый - открыт для бронирования
+                        opacity = '1';
+                        cursor = 'pointer';
+                    } else if (status === 'booked') {
+                        bgColor = '#ef4444';  // Красный - занят
+                        opacity = '1';
+                        cursor = 'not-allowed';
+                    } else {
+                        bgColor = '#6b7280';  // Серый - не выбран
+                        opacity = '0.7';
+                        cursor = 'pointer';
+                    }
+                    
+                    hoursHTML += `
+                        <button class="admin-hour-btn" data-hour="${hour}" 
+                            onclick="adminToggleHour(${hour}, '${isoDate}')"
+                            style="
+                                background: linear-gradient(135deg, ${bgColor} 0%, ${bgColor} 100%);
+                                opacity: ${opacity};
+                                cursor: ${cursor};
+                                padding: 12px;
+                                margin: 8px 0;
+                                border: none;
+                                border-radius: 6px;
+                                color: white;
+                                font-weight: 600;
+                                font-size: 1em;
+                                width: 100%;
+                                transition: all 0.3s;
+                            "
+                            ${status === 'booked' ? 'disabled' : ''}
+                        >${timeStr}</button>
+                    `;
+                }
+                
+                hoursHTML += `
+                    <button class="btn btn-primary" onclick="adminSaveHours()" 
+                        style="width: 100%; margin-top: 20px; padding: 12px;">
+                        💾 Сохранить
+                    </button>
+                `;
+                
+                timesPanel.innerHTML = hoursHTML;
+            } catch (error) {
+                console.error('Ошибка при загрузке времён:', error);
+            }
+        }
+
+        function adminToggleHour(hour, date) {
+            if (!adminSelectedHours[date]) {
+                adminSelectedHours[date] = {};
+            }
+            
+            const currentStatus = adminSelectedHours[date][hour];
+            
+            // Не можем переключать занятые часы (booked)
+            if (currentStatus === 'booked') {
+                console.log(`❌ Час ${hour} занят, невозможно изменить`);
+                return;
+            }
+            
+            // Переключаем между 'free' и 'selected'
+            adminSelectedHours[date][hour] = currentStatus === 'selected' ? 'free' : 'selected';
+            
+            // Обновляем визуально кнопку
+            const btn = document.querySelector(`.admin-hour-btn[data-hour="${hour}"]`);
+            if (btn) {
+                const newStatus = adminSelectedHours[date][hour];
+                let bgColor, opacity;
+                
+                if (newStatus === 'selected') {
+                    bgColor = '#22c55e';  // Зеленый
+                    opacity = '1';
+                } else {
+                    bgColor = '#6b7280';  // Серый
+                    opacity = '0.7';
+                }
+                
+                btn.style.background = `linear-gradient(135deg, ${bgColor} 0%, ${bgColor} 100%)`;
+                btn.style.opacity = opacity;
+            }
+        }
+
+        async function adminSaveHours() {
+            const date = adminCurrentSelectedDate;
+            if (!date || !adminSelectedHours[date]) {
+                alert('Выберите день');
+                return;
+            }
+            
+            const hours = Object.keys(adminSelectedHours[date])
+                .filter(hour => adminSelectedHours[date][hour] === 'selected')
+                .map(hour => parseInt(hour));
+            
+            if (hours.length === 0) {
+                alert('Выберите хотя бы один час');
+                return;
+            }
+            
+            console.log(`Сохраняю часы для ${date}:`, hours);
+            
+            try {
+                const response = await fetch('/api/admin/save-hours', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        date: date,
+                        hours: hours
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('✅ Часы сохранены!');
+                    loadAdminCalendar();
+                } else {
+                    alert('❌ Ошибка: ' + (data.message || 'Неизвестная ошибка'));
+                }
+            } catch (error) {
+                console.error('Ошибка сохранения:', error);
+                alert('Ошибка сохранения');
+            }
+        }
+
+        // Переключить месяц вперед
+        function adminNextMonth() {
+            adminCurrentDate.setMonth(adminCurrentDate.getMonth() + 1);
+            loadAdminCalendar();
+        }
+
+        // Переключить месяц назад
+        function adminPreviousMonth() {
+            adminCurrentDate.setMonth(adminCurrentDate.getMonth() - 1);
+            loadAdminCalendar();
+        }
+
+        async function adminCreateInterviewSlot() {
+            const startInput = document.getElementById('adminSlotStart');
+            const endInput = document.getElementById('adminSlotEnd');
+            const message = document.getElementById('adminSlotMessage');
+
+            const startTime = startInput.value;
+            const endTime = endInput.value;
+
+            if (!startTime) {
+                message.className = 'message error';
+                message.textContent = 'Укажите дату и время начала';
+                return;
+            }
+
+            if (!endTime) {
+                message.className = 'message error';
+                message.textContent = 'Укажите дату и время окончания';
+                return;
+            }
+
+            if (startTime >= endTime) {
+                message.className = 'message error';
+                message.textContent = 'Время начала должно быть раньше времени окончания';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/interview-slots', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        start_time: startTime,
+                        end_time: endTime
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    message.className = 'message success';
+                    message.textContent = '✅ Слот добавлен';
+                    startInput.value = '';
+                    endInput.value = '';
+                    await loadInterviewSlotsAdmin();
+                } else {
+                    message.className = 'message error';
+                    message.textContent = '❌ ' + data.message;
+                }
+            } catch (error) {
+                console.error('Ошибка при добавлении слота:', error);
+                message.className = 'message error';
+                message.textContent = 'Ошибка подключения';
             }
         }
 
@@ -1103,12 +2115,51 @@
             }
         }
 
+        async function deleteSlot(slotId) {
+            if (!confirm('Удалить этот слот?')) {
+                return;
+            }
+
+            try {
+                // Пробуем POST метод
+                const response = await fetch(`/api/interview-slots/${slotId}/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const responseText = await response.text();
+                let data = null;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('Ошибка парсинга JSON:', parseError);
+                    alert(`Ошибка: сервер вернул не JSON (HTTP ${response.status})`);
+                    return;
+                }
+                
+                if (data.success) {
+                    console.log('✅ Слот удалён, перезагружаю календарь...');
+                    // Очищаем кэш календаря
+                    adminCalendarData = {};
+                    // Перезагружаем оба: слоты И календарь
+                    await loadInterviewSlotsAdmin();
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Ошибка при удалении слота:', error);
+                alert('Ошибка подключения');
+            }
+        }
+
         // Загружаем ответы если мы на этой вкладке при загрузке страницы
         if (document.getElementById('answers-tab').classList.contains('active')) {
+            console.log('🚀 Загрузка ответов при старте...');
             loadAnswers();
         }
 
         if (document.getElementById('interviews-tab').classList.contains('active')) {
+            console.log('🚀 Загрузка слотов и календаря при старте...');
             loadInterviewSlotsAdmin();
         }
 
