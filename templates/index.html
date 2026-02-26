@@ -445,13 +445,14 @@
             <!-- Правая колонка: Список и отчет -->
             <div class="right-column">
                 <div class="panel-tabs">
-                    <button class="panel-tab active" onclick="switchApplicantTab('applicants')">📋 Анкеты</button>
+                    <button class="panel-tab active" onclick="switchApplicantTab('operators')">👨‍💼 Операторы</button>
+                    <button class="panel-tab" onclick="switchApplicantTab('models')">👩‍🎬 Модели</button>
                     <button class="panel-tab" onclick="switchApplicantTab('slots')">🗓️ Свободные слоты</button>
                 </div>
 
-                <div id="applicants-tab" class="panel-content active">
+                <div id="operators-tab" class="panel-content active">
                     <div class="actions-bar">
-                        <h2>Список кандидатов <span id="applicantsCount">(0)</span></h2>
+                        <h2>Анкеты операторов <span id="operatorsCount">(0)</span></h2>
                         <div class="action-buttons">
                             <a href="/download-report" class="btn btn-success">⬇️ Скачать отчет (TXT)</a>
                             <button id="refreshBtn" class="btn btn-secondary">🔄 Обновить</button>
@@ -461,8 +462,21 @@
                         </div>
                     </div>
 
-                    <div id="applicantsList" class="applicants-list">
-                        <p class="loading">Загрузка кандидатов...</p>
+                    <div id="operatorsList" class="applicants-list">
+                        <p class="loading">Загрузка операторов...</p>
+                    </div>
+                </div>
+
+                <div id="models-tab" class="panel-content">
+                    <div class="actions-bar">
+                        <h2>Анкеты моделей <span id="modelsCount">(0)</span></h2>
+                        <div class="action-buttons">
+                            <button id="refreshModelsBtn" class="btn btn-secondary">🔄 Обновить</button>
+                        </div>
+                    </div>
+
+                    <div id="modelsList" class="applicants-list">
+                        <p class="loading">Загрузка моделей...</p>
                     </div>
                 </div>
 
@@ -574,6 +588,159 @@
 
                 interviewInput.value = formatted;
             });
+        }
+
+        // Загрузка списка операторов
+        function loadOperators() {
+            fetch('/api/applicants')
+                .then(response => response.json())
+                .then(applicants => {
+                    const container = document.getElementById('operatorsList');
+                    const countEl = document.getElementById('operatorsCount');
+                    if (countEl) {
+                        countEl.textContent = `(${applicants.length})`;
+                    }
+                    
+                    if (applicants.length === 0) {
+                        container.innerHTML = '<p class="empty">Нет добавленных операторов</p>';
+                        return;
+                    }
+                    
+                    container.innerHTML = applicants.map(app => {
+                        const canDelete = (window.CURRENT_USER.is_admin === true) || (app.owner_username && app.owner_username === window.CURRENT_USER.username);
+                        const isAdmin = window.CURRENT_USER.is_admin === true;
+                        
+                        let statusBadge = '';
+                        if (app.status === 'approved') {
+                            statusBadge = '<span style="background: #22c55e; color: white; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; font-weight: 600;">✅ Одобрена</span>';
+                        } else if (app.status === 'rejected') {
+                            statusBadge = '<span style="background: #ef4444; color: white; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; font-weight: 600;">❌ Отклонена</span>';
+                        } else {
+                            statusBadge = '<span style="background: #6366f1; color: white; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; font-weight: 600;">⏳ Ожидает</span>';
+                        }
+                        
+                        return `
+                        <div class="applicant-card">
+                            <div class="applicant-header">
+                                <div>
+                                    <h3>${app.full_name} ${statusBadge}</h3>
+                                    <small>Добавил: ${app.owner_username || '-'}</small>
+                                </div>
+                                ${canDelete ? `<button class="btn-delete" onclick="deleteApplicant(${app.id})" title="Удалить">✕</button>` : ''}
+                            </div>
+                            <p><strong>Возраст:</strong> ${app.date_of_birth || '-'}</p>
+                            <p><strong>Английский:</strong> ${app.english_level || '-'}</p>
+                            <p><strong>Процессор:</strong> ${app.cpu_model || '-'}</p>
+                            <p><strong>Видеокарта:</strong> ${app.gpu_model || '-'}</p>
+                            <p><strong>Интернет:</strong> ${app.internet_speed || '-'}</p>
+                            <p><strong>Опыт работы:</strong> ${app.work_experience || '-'}</p>
+                            <p><strong>Время собеседования:</strong> ${app.interview_time || '-'}</p>
+                            <p><strong>Телефон:</strong> ${app.phone}</p>
+                            <p><strong>Телега:</strong> ${app.telegram || '-'}</p>
+                            <p class="date">Добавлено: ${app.date_added}</p>
+                            ${isAdmin && app.status !== 'approved' && app.status !== 'rejected' ? `
+                                <div style="display: flex; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #2d2d3d;">
+                                    <button onclick="updateStatus(${app.id}, 'approved')" style="flex: 1; padding: 10px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">✅ Одобрить</button>
+                                    <button onclick="updateStatus(${app.id}, 'rejected')" style="flex: 1; padding: 10px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">❌ Отклонить</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                        `;
+                    }).join('');
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки операторов:', error);
+                    document.getElementById('operatorsList').innerHTML = '<p class="error">Ошибка загрузки</p>';
+                });
+        }
+
+        // Загрузка списка моделей
+        function loadModels() {
+            fetch('/api/model-operators')
+                .then(response => response.json())
+                .then(models => {
+                    const container = document.getElementById('modelsList');
+                    const countEl = document.getElementById('modelsCount');
+                    if (countEl) {
+                        countEl.textContent = `(${models.length})`;
+                    }
+                    
+                    if (models.length === 0) {
+                        container.innerHTML = '<p class="empty">Нет добавленных моделей</p>';
+                        return;
+                    }
+                    
+                    container.innerHTML = models.map(model => {
+                        const canDelete = (window.CURRENT_USER.is_admin === true) || (model.owner_username && model.owner_username === window.CURRENT_USER.username);
+                        const isAdmin = window.CURRENT_USER.is_admin === true;
+                        const photos = model.photos ? model.photos.split(',').filter(p => p) : [];
+                        
+                        let statusBadge = '';
+                        if (model.status === 'approved') {
+                            statusBadge = '<span style="background: #22c55e; color: white; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; font-weight: 600;">✅ Одобрена</span>';
+                        } else if (model.status === 'rejected') {
+                            statusBadge = '<span style="background: #ef4444; color: white; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; font-weight: 600;">❌ Отклонена</span>';
+                        } else {
+                            statusBadge = '<span style="background: #6366f1; color: white; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; font-weight: 600;">⏳ Ожидает</span>';
+                        }
+                        
+                        return `
+                        <div class="applicant-card">
+                            <div class="applicant-header">
+                                <div>
+                                    <h3>${model.full_name} ${statusBadge}</h3>
+                                    <small>Добавил: ${model.owner_username || '-'}</small>
+                                </div>
+                                ${canDelete ? `<button class="btn-delete" onclick="deleteModel(${model.id})" title="Удалить">✕</button>` : ''}
+                            </div>
+                            <p><strong>Город:</strong> ${model.city}</p>
+                            <p><strong>Телефон:</strong> ${model.phone}</p>
+                            <p><strong>Возраст:</strong> ${model.age || '-'}</p>
+                            <p><strong>Проживание:</strong> ${model.residence || '-'}</p>
+                            <p><strong>2 устройства:</strong> ${model.has_dual_devices || '-'}</p>
+                            <p><strong>Модель устройства:</strong> ${model.device_model || '-'}</p>
+                            <p><strong>Часы/дни в неделю:</strong> ${model.work_hours || '-'}</p>
+                            <p><strong>Наушники:</strong> ${model.has_headphones || '-'}</p>
+                            <p><strong>Телега:</strong> ${model.telegram || '-'}</p>
+                            <p class="date">Добавлено: ${model.date_added}</p>
+                            ${photos.length > 0 ? `
+                                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #2d2d3d;">
+                                    <strong>Фото:</strong>
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin-top: 8px;">
+                                        ${photos.map(photo => `<img src="${photo}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 6px; cursor: pointer;" onclick="openPhotoModal('${photo}')">`).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        `;
+                    }).join('');
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки моделей:', error);
+                    document.getElementById('modelsList').innerHTML = '<p class="error">Ошибка загрузки</p>';
+                });
+        }
+
+        // Открыть фото в модальном окне
+        function openPhotoModal(photoUrl) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 9999; cursor: pointer;';
+            modal.innerHTML = `<img src="${photoUrl}" style="max-width: 90%; max-height: 90%; border-radius: 8px;">`;
+            modal.onclick = () => modal.remove();
+            document.body.appendChild(modal);
+        }
+
+        // Удалить модель
+        async function deleteModel(id) {
+            if (confirm('Вы уверены, что хотите удалить эту анкету?')) {
+                try {
+                    // Пока просто перезагружаем, добавим нормальный эндпоинт позже
+                    alert('Функция удаления для моделей будет реализована');
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    alert('Ошибка при удалении анкеты');
+                }
+            }
         }
 
         // Загрузка списка кандидатов
@@ -938,6 +1105,12 @@
             if (tabName === 'slots') {
                 console.log('📅 Вызываю loadCalendar()');
                 loadCalendar();
+            } else if (tabName === 'operators') {
+                console.log('👨‍💼 Вызываю loadOperators()');
+                loadOperators();
+            } else if (tabName === 'models') {
+                console.log('👩‍🎬 Вызываю loadModels()');
+                loadModels();
             }
         }
 
@@ -961,6 +1134,9 @@
 
         // Обработка формы модели/оператора
         document.addEventListener('DOMContentLoaded', function() {
+            // Загрузить список операторов при загрузке страницы
+            loadOperators();
+            
             const modelForm = document.getElementById('modelForm');
             if (modelForm) {
                 modelForm.addEventListener('submit', async function(e) {
