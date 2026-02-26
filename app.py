@@ -59,6 +59,7 @@ class User(db.Model):
     display_name = db.Column(db.String(120))
     bio = db.Column(db.String(500))
     avatar_url = db.Column(db.String(500))
+    prefix = db.Column(db.String(50))  # Префикс/звание пользователя (Developer, Admin, etc.)
     is_admin = db.Column(db.Boolean, default=False)
     is_owner = db.Column(db.Boolean, default=False)  # Владелец - полный доступ
     is_guest = db.Column(db.Boolean, default=False)
