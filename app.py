@@ -377,6 +377,70 @@ def check_conflicting_closed_slots(slot_start, slot_end):
     
     return conflicting_slots
 
+# Функция для проверки дубликатов анкет
+def check_duplicate_applicants(phone, telegram, full_name):
+    """
+    Проверяет наличие дубликатов по телефону, телеграму или имени.
+    Возвращает список найденных похожих анкет с информацией о совпадении.
+    """
+    duplicates = []
+    
+    # Проверка по телефону (точное совпадение)
+    if phone:
+        phone_clean = phone.strip()
+        existing_by_phone = Applicant.query.filter_by(phone=phone_clean).all()
+        for app in existing_by_phone:
+            duplicates.append({
+                'id': app.id,
+                'full_name': app.full_name,
+                'phone': app.phone,
+                'telegram': app.telegram,
+                'date_added': app.date_added.strftime('%d.%m.%Y %H:%M'),
+                'match_type': 'телефон',
+                'status': app.status
+            })
+    
+    # Проверка по телеграму (точное совпадение, игнорируя @)
+    if telegram:
+        telegram_clean = telegram.strip().lstrip('@').lower()
+        if telegram_clean:
+            all_applicants = Applicant.query.all()
+            for app in all_applicants:
+                if app.telegram:
+                    app_tg_clean = app.telegram.strip().lstrip('@').lower()
+                    if app_tg_clean == telegram_clean:
+                        # Проверяем, не добавили ли уже эту анкету (по телефону)
+                        if not any(d['id'] == app.id for d in duplicates):
+                            duplicates.append({
+                                'id': app.id,
+                                'full_name': app.full_name,
+                                'phone': app.phone,
+                                'telegram': app.telegram,
+                                'date_added': app.date_added.strftime('%d.%m.%Y %H:%M'),
+                                'match_type': 'телеграм',
+                                'status': app.status
+                            })
+    
+    # Проверка по полному имени (точное совпадение)
+    if full_name:
+        name_clean = full_name.strip().lower()
+        all_applicants = Applicant.query.all()
+        for app in all_applicants:
+            if app.full_name and app.full_name.strip().lower() == name_clean:
+                # Проверяем, не добавили ли уже эту анкету
+                if not any(d['id'] == app.id for d in duplicates):
+                    duplicates.append({
+                        'id': app.id,
+                        'full_name': app.full_name,
+                        'phone': app.phone,
+                        'telegram': app.telegram,
+                        'date_added': app.date_added.strftime('%d.%m.%Y %H:%M'),
+                        'match_type': 'имя',
+                        'status': app.status
+                    })
+    
+    return duplicates
+
 @app.route('/api/add-applicant', methods=['POST'])
 def add_applicant():
     try:
@@ -455,6 +519,25 @@ def add_applicant():
                 conflict_times = ', '.join([f"{c['start']} - {c['end']}" for c in conflicting])
                 warning_message = f"⚠️ Внимание: между выбранным временем обнаружены занятые слоты: {conflict_times}"
 
+        # Проверка на дубликаты анкет
+        phone = data.get('phone', '').strip()
+        telegram = data.get('telegram', '').strip()
+        full_name = data.get('full_name', '').strip()
+        
+        duplicates = check_duplicate_applicants(phone, telegram, full_name)
+        duplicate_warning = None
+        
+        if duplicates:
+            # Формируем предупреждение о найденных дубликатах
+            dup_info = []
+            for dup in duplicates[:3]:  # Показываем максимум 3 первых совпадения
+                status_text = {'pending': 'на рассмотрении', 'approved': 'одобрена', 'rejected': 'отклонена'}.get(dup['status'], dup['status'])
+                dup_info.append(f"{dup['full_name']} (совпадение по: {dup['match_type']}, статус: {status_text}, добавлена: {dup['date_added']})")
+            
+            duplicate_warning = f"⚠️ ВНИМАНИЕ: Найдены похожие анкеты ({len(duplicates)} шт.): " + "; ".join(dup_info)
+            if len(duplicates) > 3:
+                duplicate_warning += f" и ещё {len(duplicates) - 3}..."
+
         new_applicant = Applicant(
             full_name=data.get('full_name', ''),
             date_of_birth=data.get('date_of_birth', ''),
@@ -473,8 +556,16 @@ def add_applicant():
         db.session.commit()
         
         response = {'success': True, 'message': 'Анкета успешно добавлена'}
+        
+        # Объединяем все предупреждения
+        warnings = []
+        if duplicate_warning:
+            warnings.append(duplicate_warning)
         if warning_message:
-            response['warning'] = warning_message
+            warnings.append(warning_message)
+        
+        if warnings:
+            response['warning'] = '\n'.join(warnings)
         
         return jsonify(response), 201
     except Exception as e:
