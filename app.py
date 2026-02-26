@@ -1553,6 +1553,31 @@ def update_applicant_status(applicant_id):
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
+@app.route('/api/model-operator/<int:model_id>/status', methods=['POST'])
+def update_model_operator_status(model_id):
+    """Изменение статуса анкеты модели/оператора (одобрить/отклонить)"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        user = User.query.get(session['user_id'])
+        if not user.is_admin:
+            return jsonify({'success': False, 'message': 'Forbidden'}), 403
+        
+        model = ModelOperatorApplication.query.get_or_404(model_id)
+        data = request.json
+        status = data.get('status')
+        
+        if status not in ['pending', 'approved', 'rejected']:
+            return jsonify({'success': False, 'message': 'Некорректный статус'}), 400
+        
+        model.status = status
+        db.session.commit()
+        
+        status_text = {'pending': 'Ожидает', 'approved': 'Одобрена', 'rejected': 'Отклонена'}
+        return jsonify({'success': True, 'message': f'Статус изменен: {status_text[status]}', 'status': status}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
 @app.route('/api/delete-all', methods=['DELETE'])
 def delete_all_applicants():
     try:

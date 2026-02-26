@@ -711,6 +711,12 @@
                                     </div>
                                 </div>
                             ` : ''}
+                            ${isAdmin && model.status !== 'approved' && model.status !== 'rejected' ? `
+                                <div style="display: flex; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #2d2d3d;">
+                                    <button onclick="updateModelStatus(${model.id}, 'approved')" style="flex: 1; padding: 10px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">✅ Одобрить</button>
+                                    <button onclick="updateModelStatus(${model.id}, 'rejected')" style="flex: 1; padding: 10px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">❌ Отклонить</button>
+                                </div>
+                            ` : ''}
                         </div>
                         `;
                     }).join('');
@@ -909,8 +915,38 @@
             }
         }
 
+        async function updateModelStatus(id, status) {
+            const statusText = status === 'approved' ? 'одобрить' : 'отклонить';
+            if (confirm(`Вы уверены, что хотите ${statusText} эту анкету?`)) {
+                try {
+                    const response = await fetch(`/api/model-operator/${id}/status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ status: status })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        loadModels();
+                    } else {
+                        alert('Ошибка при обновлении статуса: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    alert('Ошибка при обновлении статуса');
+                }
+            }
+        }
+
         // Кнопка обновления
         document.getElementById('refreshBtn').addEventListener('click', loadApplicants);
+
+        const refreshModelsBtn = document.getElementById('refreshModelsBtn');
+        if (refreshModelsBtn) {
+            refreshModelsBtn.addEventListener('click', loadModels);
+        }
 
         // Кнопка очистки всех анкет
         const clearAllBtn = document.getElementById('clearAllBtn');
