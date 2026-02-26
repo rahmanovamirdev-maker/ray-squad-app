@@ -488,7 +488,6 @@
             {% if questions %}
             <div class="submit-section">
                 <button class="btn-submit" onclick="submitAllAnswers()" {% if current_user and not current_user.can_submit %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>✅ Отправить ответы</button>
-                <a href="/" class="btn-back">← Вернуться на главную</a>
             </div>
             {% endif %}
         </div>
