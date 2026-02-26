@@ -1528,6 +1528,22 @@ def delete_applicant(applicant_id):
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
+@app.route('/api/delete-model/<int:model_id>', methods=['DELETE'])
+def delete_model(model_id):
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        user = User.query.get(session['user_id'])
+        model = ModelOperatorApplication.query.get_or_404(model_id)
+        # allow admin or owner
+        if not user.is_admin and model.owner_username != user.username:
+            return jsonify({'success': False, 'message': 'Forbidden'}), 403
+        db.session.delete(model)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Анкета модели удалена'}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
 @app.route('/api/applicant/<int:applicant_id>/status', methods=['POST'])
 def update_applicant_status(applicant_id):
     """Изменение статуса анкеты (одобрить/отклонить)"""

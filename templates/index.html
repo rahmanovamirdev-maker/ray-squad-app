@@ -741,8 +741,16 @@
         async function deleteModel(id) {
             if (confirm('Вы уверены, что хотите удалить эту анкету?')) {
                 try {
-                    // Пока просто перезагружаем, добавим нормальный эндпоинт позже
-                    alert('Функция удаления для моделей будет реализована');
+                    const response = await fetch(`/api/delete-model/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        loadModels();
+                    } else {
+                        alert('Ошибка при удалении: ' + result.message);
+                    }
                 } catch (error) {
                     console.error('Ошибка:', error);
                     alert('Ошибка при удалении анкеты');
