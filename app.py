@@ -1633,6 +1633,48 @@ def download_report():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
+@app.route('/download-models-report')
+def download_models_report():
+    try:
+        # Получаем все анкеты моделей, кроме отклоненных (rejected)
+        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.status != 'rejected').order_by(ModelOperatorApplication.date_added.desc()).all()
+        
+        # Создание текстового отчета
+        report_content = "=" * 80 + "\n"
+        report_content += "ОТЧЕТ ПО МОДЕЛЯМ/ОПЕРАТОРАМ\n"
+        report_content += f"Дата создания: {moscow_now().strftime('%d.%m.%Y %H:%M')}\n"
+        report_content += f"Всего моделей: {len(models)}\n"
+        report_content += "=" * 80 + "\n\n"
+        
+        for idx, model in enumerate(models, 1):
+            report_content += f"Добавил: {model.owner_username}\n"
+            report_content += f"МОДЕЛЬ/ОПЕРАТОР #{idx}\n"
+            report_content += "-" * 80 + "\n"
+            report_content += f"Имя: {model.full_name}\n"
+            report_content += f"Город: {model.city}\n"
+            report_content += f"Телефон: {model.phone}\n"
+            report_content += f"Возраст: {model.age}\n"
+            report_content += f"Проживание: {model.residence}\n"
+            report_content += f"2 устройства: {model.has_dual_devices}\n"
+            report_content += f"Модель устройства: {model.device_model}\n"
+            report_content += f"Часы/дни в неделю: {model.work_hours}\n"
+            report_content += f"Наушники: {model.has_headphones}\n"
+            report_content += f"Телега: {model.telegram}\n"
+            report_content += f"Статус: {model.status}\n"
+            report_content += f"Дата добавления: {model.date_added.strftime('%d.%m.%Y %H:%M')}\n"
+            report_content += "\n"
+        
+        # Отправка файла
+        file_stream = io.BytesIO(report_content.encode('utf-8'))
+        return send_file(
+            file_stream,
+            mimetype='text/plain; charset=utf-8',
+            as_attachment=True,
+            download_name=f'models_report_{moscow_now().strftime("%d_%m_%Y_%H_%M")}.txt'
+        )
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
 if __name__ == '__main__':
     import os
     
