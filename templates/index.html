@@ -208,6 +208,67 @@
             color: #e0e0e0;
             margin-bottom: 15px;
         }
+
+        /* Стили для select и file input */
+        select, input[type="file"] {
+            background: #252535;
+            border: 1px solid #3d3d4d;
+            color: #e0e0e0;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 1em;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        select:focus, input[type="file"]:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        input[type="file"] {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: #6366f1;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            background: #4f46e5;
+        }
+
+        .form-type-btn {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #3d3d4d;
+            background: #2a2a3a;
+            color: #b0b0b0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .form-type-btn.active {
+            background: #6366f1;
+            border-color: #6366f1;
+            color: white;
+        }
+
+        .form-type-btn:hover {
+            border-color: #6366f1;
+            color: #6366f1;
+        }
     </style>
 </head>
 <body>
@@ -241,7 +302,15 @@
             <div class="left-column">
                 <section class="form-section">
                     <h2>Добавить новую анкету</h2>
-                    <form id="applicantForm">
+                    
+                    <!-- Выбор типа анкеты -->
+                    <div class="form-group" style="margin-bottom: 20px; display: flex; gap: 10px;">
+                        <button type="button" class="btn btn-secondary form-type-btn active" data-type="worker" onclick="switchFormType('worker')" style="flex: 1;">👨‍💼 Кандидата на работу</button>
+                        <button type="button" class="btn btn-secondary form-type-btn" data-type="model" onclick="switchFormType('model')" style="flex: 1;">👩‍🎬 Модель/Оператор</button>
+                    </div>
+                    
+                    <!-- Форма для кандидата на работу -->
+                    <form id="applicantForm" class="form-worker" style="display: block;">
                         <div class="form-group">
                             <label for="full_name">Имя *</label>
                             <input type="text" id="full_name" name="full_name" placeholder="Ваше имя" required>
@@ -295,6 +364,80 @@
 
                         <button type="submit" class="btn btn-primary">✅ Добавить анкету</button>
                         <div id="formMessage" class="message"></div>
+                    </form>
+                    
+                    <!-- Форма для модели/оператора -->
+                    <form id="modelForm" class="form-model" style="display: none;" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="model_full_name">Имя *</label>
+                            <input type="text" id="model_full_name" name="full_name" placeholder="Ваше имя" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="model_city">Город *</label>
+                            <input type="text" id="model_city" name="city" placeholder="Москва, Санкт-Петербург" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="model_phone">Номер телефона *</label>
+                            <input type="tel" id="model_phone" name="phone" placeholder="+7 (XXX) XXX-XX-XX" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="model_age">Возраст</label>
+                            <input type="text" id="model_age" name="age" placeholder="25 лет">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="model_residence">Проживание</label>
+                            <select id="model_residence" name="residence">
+                                <option value="">-- Выберите --</option>
+                                <option value="одна">Одна</option>
+                                <option value="не одна">Не одна</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="model_dual_devices">Есть 2 мобильных телефона или комп + телефон?</label>
+                            <select id="model_dual_devices" name="has_dual_devices">
+                                <option value="">-- Выберите --</option>
+                                <option value="да">Да</option>
+                                <option value="нет">Нет</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="model_device_model">Модель устройства</label>
+                            <input type="text" id="model_device_model" name="device_model" placeholder="iPhone 14 Pro, Samsung Galaxy S23">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="model_work_hours">Сколько часов и дней в неделю готова уделять работе?</label>
+                            <textarea id="model_work_hours" name="work_hours" placeholder="Например: 4-6 часов в день, 5-6 дней в неделю" rows="2"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="model_headphones">Есть наушники?</label>
+                            <select id="model_headphones" name="has_headphones">
+                                <option value="">-- Выберите --</option>
+                                <option value="да">Да</option>
+                                <option value="нет">Нет</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="model_telegram">Телеграм для связи</label>
+                            <input type="text" id="model_telegram" name="telegram" placeholder="@username">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="model_photos">Фото (в полный рост приветствуется)</label>
+                            <input type="file" id="model_photos" name="photos" multiple accept="image/*">
+                            <small class="form-hint">Загрузите несколько фото, предпочтительно в полный рост</small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">✅ Добавить анкету</button>
+                        <div id="modelFormMessage" class="message"></div>
                     </form>
                 </section>
             </div>
@@ -797,6 +940,59 @@
                 loadCalendar();
             }
         }
+
+        // Переключение типа формы (кандидат на работу / модель-оператор)
+        function switchFormType(type) {
+            const workerForm = document.getElementById('applicantForm');
+            const modelForm = document.getElementById('modelForm');
+            const buttons = document.querySelectorAll('.form-type-btn');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-type="${type}"]`).classList.add('active');
+            
+            if (type === 'worker') {
+                workerForm.style.display = 'block';
+                modelForm.style.display = 'none';
+            } else {
+                workerForm.style.display = 'none';
+                modelForm.style.display = 'block';
+            }
+        }
+
+        // Обработка формы модели/оператора
+        document.addEventListener('DOMContentLoaded', function() {
+            const modelForm = document.getElementById('modelForm');
+            if (modelForm) {
+                modelForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(this);
+                    const messageDiv = document.getElementById('modelFormMessage');
+                    
+                    try {
+                        const response = await fetch('/api/add-model-operator', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            messageDiv.innerHTML = `<div class="success-message">✅ ${result.message}</div>`;
+                            modelForm.reset();
+                            
+                            // Перезагрузить список
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            messageDiv.innerHTML = `<div class="error-message">❌ ${result.message}</div>`;
+                        }
+                    } catch (error) {
+                        console.error('Ошибка:', error);
+                        messageDiv.innerHTML = `<div class="error-message">❌ Ошибка при отправке: ${error.message}</div>`;
+                    }
+                });
+            }
+        });
 
     </script>
 </body>

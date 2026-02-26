@@ -158,6 +158,43 @@ class InterviewSlot(db.Model):
             'is_open': self.is_open
         }
 
+# Модель для анкет моделей/операторов
+class ModelOperatorApplication(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    full_name = db.Column(db.String(100), nullable=False)
+    city = db.Column(db.String(100), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    age = db.Column(db.String(50))
+    residence = db.Column(db.String(50))  # "одна" или "не одна"
+    has_dual_devices = db.Column(db.String(50))  # "да" или "нет" - 2 мобильных или комп+телефон
+    device_model = db.Column(db.String(200))
+    work_hours = db.Column(db.String(200))  # Сколько часов и дней в неделю
+    has_headphones = db.Column(db.String(50))  # "да" или "нет"
+    telegram = db.Column(db.String(100))
+    photos = db.Column(db.Text)  # Сохраняем пути к фото через запятую или JSON
+    owner_username = db.Column(db.String(100))
+    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    date_added = db.Column(db.DateTime, default=moscow_now)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'full_name': self.full_name,
+            'city': self.city,
+            'phone': self.phone,
+            'age': self.age,
+            'residence': self.residence,
+            'has_dual_devices': self.has_dual_devices,
+            'device_model': self.device_model,
+            'work_hours': self.work_hours,
+            'has_headphones': self.has_headphones,
+            'telegram': self.telegram,
+            'photos': self.photos,
+            'owner_username': self.owner_username,
+            'status': self.status,
+            'date_added': self.date_added.strftime('%d.%m.%Y %H:%M')
+        }
+
 # Модель для истории синхронизации статусов с внешним API
 
 
@@ -568,6 +605,62 @@ def add_applicant():
             response['warning'] = '\n'.join(warnings)
         
         return jsonify(response), 201
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+@app.route('/api/add-model-operator', methods=['POST'])
+def add_model_operator():
+    """Добавляет анкету модели/оператора"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        user = User.query.get(session['user_id'])
+        data = request.form  # Используем form для получения данных и файлов
+        files = request.files  # Для загрузки фото
+        
+        # Валидация обязательных полей
+        required_fields = ['full_name', 'city', 'phone']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'success': False, 'message': f'Поле "{field}" обязательно'}), 400
+        
+        # Сохраняем фото
+        photos = []
+        photo_dir = os.path.join('static', 'model_photos')
+        os.makedirs(photo_dir, exist_ok=True)
+        
+        if 'photos' in files:
+            photo_files = files.getlist('photos')
+            for idx, photo_file in enumerate(photo_files):
+                if photo_file and photo_file.filename:
+                    # Генерируем уникальное имя файла
+                    timestamp = moscow_now().strftime('%Y%m%d_%H%M%S')
+                    filename = f'model_{user.id}_{timestamp}_{idx}_{photo_file.filename}'
+                    filepath = os.path.join(photo_dir, filename)
+                    photo_file.save(filepath)
+                    photos.append(f'/static/model_photos/{filename}')
+        
+        # Создаём анкету
+        new_model = ModelOperatorApplication(
+            full_name=data.get('full_name', ''),
+            city=data.get('city', ''),
+            phone=data.get('phone', ''),
+            age=data.get('age', ''),
+            residence=data.get('residence', ''),
+            has_dual_devices=data.get('has_dual_devices', ''),
+            device_model=data.get('device_model', ''),
+            work_hours=data.get('work_hours', ''),
+            has_headphones=data.get('has_headphones', ''),
+            telegram=data.get('telegram', ''),
+            photos=','.join(photos) if photos else '',
+            owner_username=user.username if user else None
+        )
+        
+        db.session.add(new_model)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Анкета модели/оператора успешно добавлена'}), 201
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
