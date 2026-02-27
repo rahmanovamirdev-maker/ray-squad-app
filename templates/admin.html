@@ -166,45 +166,6 @@
             word-wrap: break-word;
         }
 
-        /* Стили для гостевого аккаунта чекбокса */
-        .guest-checkbox-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: rgba(99, 102, 241, 0.1);
-            padding: 16px;
-            border-radius: 8px;
-            border: 2px solid rgba(99, 102, 241, 0.2);
-            transition: all 0.3s;
-            margin-top: 10px;
-        }
-
-        .guest-checkbox-wrapper:hover {
-            border-color: #6366f1;
-            background: rgba(99, 102, 241, 0.15);
-        }
-
-        .guest-checkbox-wrapper input[type="checkbox"] {
-            width: 22px;
-            height: 22px;
-            cursor: pointer;
-            accent-color: #6366f1;
-        }
-
-        .guest-checkbox-wrapper label {
-            margin: 0;
-            cursor: pointer;
-            flex: 1;
-        }
-
-        .guest-checkbox-wrapper span {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            color: #e0e0e0;
-        }
-
         /* Теги типа аккаунта */
         .user-badge {
             display: inline-block;
@@ -213,12 +174,6 @@
             font-size: 0.85em;
             font-weight: 600;
             margin-left: 8px;
-        }
-
-        .user-badge.guest {
-            background: rgba(99, 102, 241, 0.2);
-            color: #6366f1;
-            border: 1px solid #6366f1;
         }
 
         .user-badge.worker {
@@ -1325,7 +1280,6 @@
             <button class="tab-btn {% if current_tab == 'users' %}active{% endif %}" onclick="switchTab('users')">👤 Создание аккаунта</button>
             <button class="tab-btn {% if current_tab == 'operators' %}active{% endif %}" onclick="switchTab('operators')">👨‍💼 Операторы</button>
             <button class="tab-btn {% if current_tab == 'models' %}active{% endif %}" onclick="switchTab('models')">👩‍🎬 Модели</button>
-            <button class="tab-btn {% if current_tab == 'answers' %}active{% endif %}" onclick="switchTab('answers')">📝 Ответы по отбору</button>
             <button class="tab-btn {% if current_tab == 'interviews' %}active{% endif %}" onclick="switchTab('interviews')">🗓️ Открытые собеседования</button>
         </div>
 
@@ -1333,54 +1287,76 @@
         <div id="users-tab" class="tab-content {% if current_tab == 'users' %}active{% endif %}">
             <div class="main-content">
                 <div class="left-column">
-                    <section class="form-section">
-                        <h2>Создать пользователя</h2>
+                    <section class="form-section" style="background: linear-gradient(135deg, rgba(45, 45, 61, 0.8) 0%, rgba(30, 30, 46, 0.9) 100%); border: 2px solid rgba(99, 102, 241, 0.3); box-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);">
+                        <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid rgba(99, 102, 241, 0.2);">
+                            <h2 style="color: #6366f1; font-size: 1.8em; margin: 0 0 8px 0; text-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);">👤 Создать пользователя</h2>
+                            <p style="color: #b0b0b0; margin: 0; font-size: 0.95em;">Добавление нового администратора или рабочего</p>
+                        </div>
                         {% with messages = get_flashed_messages(with_categories=true) %}
                           {% if messages %}
                             {% for category, msg in messages %}
-                              <div class="message {{ 'success' if category=='success' else 'error' }}">{{ msg }}</div>
+                              <div class="message {{ 'success' if category=='success' else 'error' }}" style="margin-bottom: 20px;">{{ msg }}</div>
                             {% endfor %}
                           {% endif %}
                         {% endwith %}
                         <form method="post" action="{{ url_for('admin_create_user') }}">
                             <div class="form-group">
-                                <label for="username">Логин</label>
-                                <input type="text" id="username" name="username" required>
+                                <label for="username" style="display: flex; align-items: center; gap: 8px; color: #e0e0e0; font-weight: 600; margin-bottom: 8px;">
+                                    <span style="font-size: 1.2em;">🔐</span> Логин
+                                </label>
+                                <input type="text" id="username" name="username" placeholder="Введите уникальный логин" required 
+                                    style="width: 100%; padding: 14px 16px; background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3a 100%); border: 2px solid #6366f1; border-radius: 10px; color: #e0e0e0; font-size: 1em; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);"
+                                    onfocus="this.style.boxShadow='0 6px 20px rgba(99, 102, 241, 0.3)'; this.style.borderColor='#818cf8';"
+                                    onblur="this.style.boxShadow='0 4px 12px rgba(99, 102, 241, 0.1)'; this.style.borderColor='#6366f1';">
                             </div>
                             <div class="form-group">
-                                <label for="password">Пароль</label>
-                                <input type="text" id="password" name="password" required>
+                                <label for="password" style="display: flex; align-items: center; gap: 8px; color: #e0e0e0; font-weight: 600; margin-bottom: 8px;">
+                                    <span style="font-size: 1.2em;">🔑</span> Пароль
+                                </label>
+                                <input type="text" id="password" name="password" placeholder="Автогенерируемый или введите свой" required
+                                    style="width: 100%; padding: 14px 16px; background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3a 100%); border: 2px solid #6366f1; border-radius: 10px; color: #e0e0e0; font-size: 1em; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);"
+                                    onfocus="this.style.boxShadow='0 6px 20px rgba(99, 102, 241, 0.3)'; this.style.borderColor='#818cf8';"
+                                    onblur="this.style.boxShadow='0 4px 12px rgba(99, 102, 241, 0.1)'; this.style.borderColor='#6366f1';">
                             </div>
                             <div class="form-group">
-                                <label>Тип аккаунта</label>
-                                <div class="guest-checkbox-wrapper">
-                                    <input type="checkbox" id="is_worker" name="is_worker">
-                                    <label for="is_worker">
-                                        <span>💼 Рабочий аккаунт с доступом к анкетам</span>
+                                <label style="display: flex; align-items: center; gap: 8px; color: #e0e0e0; font-weight: 600; margin-bottom: 12px;">
+                                    <span style="font-size: 1.2em;">👥</span> Тип аккаунта
+                                </label>
+                                <div style="padding: 16px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(79, 70, 229, 0.05) 100%); border-radius: 10px; border: 2px solid rgba(99, 102, 241, 0.2); transition: all 0.3s ease;">
+                                    <input type="checkbox" id="is_admin" name="is_admin" style="width: 20px; height: 20px; cursor: pointer; accent-color: #6366f1;">
+                                    <label for="is_admin" style="margin: 0; cursor: pointer; margin-left: 12px; display: inline-block;">
+                                        <span style="display: inline-flex; align-items: center; gap: 10px; font-weight: 600; color: #e0e0e0; font-size: 1em;">
+                                            👤 Администратор
+                                            <span style="font-size: 0.85em; color: #b0b0b0; font-weight: 400;">(полный доступ к панели)</span>
+                                        </span>
                                     </label>
                                 </div>
-                                <div class="guest-checkbox-wrapper" style="margin-top: 10px;">
-                                    <input type="checkbox" id="is_admin" name="is_admin">
-                                    <label for="is_admin">
-                                        <span>👤 Администратор (полный доступ к панели)</span>
-                                    </label>
-                                </div>
                             </div>
                             <div class="form-group">
-                                <label for="team">Команда</label>
-                                <select id="team" name="team" style="width: 100%; padding: 12px; background: #1e1e2e; border: 1px solid #2d2d3d; border-radius: 8px; color: #e0e0e0; font-size: 1em;">
-                                    <option value="">Без команды</option>
-                                    <option value="Delta">🔴 Delta</option>
-                                    <option value="Den">🔵 Den</option>
-                                    <option value="Amir">🟢 Amir</option>
-                                    <option value="404">🟡 404</option>
-                                    <option value="Bobik">🟣 Bobik</option>
-                                    <option value="Oir">🟠 Oir</option>
-                                    <option value="Gordon">⚫ Gordon</option>
-                                    <option value="Rey">💎 Rey</option>
+                                <label for="team" style="display: flex; align-items: center; gap: 8px; color: #e0e0e0; font-weight: 600; margin-bottom: 8px;">
+                                    <span style="font-size: 1.2em;">🎯</span> Команда
+                                </label>
+                                <select id="team" name="team" 
+                                    style="width: 100%; padding: 14px 16px; background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3a 100%); border: 2px solid #6366f1; border-radius: 10px; color: #e0e0e0; font-size: 1em; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1); cursor: pointer;"
+                                    onfocus="this.style.boxShadow='0 6px 20px rgba(99, 102, 241, 0.3)'; this.style.borderColor='#818cf8';"
+                                    onblur="this.style.boxShadow='0 4px 12px rgba(99, 102, 241, 0.1)'; this.style.borderColor='#6366f1';">
+                                    <option value="" style="background: #1e1e2e; color: #b0b0b0;">Без команды</option>
+                                    <option value="Delta" style="background: #1e1e2e; color: #e0e0e0;">🔴 Delta</option>
+                                    <option value="Den" style="background: #1e1e2e; color: #e0e0e0;">🔵 Den</option>
+                                    <option value="Amir" style="background: #1e1e2e; color: #e0e0e0;">🟢 Amir</option>
+                                    <option value="404" style="background: #1e1e2e; color: #e0e0e0;">🟡 404</option>
+                                    <option value="Bobik" style="background: #1e1e2e; color: #e0e0e0;">🟣 Bobik</option>
+                                    <option value="Oir" style="background: #1e1e2e; color: #e0e0e0;">🟠 Oir</option>
+                                    <option value="Gordon" style="background: #1e1e2e; color: #e0e0e0;">⚫ Gordon</option>
+                                    <option value="Rey" style="background: #1e1e2e; color: #e0e0e0;">💎 Rey</option>
                                 </select>
                             </div>
-                            <button type="submit" class="btn btn-primary">Создать</button>
+                            <button type="submit" class="btn btn-primary" 
+                                style="width: 100%; margin-top: 30px; padding: 16px 24px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border: none; border-radius: 10px; color: white; font-size: 1.05em; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3); text-transform: uppercase; letter-spacing: 0.5px;"
+                                onmouseover="this.style.boxShadow='0 10px 30px rgba(99, 102, 241, 0.5)'; this.style.transform='translateY(-2px)';"
+                                onmouseout="this.style.boxShadow='0 6px 20px rgba(99, 102, 241, 0.3)'; this.style.transform='translateY(0)';">
+                                ✨ Создать аккаунт
+                            </button>
                         </form>
                     </section>
                 </div>
@@ -1400,8 +1376,6 @@
                                             <span class="user-badge admin" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">💎 Владелец</span>
                                         {% elif u.is_admin %}
                                             <span class="user-badge admin">👤 Админ{% if u.team %} ({{ u.team }}){% endif %}</span>
-                                        {% elif u.is_guest %}
-                                            <span class="user-badge guest">🎓 Гостевой</span>
                                         {% else %}
                                             <span class="user-badge worker">💼 Рабочий{% if u.team %} #{{ u.team }}{% endif %}</span>
                                         {% endif %}
@@ -1413,9 +1387,6 @@
                                             {% if not u.is_owner or current_user.is_owner %}
                                             <button onclick="resetPassword({{ u.id }}, '{{ u.username }}')"><span class="action-icon">🔑</span>Сбросить пароль</button>
                                             <button onclick="openTeamModal({{ u.id }}, '{{ u.username }}', '{{ u.team or '' }}')"><span class="action-icon">👥</span>Изменить команду</button>
-                                            {% endif %}
-                                            {% if u.is_guest %}
-                                            <button id="toggleBtn{{ u.id }}" class="success" onclick="toggleSubmission({{ u.id }}, {{ u.id }})"><span class="action-icon">{% if u.can_submit %}✅{% else %}🔒{% endif %}</span>{% if u.can_submit %}Заблокировать{% else %}Разблокировать{% endif %}</button>
                                             {% endif %}
                                             {% if not u.is_owner or current_user.is_owner %}
                                             <button class="danger" onclick="if (confirm('Удалить пользователя?')) { document.getElementById('deleteForm{{ u.id }}').submit(); }"><span class="action-icon">✕</span>Удалить</button>
@@ -1475,20 +1446,6 @@
                 <p class="loading">Загрузка анкет моделей...</p>
             </div>
         </div>
-
-        <!-- Вкладка: Ответы по отбору -->
-        <div id="answers-tab" class="tab-content {% if current_tab == 'answers' %}active{% endif %}">
-            <div class="actions-bar" style="margin-bottom: 30px;">
-                <h2>Ответы гостей по отбору <span id="answersCount">(0)</span></h2>
-                <button class="btn btn-danger" onclick="deleteAllAnswers()" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);">
-                    🗑️ Очистить все ответы
-                </button>
-            </div>
-            <div id="answersContainer" class="applicants-list">
-                <p class="loading">Загрузка ответов...</p>
-            </div>
-        </div>
-
         <!-- Вкладка: Открытые собеседования -->
         <div id="interviews-tab" class="tab-content {% if current_tab == 'interviews' %}active{% endif %}">
             <div class="actions-bar">
@@ -1651,66 +1608,8 @@
             document.getElementById(tabName + '-tab').classList.add('active');
             event.target.classList.add('active');
 
-            // Загружаем ответы при переходе на вкладку ответов
-            if (tabName === 'answers') {
-                loadAnswers();
-            }
-
             if (tabName === 'interviews') {
                 loadInterviewSlotsAdmin();
-            }
-        }
-
-        async function loadAnswers() {
-            try {
-                const response = await fetch('/api/guest-answers');
-                const data = await response.json();
-                console.log('Ответы загружены:', { status: response.status, success: data.success, count: data.answers ? data.answers.length : 0 });
-                const container = document.getElementById('answersContainer');
-                const countEl = document.getElementById('answersCount');
-
-                if (response.ok && data.success && data.answers && data.answers.length > 0) {
-                    countEl.textContent = `(${data.answers.length})`;
-                    container.innerHTML = data.answers.map(answer => `
-                        <div class="answer-card ${answer.approved ? 'approved' : ''}">
-                            <div class="meta">
-                                <span><strong>От:</strong> ${answer.guest_name}</span>
-                                <span><strong>TG:</strong> ${answer.guest_tg || '-'}</span>
-                                <span><strong>Возраст:</strong> ${answer.guest_age || '-'}</span>
-                                <span><strong>Опыт в адалте:</strong> ${answer.guest_adult_exp || '-'}</span>
-                                <span><strong>Часы работы:</strong> ${answer.guest_work_hours || '-'}</span>
-                                <span><strong>Дата:</strong> ${answer.submitted_at}</span>
-                            </div>
-                            <h4>Вопрос:</h4>
-                            <div class="question">${answer.question_text}</div>
-                            <h4>Ответ:</h4>
-                            <div class="answer">${answer.answer_text}</div>
-                            <div class="answer-actions">
-                                <button class="btn-approve" onclick="openChat(${answer.user_id})">💬 Чат</button>
-                                ${answer.approved ? 
-                                    `<button class="btn-approve" disabled>✅ Одобрено</button>` :
-                                    `<button class="btn-approve" onclick="approveAnswer(${answer.id})">✅ Одобрить</button>`
-                                }
-                                <button class="btn-delete-answer" onclick="deleteAnswer(${answer.id})">🗑️ Удалить</button>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    countEl.textContent = '(0)';
-                    if (!response.ok) {
-                        container.innerHTML = '<p class="empty">Ошибка сервера: ' + response.status + '</p>';
-                    } else if (!data.success) {
-                        container.innerHTML = '<p class="empty">Ошибка API: ' + (data.message || 'неизвестная') + '</p>';
-                    } else {
-                        container.innerHTML = '<p class="empty">Нет поступивших ответов</p>';
-                    }
-                }
-            } catch (error) {
-                console.error('Ошибка при загрузке ответов:', error);
-                const container = document.getElementById('answersContainer');
-                const countEl = document.getElementById('answersCount');
-                countEl.textContent = '(!)';
-                container.innerHTML = '<p class="empty">Ошибка подключения: ' + error.message + '</p>';
             }
         }
 
