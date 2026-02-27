@@ -1,53 +1,59 @@
 """
-Исправление команды для анкет Rey Squad которые были созданы 
-от пользователей promisenothing и escobar
+Универсальный скрипт для исправления команды (team) всех анкет
+Проверяет для каждого пользователя что у всех его анкет установлена его команда
 """
 
-from app import app, db, Applicant, ModelOperatorApplication
+from app import app, db, User, Applicant, ModelOperatorApplication
 
-def fix_rey_squad_team():
+def fix_all_teams():
     with app.app_context():
-        print("🔧 Исправление команды для анкет Rey Squad...")
+        print("🔧 Исправление команды для всех анкет...\n")
         
         try:
-            rey_users = ['promisenothing', 'escobar']
+            # Получаем всех пользователей с командой
+            users_with_team = User.query.filter(User.team != None, User.team != '').all()
+            
+            if not users_with_team:
+                print("❌ Пользователей с командой не найдено")
+                return
+            
+            print(f"📋 Найдено пользователей с командой: {len(users_with_team)}\n")
+            
             total_fixed = 0
             
-            # Для операторов
-            print("\n📋 Обработка анкет операторов:")
-            amir_applicants = Applicant.query.filter(Applicant.owner_username.in_(rey_users)).all()
-            print(f"Найдено {len(amir_applicants)} анкет операторов от пользователей Rey")
+            for user in users_with_team:
+                print(f"👤 Пользователь: {user.username} (команда: {user.team})")
+                
+                # Для анкет операторов
+                applicants = Applicant.query.filter_by(owner_username=user.username).all()
+                if applicants:
+                    print(f"   Анкеты операторов: {len(applicants)}")
+                    for app_rec in applicants:
+                        if app_rec.team != user.team:
+                            print(f"     - {app_rec.full_name}: '{app_rec.team}' → '{user.team}'")
+                            app_rec.team = user.team
+                            total_fixed += 1
+                
+                # Для анкет моделей/операторов
+                models = ModelOperatorApplication.query.filter_by(owner_username=user.username).all()
+                if models:
+                    print(f"   Анкеты моделей: {len(models)}")
+                    for model_rec in models:
+                        if model_rec.team != user.team:
+                            print(f"     - {model_rec.full_name}: '{model_rec.team}' → '{user.team}'")
+                            model_rec.team = user.team
+                            total_fixed += 1
+                
+                if not applicants and not models:
+                    print(f"   ℹ️  Анкет от этого пользователя не найдено")
+                
+                print()
             
-            for app_rec in amir_applicants:
-                print(f"  Изменил: {app_rec.full_name} (ID: {app_rec.id})")
-                print(f"    Owner: {app_rec.owner_username}")
-                print(f"    Было: team='{app_rec.team}'")
-                app_rec.team = 'Rey'
-                print(f"    Стало: team='Rey'")
-                total_fixed += 1
-            
-            if amir_applicants:
+            if total_fixed > 0:
                 db.session.commit()
-                print(f"✓ Обновлено {len(amir_applicants)} анкет операторов")
-            
-            # Для моделей/операторов
-            print("\n🎥 Обработка анкет моделей:")
-            amir_models = ModelOperatorApplication.query.filter(ModelOperatorApplication.owner_username.in_(rey_users)).all()
-            print(f"Найдено {len(amir_models)} анкет моделей от пользователей Rey")
-            
-            for model_rec in amir_models:
-                print(f"  Изменил: {model_rec.full_name} (ID: {model_rec.id})")
-                print(f"    Owner: {model_rec.owner_username}")
-                print(f"    Было: team='{model_rec.team}'")
-                model_rec.team = 'Rey'
-                print(f"    Стало: team='Rey'")
-                total_fixed += 1
-            
-            if amir_models:
-                db.session.commit()
-                print(f"✓ Обновлено {len(amir_models)} анкет моделей")
-            
-            print(f"\n✅ Исправление завершено! Всего обновлено: {total_fixed} анкет")
+                print(f"✅ Исправление завершено! Обновлено {total_fixed} анкет")
+            else:
+                print(f"✅ Все команды уже установлены правильно! Зафиксировано 0 ошибок")
             
         except Exception as e:
             print(f"❌ Ошибка: {str(e)}")
@@ -55,4 +61,4 @@ def fix_rey_squad_team():
             raise
 
 if __name__ == '__main__':
-    fix_rey_squad_team()
+    fix_all_teams()
