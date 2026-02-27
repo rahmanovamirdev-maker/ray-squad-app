@@ -422,7 +422,7 @@
                     <button class="nav-link" onclick="openChat()">💬 Чат</button>
                     {% if not current_user.is_guest %}
                         <a href="{{ url_for('index') }}" class="nav-link">Главная</a>
-                        {# <a href="{{ url_for('manual') }}" class="nav-link">Мануал</a> #}
+                        <a href="{{ url_for('manual') }}" class="nav-link">Мануал</a>
                         <a href="{{ url_for('profile') }}" class="nav-link">Профиль</a>
                     {% endif %}
                     {% if current_user.is_admin %}

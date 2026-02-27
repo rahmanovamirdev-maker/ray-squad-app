@@ -284,7 +284,7 @@
                     {% if current_user %}
                         <span class="nav-user">Вход как: <strong>{{ current_user.username }}</strong></span>
                         <a href="{{ url_for('index') }}" class="nav-link active">Главная</a>
-                        {# <a href="{{ url_for('manual') }}" class="nav-link">Мануал</a> #}
+                        <a href="{{ url_for('manual') }}" class="nav-link">Мануал</a>
                         <a href="{{ url_for('profile') }}" class="nav-link">Профиль</a>
                         {% if current_user.is_admin %}
                             <a href="{{ url_for('admin_panel') }}" class="nav-link">Админка</a>

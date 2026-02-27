@@ -37,6 +37,7 @@ class Applicant(db.Model):
     date_added = db.Column(db.DateTime, default=moscow_now)
     owner_username = db.Column(db.String(100))
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    team = db.Column(db.String(50))  # Команда (Team 1 - Team 8)
 
     def to_dict(self):
         return {
@@ -53,7 +54,8 @@ class Applicant(db.Model):
             'telegram': self.telegram,
             'date_added': self.date_added.strftime('%d.%m.%Y %H:%M'),
             'owner_username': self.owner_username,
-            'status': self.status
+            'status': self.status,
+            'team': self.team
         }
 
 # Модель пользователей
@@ -73,6 +75,7 @@ class User(db.Model):
     earned_amount = db.Column(db.Float, default=0.0)  # Заработанная сумма
     created_at = db.Column(db.DateTime, default=moscow_now)
     last_login_at = db.Column(db.DateTime)
+    team = db.Column(db.String(50))  # Команда (Team 1 - Team 8)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
@@ -176,6 +179,7 @@ class ModelOperatorApplication(db.Model):
     owner_username = db.Column(db.String(100))
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
     date_added = db.Column(db.DateTime, default=moscow_now)
+    team = db.Column(db.String(50))  # Команда (Team 1 - Team 8)
 
     def to_dict(self):
         return {
@@ -193,7 +197,8 @@ class ModelOperatorApplication(db.Model):
             'photos': self.photos,
             'owner_username': self.owner_username,
             'status': self.status,
-            'date_added': self.date_added.strftime('%d.%m.%Y %H:%M')
+            'date_added': self.date_added.strftime('%d.%m.%Y %H:%M'),
+            'team': self.team
         }
 
 # Модель для истории синхронизации статусов с внешним API
@@ -250,6 +255,25 @@ with app.app_context():
                 db.session.execute(text("ALTER TABLE user ADD COLUMN can_submit BOOLEAN DEFAULT 1"))
                 db.session.commit()
                 print("[MIGRATION] Столбец can_submit добавлен успешно")
+            if 'team' not in cols:
+                print("[MIGRATION] Добавляю столбец team в таблицу user...")
+                db.session.execute(text("ALTER TABLE user ADD COLUMN team VARCHAR(50)"))
+                db.session.commit()
+                print("[MIGRATION] Столбец team добавлен успешно")
+        if 'applicant' in insp.get_table_names():
+            cols = [c['name'] for c in insp.get_columns('applicant')]
+            if 'team' not in cols:
+                print("[MIGRATION] Добавляю столбец team в таблицу applicant...")
+                db.session.execute(text("ALTER TABLE applicant ADD COLUMN team VARCHAR(50)"))
+                db.session.commit()
+                print("[MIGRATION] Столбец team добавлен успешно")
+        if 'model_operator_application' in insp.get_table_names():
+            cols = [c['name'] for c in insp.get_columns('model_operator_application')]
+            if 'team' not in cols:
+                print("[MIGRATION] Добавляю столбец team в таблицу model_operator_application...")
+                db.session.execute(text("ALTER TABLE model_operator_application ADD COLUMN team VARCHAR(50)"))
+                db.session.commit()
+                print("[MIGRATION] Столбец team добавлен успешно")
         if 'guest_answer' in insp.get_table_names():
             cols = [c['name'] for c in insp.get_columns('guest_answer')]
             if 'user_id' not in cols:
@@ -689,10 +713,24 @@ def get_applicants():
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
-    if user.is_admin:
+    
+    # Owner и Developer видят все анкеты
+    if user.is_owner or (user.prefix and user.prefix == 'Developer'):
         applicants = Applicant.query.order_by(Applicant.date_added.desc()).all()
+    # Обычные админы видят только анкеты своей команды
+    elif user.is_admin and user.team:
+        applicants = Applicant.query.filter_by(team=user.team).order_by(Applicant.date_added.desc()).all()
+        # Автоматически привязываем анкеты без команды к команде текущего админа
+        for applicant in Applicant.query.filter_by(team=None).all():
+            applicant.team = user.team
+        db.session.commit()
+    # Админы без команды видят все анкеты (для обратной совместимости)
+    elif user.is_admin:
+        applicants = Applicant.query.order_by(Applicant.date_added.desc()).all()
+    # Обычные пользователи видят только свои анкеты
     else:
         applicants = Applicant.query.filter_by(owner_username=user.username).order_by(Applicant.date_added.desc()).all()
+    
     return jsonify([a.to_dict() for a in applicants])
 
 @app.route('/api/model-operators')
@@ -700,10 +738,24 @@ def get_model_operators():
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
-    if user.is_admin:
+    
+    # Owner и Developer видят все анкеты
+    if user.is_owner or (user.prefix and user.prefix == 'Developer'):
         models = ModelOperatorApplication.query.order_by(ModelOperatorApplication.date_added.desc()).all()
+    # Обычные админы видят только анкеты своей команды
+    elif user.is_admin and user.team:
+        models = ModelOperatorApplication.query.filter_by(team=user.team).order_by(ModelOperatorApplication.date_added.desc()).all()
+        # Автоматически привязываем анкеты без команды к команде текущего админа
+        for model in ModelOperatorApplication.query.filter_by(team=None).all():
+            model.team = user.team
+        db.session.commit()
+    # Админы без команды видят все анкеты (для обратной совместимости)
+    elif user.is_admin:
+        models = ModelOperatorApplication.query.order_by(ModelOperatorApplication.date_added.desc()).all()
+    # Обычные пользователи видят только свои анкеты
     else:
         models = ModelOperatorApplication.query.filter_by(owner_username=user.username).order_by(ModelOperatorApplication.date_added.desc()).all()
+    
     return jsonify([m.to_dict() for m in models])
 
 @app.route('/api/interview-slots')
@@ -1247,6 +1299,7 @@ def admin_create_user():
     password = request.form.get('password')
     is_worker = request.form.get('is_worker') == 'on'
     is_admin_role = request.form.get('is_admin') == 'on'
+    team = request.form.get('team')  # Получаем команду из формы
     
     # Если выбран рабочий аккаунт, то is_guest = False, иначе is_guest = True
     is_guest = not is_worker and not is_admin_role
@@ -1258,7 +1311,7 @@ def admin_create_user():
         flash('Пользователь с таким именем уже существует', 'error')
         return redirect(url_for('admin_panel'))
     
-    new_user = User(username=username, password_hash=generate_password_hash(password), is_admin=is_admin_role, is_guest=is_guest)
+    new_user = User(username=username, password_hash=generate_password_hash(password), is_admin=is_admin_role, is_guest=is_guest, team=team)
     db.session.add(new_user)
     db.session.commit()
     
@@ -1321,6 +1374,41 @@ def reset_user_password(user_id):
             'success': True, 
             'message': 'Пароль сброшен',
             'new_password': new_password,
+            'username': user.username
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+
+@app.route('/api/update-team/<int:user_id>', methods=['POST'])
+def update_user_team(user_id):
+    """Изменение команды пользователя"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    admin = User.query.get(session['user_id'])
+    if not admin or not admin.is_admin:
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+    
+    try:
+        user = User.query.get_or_404(user_id)
+        data = request.get_json()
+        new_team = data.get('team', '')
+        
+        # Валидация команды
+        valid_teams = ['Delta', 'Den', 'Amir', '404', 'Bobik', 'Oir', 'Gordon', 'Rey', '']
+        if new_team not in valid_teams:
+            return jsonify({'success': False, 'message': 'Неверная команда'}), 400
+        
+        # Обновляем команду
+        user.team = new_team if new_team else None
+        db.session.commit()
+        
+        print(f"[INFO] Команда пользователя {user.username} изменена на: {new_team or 'Без команды'}")
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Команда обновлена',
+            'team': new_team,
             'username': user.username
         }), 200
     except Exception as e:
