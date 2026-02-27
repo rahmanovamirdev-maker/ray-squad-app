@@ -269,6 +269,95 @@
             border-color: #6366f1;
             color: #6366f1;
         }
+
+        /* Модальное окно редактирования */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: #1e1e2e;
+            margin: 2% auto;
+            padding: 30px;
+            border: 1px solid #3d3d4d;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #3d3d4d;
+        }
+
+        .modal-header h2 {
+            color: #6366f1;
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        .close {
+            color: #b0b0b0;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #ef4444;
+            transform: rotate(90deg);
+        }
+
+        .btn-edit {
+            background: transparent;
+            border: none;
+            color: #6366f1;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px 10px;
+            transition: all 0.3s ease;
+            margin-right: 5px;
+        }
+
+        .btn-edit:hover {
+            color: #4f46e5;
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
@@ -535,6 +624,51 @@
         </div>
     </div>
 
+    <!-- Модальное окно для редактирования анкеты -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Редактировать анкету</h2>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <form id="editApplicantForm" onsubmit="submitEdit(event)">
+                <input type="hidden" id="edit_applicant_id">
+                
+                <label>Имя и Фамилия <span style="color: #ef4444;">*</span></label>
+                <input type="text" id="edit_full_name" required>
+
+                <label>Возраст и дата рождения</label>
+                <input type="text" id="edit_date_of_birth" placeholder="25 лет, 15.03.1999">
+
+                <label>Уровень английского</label>
+                <input type="text" id="edit_english_level" placeholder="B2, Upper-Intermediate">
+
+                <label>Процессор (CPU)</label>
+                <input type="text" id="edit_cpu_model" placeholder="Intel Core i7-11700K">
+
+                <label>Видеокарта (GPU)</label>
+                <input type="text" id="edit_gpu_model" placeholder="NVIDIA RTX 3060">
+
+                <label>Скорость интернета</label>
+                <input type="text" id="edit_internet_speed" placeholder="100 Мбит/с">
+
+                <label>Опыт работы</label>
+                <input type="text" id="edit_work_experience" placeholder="2 года удалённой работы">
+
+                <label>Удобное время для собеседования</label>
+                <input type="text" id="edit_interview_time" placeholder="С 14:00 до 18:00">
+
+                <label>Телефон <span style="color: #ef4444;">*</span></label>
+                <input type="tel" id="edit_phone" required>
+
+                <label>Телеграм</label>
+                <input type="text" id="edit_telegram" placeholder="@username">
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 20px;">💾 Сохранить изменения</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         function toggleHeaderNav() {
             const nav = document.getElementById('topNav');
@@ -627,7 +761,10 @@
                                     <h3>${app.full_name} ${statusBadge}</h3>
                                     <small>Добавил: ${app.owner_username || '-'}</small>
                                 </div>
-                                ${canDelete ? `<button class="btn-delete" onclick="deleteApplicant(${app.id})" title="Удалить">✕</button>` : ''}
+                                <div>
+                                    ${canDelete && app.status === 'pending' ? `<button class="btn-edit" onclick="openEditModal(${app.id})" title="Редактировать">✏️</button>` : ''}
+                                    ${canDelete ? `<button class="btn-delete" onclick="deleteApplicant(${app.id})" title="Удалить">✕</button>` : ''}
+                                </div>
                             </div>
                             <p><strong>Возраст:</strong> ${app.date_of_birth || '-'}</p>
                             <p><strong>Английский:</strong> ${app.english_level || '-'}</p>
@@ -946,6 +1083,91 @@
                     console.error('Ошибка:', error);
                     alert('Ошибка при обновлении статуса');
                 }
+            }
+        }
+
+        // Функции для редактирования анкеты
+        async function openEditModal(id) {
+            try {
+                const response = await fetch(`/api/applicant/${id}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const app = result.applicant;
+                    
+                    // Заполняем форму данными
+                    document.getElementById('edit_applicant_id').value = app.id;
+                    document.getElementById('edit_full_name').value = app.full_name || '';
+                    document.getElementById('edit_date_of_birth').value = app.date_of_birth || '';
+                    document.getElementById('edit_english_level').value = app.english_level || '';
+                    document.getElementById('edit_cpu_model').value = app.cpu_model || '';
+                    document.getElementById('edit_gpu_model').value = app.gpu_model || '';
+                    document.getElementById('edit_internet_speed').value = app.internet_speed || '';
+                    document.getElementById('edit_work_experience').value = app.work_experience || '';
+                    document.getElementById('edit_interview_time').value = app.interview_time || '';
+                    document.getElementById('edit_phone').value = app.phone || '';
+                    document.getElementById('edit_telegram').value = app.telegram || '';
+                    
+                    // Открываем модальное окно
+                    document.getElementById('editModal').style.display = 'block';
+                } else {
+                    alert('Ошибка при загрузке данных: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при загрузке данных анкеты');
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        async function submitEdit(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('edit_applicant_id').value;
+            const data = {
+                full_name: document.getElementById('edit_full_name').value,
+                date_of_birth: document.getElementById('edit_date_of_birth').value,
+                english_level: document.getElementById('edit_english_level').value,
+                cpu_model: document.getElementById('edit_cpu_model').value,
+                gpu_model: document.getElementById('edit_gpu_model').value,
+                internet_speed: document.getElementById('edit_internet_speed').value,
+                work_experience: document.getElementById('edit_work_experience').value,
+                interview_time: document.getElementById('edit_interview_time').value,
+                phone: document.getElementById('edit_phone').value,
+                telegram: document.getElementById('edit_telegram').value
+            };
+            
+            try {
+                const response = await fetch(`/api/applicant/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('✅ ' + result.message);
+                    closeEditModal();
+                    loadApplicants();
+                } else {
+                    alert('❌ Ошибка: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('❌ Ошибка при обновлении анкеты');
+            }
+        }
+
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) {
+                closeEditModal();
             }
         }
 

@@ -1657,6 +1657,73 @@ def update_applicant_status(applicant_id):
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
+@app.route('/api/applicant/<int:applicant_id>', methods=['GET'])
+def get_applicant(applicant_id):
+    """Получение данных анкеты для редактирования"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        applicant = Applicant.query.get_or_404(applicant_id)
+        user = User.query.get(session['user_id'])
+        
+        # Проверка прав: владелец или админ
+        if not (user.is_admin or applicant.owner_username == user.username):
+            return jsonify({'success': False, 'message': 'Forbidden'}), 403
+        
+        return jsonify({'success': True, 'applicant': applicant.to_dict()}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+@app.route('/api/applicant/<int:applicant_id>', methods=['PUT'])
+def update_applicant(applicant_id):
+    """Обновление данных анкеты (только для анкет в статусе pending)"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        applicant = Applicant.query.get_or_404(applicant_id)
+        user = User.query.get(session['user_id'])
+        
+        # Проверка прав: владелец или админ
+        if not (user.is_admin or applicant.owner_username == user.username):
+            return jsonify({'success': False, 'message': 'Forbidden'}), 403
+        
+        # Можно редактировать только анкеты в статусе pending
+        if applicant.status != 'pending':
+            return jsonify({'success': False, 'message': 'Можно редактировать только анкеты в статусе ожидания'}), 400
+        
+        data = request.json
+        
+        # Обновляем поля
+        if 'full_name' in data:
+            applicant.full_name = data['full_name']
+        if 'date_of_birth' in data:
+            applicant.date_of_birth = data['date_of_birth']
+        if 'english_level' in data:
+            applicant.english_level = data['english_level']
+        if 'cpu_model' in data:
+            applicant.cpu_model = data['cpu_model']
+        if 'gpu_model' in data:
+            applicant.gpu_model = data['gpu_model']
+        if 'internet_speed' in data:
+            applicant.internet_speed = data['internet_speed']
+        if 'work_experience' in data:
+            applicant.work_experience = data['work_experience']
+        if 'interview_time' in data:
+            applicant.interview_time = data['interview_time']
+        if 'phone' in data:
+            applicant.phone = data['phone']
+        if 'telegram' in data:
+            applicant.telegram = data['telegram']
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Анкета успешно обновлена', 'applicant': applicant.to_dict()}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 400
+
 @app.route('/api/model-operator/<int:model_id>/status', methods=['POST'])
 def update_model_operator_status(model_id):
     """Изменение статуса анкеты модели/оператора (одобрить/отклонить)"""
