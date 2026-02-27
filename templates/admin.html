@@ -2649,7 +2649,7 @@
                 container.innerHTML = applicants.map((app, idx) => `
                     <div class="applicant-card">
                         <div class="applicant-header">
-                            <h3>#${idx + 1} - ${app.full_name} ${app.team ? `<span style="font-size: 0.85em; color: #6366f1;">${getTeamEmoji(app.team)} ${app.team}</span>` : ''}</h3>
+                            <h3>#${idx + 1} - ${app.full_name} ${app.team ? `<span style="font-size: 0.85em; color: #6366f1;">${getTeamEmoji(app.team)} ${app.team}</span>` : '<span style="font-size: 0.85em; color: #999;">Без команды</span>'}</h3>
                             <span class="status-badge ${app.status}">${
                                 app.status === 'approved' ? '✅ Одобрено' :
                                 app.status === 'rejected' ? '❌ Отклонено' :
@@ -2657,7 +2657,7 @@
                             }</span>
                         </div>
                         <div class="applicant-details">
-                            <p><strong>Добавил:</strong> ${app.owner_username || '-'}</p>
+                            <p><strong>Добавил (аккаунт):</strong> ${app.owner_username || '-'}</p>
                             <p><strong>Телефон:</strong> ${app.phone}</p>
                             <p><strong>Английский:</strong> ${app.english_level || '-'}</p>
                             <p><strong>ПК:</strong> ${app.cpu_model || '-'}</p>
@@ -2694,7 +2694,7 @@
                 container.innerHTML = filtered.map((app, idx) => `
                     <div class="applicant-card">
                         <div class="applicant-header">
-                            <h3>#${idx + 1} - ${app.full_name} ${app.team ? `<span style="font-size: 0.85em; color: #6366f1;">${getTeamEmoji(app.team)} ${app.team}</span>` : ''}</h3>
+                            <h3>#${idx + 1} - ${app.full_name} ${app.team ? `<span style="font-size: 0.85em; color: #6366f1;">${getTeamEmoji(app.team)} ${app.team}</span>` : '<span style="font-size: 0.85em; color: #999;">Без команды</span>'}</h3>
                             <span class="status-badge ${app.status}">${
                                 app.status === 'approved' ? '✅ Одобрено' :
                                 app.status === 'rejected' ? '❌ Отклонено' :
@@ -2702,7 +2702,7 @@
                             }</span>
                         </div>
                         <div class="applicant-details">
-                            <p><strong>Добавил:</strong> ${app.owner_username || '-'}</p>
+                            <p><strong>Добавил (аккаунт):</strong> ${app.owner_username || '-'}</p>
                             <p><strong>Телефон:</strong> ${app.phone}</p>
                             <p><strong>Английский:</strong> ${app.english_level || '-'}</p>
                             <p><strong>ПК:</strong> ${app.cpu_model || '-'}</p>
