@@ -439,15 +439,25 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="guest_name">Имя *</label>
-                        <input type="text" id="guest_name" placeholder="Введите ваше имя" {% if current_user %}value="{{ current_user.username }}" readonly{% endif %} required>
+                        <input type="text" id="guest_name" placeholder="Введите ваше имя" {% if current_user and not current_user.can_submit %}disabled style="opacity: 0.6; cursor: not-allowed;"{% endif %} required>
                     </div>
                     <div class="form-group">
                         <label for="guest_tg">Telegram</label>
                         <input type="text" id="guest_tg" placeholder="@username" {% if current_user and not current_user.can_submit %}disabled style="opacity: 0.6; cursor: not-allowed;"{% endif %}>
                     </div>
                     <div class="form-group">
-                        <label for="guest_phone">Телефон</label>
-                        <input type="tel" id="guest_phone" placeholder="+7 (XXX) XXX-XX-XX" {% if current_user and not current_user.can_submit %}disabled style="opacity: 0.6; cursor: not-allowed;"{% endif %}>
+                        <label for="guest_age">Сколько полных лет?</label>
+                        <input type="text" id="guest_age" placeholder="Введите возраст" {% if current_user and not current_user.can_submit %}disabled style="opacity: 0.6; cursor: not-allowed;"{% endif %}>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="guest_adult_exp">Какой опыт в адалте</label>
+                        <textarea id="guest_adult_exp" placeholder="Опишите ваш опыт" style="min-height: 80px; padding: 15px; border: 2px solid #2d2d3d; border-radius: 5px; background: #2a2a3a; color: #e0e0e0; font-family: inherit; resize: vertical;" {% if current_user and not current_user.can_submit %}disabled style="opacity: 0.6; cursor: not-allowed;"{% endif %}></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="guest_work_hours">Сколько часов готовы уделять работе?</label>
+                        <input type="text" id="guest_work_hours" placeholder="Например: 4-6 часов в день" {% if current_user and not current_user.can_submit %}disabled style="opacity: 0.6; cursor: not-allowed;"{% endif %}>
                     </div>
                 </div>
             </div>
@@ -468,7 +478,7 @@
                 {% for question in questions %}
                 <div class="question-card">
                     <div class="question-text">
-                        <h4>Вопрос {{ loop.index }}</h4>
+                        <h4>{% if loop.index == 1 %}Задание{% else %}Вопрос {{ loop.index }}{% endif %}</h4>
                         <p>{{ question.question_text }}</p>
                     </div>
                     <div class="answer-input">
@@ -508,7 +518,9 @@
         async function submitAllAnswers() {
             const guestName = document.getElementById('guest_name').value.trim();
             const guestTg = document.getElementById('guest_tg').value.trim();
-            const guestPhone = document.getElementById('guest_phone').value.trim();
+            const guestAge = document.getElementById('guest_age').value.trim();
+            const guestAdultExp = document.getElementById('guest_adult_exp').value.trim();
+            const guestWorkHours = document.getElementById('guest_work_hours').value.trim();
             const messageDiv = document.getElementById('messageDiv');
             const submitBtn = document.querySelector('.btn-submit');
 
@@ -552,7 +564,9 @@
                     console.log('Отправляю ответ:', {
                         guest_name: guestName,
                         guest_tg: guestTg,
-                        guest_phone: guestPhone,
+                        guest_age: guestAge,
+                        guest_adult_exp: guestAdultExp,
+                        guest_work_hours: guestWorkHours,
                         question_id: item.questionId,
                         answer_text: item.answer
                     });
@@ -563,7 +577,9 @@
                         body: JSON.stringify({
                             guest_name: guestName,
                             guest_tg: guestTg,
-                            guest_phone: guestPhone,
+                            guest_age: guestAge,
+                            guest_adult_exp: guestAdultExp,
+                            guest_work_hours: guestWorkHours,
                             question_id: item.questionId,
                             answer_text: item.answer
                         })
@@ -604,6 +620,9 @@
                 } catch (err) {
                     console.error('Ошибка блокировки:', err);
                 }
+                
+                // Показываем всплывающее окно
+                alert('Ждите, скоро Администрация ответит Вам в чат');
                 
                 messageDiv.className = 'message success';
                 messageDiv.innerHTML = 'Успех! Отправлено ' + successCount + ' ответов. <button onclick="openChat()" style="margin-left: 10px; padding: 8px 15px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">💬 Открыть чат</button>';

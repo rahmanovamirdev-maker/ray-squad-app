@@ -100,7 +100,9 @@ class GuestAnswer(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     guest_name = db.Column(db.String(100), nullable=False)
     guest_tg = db.Column(db.String(100))
-    guest_phone = db.Column(db.String(20))
+    guest_age = db.Column(db.String(10))  # Сколько полных лет?
+    guest_adult_exp = db.Column(db.String(500))  # Какой опыт в адалте
+    guest_work_hours = db.Column(db.String(200))  # Сколько часов готовы уделять работе?
     question_id = db.Column(db.Integer, db.ForeignKey('selection_question.id'), nullable=False)
     answer_text = db.Column(db.String(5000), nullable=False)
     submitted_at = db.Column(db.DateTime, default=moscow_now)
@@ -113,7 +115,9 @@ class GuestAnswer(db.Model):
             'user_id': self.user_id,
             'guest_name': self.guest_name,
             'guest_tg': self.guest_tg,
-            'guest_phone': self.guest_phone,
+            'guest_age': self.guest_age,
+            'guest_adult_exp': self.guest_adult_exp,
+            'guest_work_hours': self.guest_work_hours,
             'question_id': self.question_id,
             'question_text': question.question_text if question else '',
             'answer_text': self.answer_text,
@@ -285,10 +289,26 @@ with app.app_context():
                 db.session.commit()
                 print("[MIGRATION] Столбец guest_tg добавлен успешно")
             if 'guest_phone' not in cols:
+                # Этот столбец депрецирован, но добавляем за совместимость
                 print("[MIGRATION] Добавляю столбец guest_phone в таблицу guest_answer...")
                 db.session.execute(text("ALTER TABLE guest_answer ADD COLUMN guest_phone VARCHAR(20)"))
                 db.session.commit()
                 print("[MIGRATION] Столбец guest_phone добавлен успешно")
+            if 'guest_age' not in cols:
+                print("[MIGRATION] Добавляю столбец guest_age в таблицу guest_answer...")
+                db.session.execute(text("ALTER TABLE guest_answer ADD COLUMN guest_age VARCHAR(10)"))
+                db.session.commit()
+                print("[MIGRATION] Столбец guest_age добавлен успешно")
+            if 'guest_adult_exp' not in cols:
+                print("[MIGRATION] Добавляю столбец guest_adult_exp в таблицу guest_answer...")
+                db.session.execute(text("ALTER TABLE guest_answer ADD COLUMN guest_adult_exp VARCHAR(500)"))
+                db.session.commit()
+                print("[MIGRATION] Столбец guest_adult_exp добавлен успешно")
+            if 'guest_work_hours' not in cols:
+                print("[MIGRATION] Добавляю столбец guest_work_hours в таблицу guest_answer...")
+                db.session.execute(text("ALTER TABLE guest_answer ADD COLUMN guest_work_hours VARCHAR(200)"))
+                db.session.commit()
+                print("[MIGRATION] Столбец guest_work_hours добавлен успешно")
             if 'approved' not in cols:
                 print("[MIGRATION] Добавляю столбец approved в таблицу guest_answer...")
                 db.session.execute(text("ALTER TABLE guest_answer ADD COLUMN approved BOOLEAN DEFAULT 0"))
@@ -376,7 +396,7 @@ with app.app_context():
         question_count = SelectionQuestion.query.count()
         if question_count == 0:
             # Добавляем первый вопрос
-            q1 = SelectionQuestion(question_text='Какие риски?', order=1)
+            q1 = SelectionQuestion(question_text='Представим такую ситуацию, я - ищу работу чаттером , повесил вакансию на доске , ваша задача - переманить меня на работу оператором : зп от 65к р , график 5/2 4/3 (смысл заклбчается в модерации стримов модели ноу-нюд формата , то есть без 18+) смены от 6 часов', order=1)
             db.session.add(q1)
             db.session.commit()
     except Exception as e:
@@ -1234,19 +1254,22 @@ def submit_guest_answer():
             user_id = session['user_id']
             print(f"[DEBUG] User ID из сессии: {user_id}")
         
-        print(f"[DEBUG] Создаю GuestAnswer с данными:")
+        print(f"[DEBUG] Сохраняю GuestAnswer с данными:")
         print(f"  - user_id: {user_id}")
         print(f"  - guest_name: {data.get('guest_name')}")
         print(f"  - guest_tg: {data.get('guest_tg')}")
-        print(f"  - guest_phone: {data.get('guest_phone')}")
+        print(f"  - guest_age: {data.get('guest_age')}")
+        print(f"  - guest_adult_exp: {data.get('guest_adult_exp')}")
+        print(f"  - guest_work_hours: {data.get('guest_work_hours')}")
         print(f"  - question_id: {data.get('question_id')}")
-        print(f"  - answer_text: {data.get('answer_text')}")
-        
+        print(f"  - answer_text: {data.get('answer_text')}")        
         answer = GuestAnswer(
             user_id=user_id,
             guest_name=data.get('guest_name', ''),
             guest_tg=data.get('guest_tg', ''),
-            guest_phone=data.get('guest_phone', ''),
+            guest_age=data.get('guest_age', ''),
+            guest_adult_exp=data.get('guest_adult_exp', ''),
+            guest_work_hours=data.get('guest_work_hours', ''),
             question_id=data.get('question_id'),
             answer_text=data.get('answer_text', '')
         )
