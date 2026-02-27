@@ -636,7 +636,8 @@ def add_applicant():
             interview_time=interview_time_value,
             phone=data.get('phone', ''),
             telegram=data.get('telegram', ''),
-            owner_username=user.username if user else None
+            owner_username=user.username if user else None,
+            team=user.team if user else None
         )
         
         db.session.add(new_applicant)
@@ -720,7 +721,8 @@ def add_model_operator():
             has_headphones=data.get('has_headphones', ''),
             telegram=data.get('telegram', ''),
             photos=','.join(photos) if photos else '',
-            owner_username=user.username if user else None
+            owner_username=user.username if user else None,
+            team=user.team if user else None
         )
         
         db.session.add(new_model)
