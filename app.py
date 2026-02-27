@@ -393,11 +393,16 @@ with app.app_context():
 
     # Ensure default questions exist
     try:
-        question_count = SelectionQuestion.query.count()
-        if question_count == 0:
-            # Добавляем первый вопрос
+        # Ищем первый вопрос с order=1
+        q1 = SelectionQuestion.query.filter_by(order=1).first()
+        if not q1:
+            # Создаём новый вопрос, если его нет
             q1 = SelectionQuestion(question_text='Представим такую ситуацию, я - ищу работу чаттером , повесил вакансию на доске , ваша задача - переманить меня на работу оператором : зп от 65к р , график 5/2 4/3 (смысл заклбчается в модерации стримов модели ноу-нюд формата , то есть без 18+) смены от 6 часов', order=1)
             db.session.add(q1)
+            db.session.commit()
+        else:
+            # Если вопрос существует, обновляем его текст на правильный
+            q1.question_text = 'Представим такую ситуацию, я - ищу работу чаттером , повесил вакансию на доске , ваша задача - переманить меня на работу оператором : зп от 65к р , график 5/2 4/3 (смысл заклбчается в модерации стримов модели ноу-нюд формата , то есть без 18+) смены от 6 часов'
             db.session.commit()
     except Exception as e:
         print(f"[DEFAULT QUESTION ERROR] {str(e)}")
