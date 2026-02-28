@@ -1607,7 +1607,7 @@
         const clearAllBtn = document.getElementById('clearAllBtn');
         if (clearAllBtn) {
             clearAllBtn.addEventListener('click', async () => {
-                if (confirm('⚠️ Внимание! Вы уверены, что хотите удалить все анкеты со статусом "Ожидает"? Анкеты со статусами "Одобрено" и "Отклонено" будут сохранены.')) {
+                if (confirm('⚠️ Внимание! Вы уверены, что хотите удалить все анкеты со статусами "Одобрено" и "Отклонено"? Анкеты со статусом "Ожидает" будут сохранены.')) {
                     try {
                         const response = await fetch('/api/delete-all', {
                             method: 'DELETE'
