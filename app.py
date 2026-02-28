@@ -139,6 +139,37 @@ class ModelOperatorApplication(db.Model):
             'team': self.team
         }
 
+# Модель для анкет Чаттеров
+class ChatApplication(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    full_name = db.Column(db.String(100), nullable=False)
+    age = db.Column(db.String(50), nullable=False)
+    geo = db.Column(db.String(100), nullable=False)  # Откуда документы
+    experience = db.Column(db.String(500))  # Опыт в адалте
+    offer_number = db.Column(db.String(50), nullable=False)  # Номер оффера (1, 2, 3)
+    phone = db.Column(db.String(20), nullable=False)
+    telegram = db.Column(db.String(100))
+    owner_username = db.Column(db.String(100))
+    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    date_added = db.Column(db.DateTime, default=moscow_now)
+    team = db.Column(db.String(50))  # Команда (Team 1 - Team 8)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'full_name': self.full_name,
+            'age': self.age,
+            'geo': self.geo,
+            'experience': self.experience,
+            'offer_number': self.offer_number,
+            'phone': self.phone,
+            'telegram': self.telegram,
+            'owner_username': self.owner_username,
+            'status': self.status,
+            'date_added': self.date_added.strftime('%d.%m.%Y %H:%M'),
+            'team': self.team
+        }
+
 # Модель для истории синхронизации статусов с внешним API
 
 
@@ -652,6 +683,45 @@ def add_model_operator():
         traceback.print_exc()
         return jsonify({'success': False, 'message': f'Ошибка: {str(e)}'}), 400
 
+@app.route('/api/add-chatter', methods=['POST'])
+def add_chatter():
+    """Добавляет анкету Чаттера"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        user = User.query.get(session['user_id'])
+        data = request.json
+        
+        # Валидация обязательных полей
+        required_fields = ['full_name', 'age', 'geo', 'offer_number', 'phone']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'success': False, 'message': f'Поле "{field}" обязательно'}), 400
+        
+        # Создаём анкету
+        new_chatter = ChatApplication(
+            full_name=data.get('full_name', ''),
+            age=data.get('age', ''),
+            geo=data.get('geo', ''),
+            experience=data.get('experience', ''),
+            offer_number=data.get('offer_number', ''),
+            phone=data.get('phone', ''),
+            telegram=data.get('telegram', ''),
+            owner_username=user.username if user else None,
+            team=user.team if user else None
+        )
+        
+        db.session.add(new_chatter)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Анкета Чаттера успешно добавлена'}), 201
+    except Exception as e:
+        print(f'[ERROR] Ошибка при добавлении анкеты Чаттера: {str(e)}')
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Ошибка: {str(e)}'}), 400
+
 @app.route('/api/applicants')
 def get_applicants():
     if 'user_id' not in session:
@@ -701,6 +771,31 @@ def get_model_operators():
         models = ModelOperatorApplication.query.filter_by(owner_username=user.username).order_by(ModelOperatorApplication.date_added.desc()).all()
     
     return jsonify([m.to_dict() for m in models])
+
+@app.route('/api/chatters')
+def get_chatters():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    user = User.query.get(session['user_id'])
+    
+    # Owner и Developer видят все анкеты
+    if user.is_owner or (user.prefix and user.prefix == 'Developer'):
+        chatters = ChatApplication.query.order_by(ChatApplication.date_added.desc()).all()
+    # Обычные админы видят только анкеты своей команды
+    elif user.is_admin and user.team:
+        chatters = ChatApplication.query.filter_by(team=user.team).order_by(ChatApplication.date_added.desc()).all()
+        # Автоматически привязываем анкеты без команды к команде текущего админа
+        for chatter in ChatApplication.query.filter_by(team=None).all():
+            chatter.team = user.team
+        db.session.commit()
+    # Админы без команды видят все анкеты (для обратной совместимости)
+    elif user.is_admin:
+        chatters = ChatApplication.query.order_by(ChatApplication.date_added.desc()).all()
+    # Обычные пользователи видят только свои анкеты
+    else:
+        chatters = ChatApplication.query.filter_by(owner_username=user.username).order_by(ChatApplication.date_added.desc()).all()
+    
+    return jsonify([c.to_dict() for c in chatters])
 
 @app.route('/api/interview-slots')
 def get_interview_slots():
@@ -1343,6 +1438,47 @@ def update_model_operator_status(model_id):
             return jsonify({'success': False, 'message': 'Некорректный статус'}), 400
         
         model.status = status
+        db.session.commit()
+        
+        status_text = {'pending': 'Ожидает', 'approved': 'Одобрена', 'rejected': 'Отклонена'}
+        return jsonify({'success': True, 'message': f'Статус изменен: {status_text[status]}', 'status': status}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+@app.route('/api/delete-chatter/<int:chatter_id>', methods=['DELETE'])
+def delete_chatter(chatter_id):
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        user = User.query.get(session['user_id'])
+        chatter = ChatApplication.query.get_or_404(chatter_id)
+        # allow admin or owner
+        if not user.is_admin and chatter.owner_username != user.username:
+            return jsonify({'success': False, 'message': 'Forbidden'}), 403
+        db.session.delete(chatter)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Анкета Чаттера удалена'}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+@app.route('/api/chatter/<int:chatter_id>/status', methods=['POST'])
+def update_chatter_status(chatter_id):
+    """Изменение статуса анкеты Чаттера (одобрить/отклонить)"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        user = User.query.get(session['user_id'])
+        if not user.is_admin:
+            return jsonify({'success': False, 'message': 'Forbidden'}), 403
+        
+        chatter = ChatApplication.query.get_or_404(chatter_id)
+        data = request.json
+        status = data.get('status')
+        
+        if status not in ['pending', 'approved', 'rejected']:
+            return jsonify({'success': False, 'message': 'Некорректный статус'}), 400
+        
+        chatter.status = status
         db.session.commit()
         
         status_text = {'pending': 'Ожидает', 'approved': 'Одобрена', 'rejected': 'Отклонена'}

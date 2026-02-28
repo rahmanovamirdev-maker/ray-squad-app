@@ -507,6 +507,7 @@
                     <div class="form-group" style="margin-bottom: 20px; display: flex; gap: 10px;">
                         <button type="button" class="btn btn-secondary form-type-btn active" data-type="worker" onclick="switchFormType('worker')" style="flex: 1;">👨‍💼 Оператор</button>
                         <button type="button" class="btn btn-secondary form-type-btn" data-type="model" onclick="switchFormType('model')" style="flex: 1;">👩‍🎬 Модель</button>
+                        <button type="button" class="btn btn-secondary form-type-btn" data-type="chatter" onclick="switchFormType('chatter')" style="flex: 1;">💬 Чаттер</button>
                     </div>
                     
                     <!-- Форма для кандидата на работу -->
@@ -639,6 +640,52 @@
                         <button type="submit" class="btn btn-primary">✅ Добавить анкету</button>
                         <div id="modelFormMessage" class="message"></div>
                     </form>
+
+                    <!-- Форма для Чаттера -->
+                    <form id="chatterForm" class="form-chatter" style="display: none;">
+                        <div class="form-group">
+                            <label for="chatter_full_name">Имя *</label>
+                            <input type="text" id="chatter_full_name" name="full_name" placeholder="Ваше имя" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="chatter_age">Возраст *</label>
+                            <input type="text" id="chatter_age" name="age" placeholder="Например, 25 лет" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="chatter_geo">Гео (Откуда документы) *</label>
+                            <input type="text" id="chatter_geo" name="geo" placeholder="Москва, РФ" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="chatter_experience">Опыт в адалте</label>
+                            <textarea id="chatter_experience" name="experience" placeholder="Опишите ваш опыт работы в взрослом контенте" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="chatter_offer_number">Номер оффера *</label>
+                            <select id="chatter_offer_number" name="offer_number" required>
+                                <option value="">-- Выберите --</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="chatter_phone">Номер телефона *</label>
+                            <input type="tel" id="chatter_phone" name="phone" placeholder="+7 (XXX) XXX-XX-XX" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="chatter_telegram">Телеграм</label>
+                            <input type="text" id="chatter_telegram" name="telegram" placeholder="@username">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">✅ Добавить анкету</button>
+                        <div id="chatterFormMessage" class="message"></div>
+                    </form>
                 </section>
             </div>
 
@@ -647,6 +694,7 @@
                 <div class="panel-tabs">
                     <button class="panel-tab active" onclick="switchApplicantTab('operators')">👨‍💼 Операторы</button>
                     <button class="panel-tab" onclick="switchApplicantTab('models')">👩‍🎬 Модели</button>
+                    <button class="panel-tab" onclick="switchApplicantTab('chatters')">💬 Чаттеры</button>
                     <button class="panel-tab" onclick="switchApplicantTab('slots')">🗓️ Свободные слоты</button>
                 </div>
 
@@ -678,6 +726,19 @@
 
                     <div id="modelsList" class="applicants-list">
                         <p class="loading">Загрузка моделей...</p>
+                    </div>
+                </div>
+
+                <div id="chatters-tab" class="panel-content">
+                    <div class="actions-bar">
+                        <h2>Анкеты Чаттеров <span id="chattersCount">(0)</span></h2>
+                        <div class="action-buttons">
+                            <button id="refreshChattersBtn" class="btn btn-secondary">🔄 Обновить</button>
+                        </div>
+                    </div>
+
+                    <div id="chattersList" class="applicants-list">
+                        <p class="loading">Загрузка Чаттеров...</p>
                     </div>
                 </div>
 
@@ -1005,6 +1066,67 @@
                 });
         }
 
+        // Загрузка списка Чаттеров
+        function loadChatters() {
+            fetch('/api/chatters')
+                .then(response => response.json())
+                .then(chatters => {
+                    const container = document.getElementById('chattersList');
+                    const countEl = document.getElementById('chattersCount');
+                    if (countEl) {
+                        countEl.textContent = `(${chatters.length})`;
+                    }
+                    
+                    if (chatters.length === 0) {
+                        container.innerHTML = '<p class="empty">Нет добавленных Чаттеров</p>';
+                        return;
+                    }
+                    
+                    container.innerHTML = chatters.map(chatter => {
+                        const canDelete = (window.CURRENT_USER.is_admin === true) || (chatter.owner_username && chatter.owner_username === window.CURRENT_USER.username);
+                        const isAdmin = window.CURRENT_USER.is_admin === true;
+                        
+                        let statusBadge = '';
+                        if (chatter.status === 'approved') {
+                            statusBadge = '<span style="background: #22c55e; color: white; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; font-weight: 600;">✅ Одобрена</span>';
+                        } else if (chatter.status === 'rejected') {
+                            statusBadge = '<span style="background: #ef4444; color: white; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; font-weight: 600;">❌ Отклонена</span>';
+                        } else {
+                            statusBadge = '<span style="background: #6366f1; color: white; padding: 4px 10px; border-radius: 5px; font-size: 0.85em; font-weight: 600;">⏳ Ожидает</span>';
+                        }
+                        
+                        return `
+                        <div class="applicant-card">
+                            <div class="applicant-header">
+                                <div>
+                                    <h3>${chatter.full_name} ${statusBadge}</h3>
+                                    <small>Добавил: ${chatter.owner_username || '-'}</small>
+                                </div>
+                                ${canDelete ? `<button class="btn-delete" onclick="deleteChatter(${chatter.id})" title="Удалить">✕</button>` : ''}
+                            </div>
+                            <p><strong>Возраст:</strong> ${chatter.age}</p>
+                            <p><strong>Гео (документы):</strong> ${chatter.geo}</p>
+                            <p><strong>Опыт в адалте:</strong> ${chatter.experience || '-'}</p>
+                            <p><strong>Номер оффера:</strong> ${chatter.offer_number}</p>
+                            <p><strong>Телефон:</strong> ${chatter.phone}</p>
+                            <p><strong>Телега:</strong> ${chatter.telegram || '-'}</p>
+                            <p class="date">Добавлено: ${chatter.date_added}</p>
+                            ${isAdmin && chatter.status !== 'approved' && chatter.status !== 'rejected' ? `
+                                <div style="display: flex; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #2d2d3d;">
+                                    <button onclick="updateChatterStatus(${chatter.id}, 'approved')" style="flex: 1; padding: 10px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">✅ Одобрить</button>
+                                    <button onclick="updateChatterStatus(${chatter.id}, 'rejected')" style="flex: 1; padding: 10px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s;">❌ Отклонить</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                        `;
+                    }).join('');
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки Чаттеров:', error);
+                    document.getElementById('chattersList').innerHTML = '<p class="error">Ошибка загрузки</p>';
+                });
+        }
+
         // Открыть фото в модальном окне
         function openPhotoModal(photoUrl) {
             const modal = document.createElement('div');
@@ -1031,6 +1153,53 @@
                 } catch (error) {
                     console.error('Ошибка:', error);
                     alert('Ошибка при удалении анкеты');
+                }
+            }
+        }
+
+        // Удалить Чаттера
+        async function deleteChatter(id) {
+            if (confirm('Вы уверены, что хотите удалить эту анкету?')) {
+                try {
+                    const response = await fetch(`/api/delete-chatter/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        loadChatters();
+                    } else {
+                        alert('Ошибка при удалении: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    alert('Ошибка при удалении анкеты');
+                }
+            }
+        }
+
+        // Обновить статус Чаттера
+        async function updateChatterStatus(id, status) {
+            const statusText = status === 'approved' ? 'одобрить' : 'отклонить';
+            if (confirm(`Вы уверены, что хотите ${statusText} эту анкету?`)) {
+                try {
+                    const response = await fetch(`/api/chatter/${id}/status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ status: status })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        loadChatters();
+                    } else {
+                        alert('Ошибка при обновлении статуса: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    alert('Ошибка при обновлении статуса');
                 }
             }
         }
@@ -1319,6 +1488,11 @@
             refreshModelsBtn.addEventListener('click', loadModels);
         }
 
+        const refreshChattersBtn = document.getElementById('refreshChattersBtn');
+        if (refreshChattersBtn) {
+            refreshChattersBtn.addEventListener('click', loadChatters);
+        }
+
         // Кнопка очистки всех анкет
         const clearAllBtn = document.getElementById('clearAllBtn');
         if (clearAllBtn) {
@@ -1518,13 +1692,17 @@
             } else if (tabName === 'models') {
                 console.log('👩‍🎬 Вызываю loadModels()');
                 loadModels();
+            } else if (tabName === 'chatters') {
+                console.log('💬 Вызываю loadChatters()');
+                loadChatters();
             }
         }
 
-        // Переключение типа формы (кандидат на работу / модель-оператор)
+        // Переключение типа формы (кандидат на работу / модель-оператор / чаттер)
         function switchFormType(type) {
             const workerForm = document.getElementById('applicantForm');
             const modelForm = document.getElementById('modelForm');
+            const chatterForm = document.getElementById('chatterForm');
             const buttons = document.querySelectorAll('.form-type-btn');
             
             buttons.forEach(btn => btn.classList.remove('active'));
@@ -1533,9 +1711,15 @@
             if (type === 'worker') {
                 workerForm.style.display = 'block';
                 modelForm.style.display = 'none';
-            } else {
+                chatterForm.style.display = 'none';
+            } else if (type === 'model') {
                 workerForm.style.display = 'none';
                 modelForm.style.display = 'block';
+                chatterForm.style.display = 'none';
+            } else if (type === 'chatter') {
+                workerForm.style.display = 'none';
+                modelForm.style.display = 'none';
+                chatterForm.style.display = 'block';
             }
         }
 
@@ -1566,6 +1750,50 @@
                             
                             // Перезагрузить список
                             setTimeout(() => location.reload(), 1000);
+                        } else {
+                            messageDiv.innerHTML = `<div class="error-message">❌ ${result.message}</div>`;
+                        }
+                    } catch (error) {
+                        console.error('Ошибка:', error);
+                        messageDiv.innerHTML = `<div class="error-message">❌ Ошибка при отправке: ${error.message}</div>`;
+                    }
+                });
+            }
+
+            // Обработка формы Чаттера
+            const chatterForm = document.getElementById('chatterForm');
+            if (chatterForm) {
+                chatterForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const formData = {
+                        full_name: document.getElementById('chatter_full_name').value,
+                        phone: document.getElementById('chatter_phone').value,
+                        age: document.getElementById('chatter_age').value,
+                        geo: document.getElementById('chatter_geo').value,
+                        experience: document.getElementById('chatter_experience').value,
+                        offer_number: document.getElementById('chatter_offer_number').value,
+                        telegram: document.getElementById('chatter_telegram').value
+                    };
+
+                    const messageDiv = document.getElementById('chatterFormMessage');
+                    
+                    try {
+                        const response = await fetch('/api/add-chatter', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(formData)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            messageDiv.innerHTML = `<div class="success-message">✅ ${result.message}</div>`;
+                            chatterForm.reset();
+                            loadChatters();
+                            setTimeout(() => { messageDiv.textContent = ''; }, 3000);
                         } else {
                             messageDiv.innerHTML = `<div class="error-message">❌ ${result.message}</div>`;
                         }
