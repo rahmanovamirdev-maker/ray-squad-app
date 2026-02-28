@@ -1210,10 +1210,10 @@ def profile():
         flash('Профиль обновлен', 'success')
         return redirect(url_for('profile'))
 
-    # Статистика - только по не удаленным анкетам
-    applicants_count = Applicant.query.filter_by(owner_username=user.username, is_deleted=False).count()
-    approved_applicants = Applicant.query.filter_by(owner_username=user.username, status='approved', is_deleted=False).count()
-    rejected_applicants = Applicant.query.filter_by(owner_username=user.username, status='rejected', is_deleted=False).count()
+    # Статистика - считаем ВСЕ анкеты включая удаленные (статистика не должна меняться при удалении)
+    applicants_count = Applicant.query.filter_by(owner_username=user.username).count()
+    approved_applicants = Applicant.query.filter_by(owner_username=user.username, status='approved').count()
+    rejected_applicants = Applicant.query.filter_by(owner_username=user.username, status='rejected').count()
 
     stats = {
         'applicants_count': applicants_count,
@@ -1246,10 +1246,10 @@ def admin_view_user_profile(user_id):
             flash('Некорректная сумма', 'error')
         return redirect(url_for('admin_view_user_profile', user_id=user_id))
     
-    # Получение статистики - только по не удаленным анкетам
-    applicants_count = Applicant.query.filter_by(owner_username=user.username, is_deleted=False).count()
-    approved_applicants = Applicant.query.filter_by(owner_username=user.username, status='approved', is_deleted=False).count()
-    rejected_applicants = Applicant.query.filter_by(owner_username=user.username, status='rejected', is_deleted=False).count()
+    # Получение статистики - считаем ВСЕ анкеты включая удаленные (статистика не должна меняться при удалении)
+    applicants_count = Applicant.query.filter_by(owner_username=user.username).count()
+    approved_applicants = Applicant.query.filter_by(owner_username=user.username, status='approved').count()
+    rejected_applicants = Applicant.query.filter_by(owner_username=user.username, status='rejected').count()
 
     stats = {
         'applicants_count': applicants_count,
