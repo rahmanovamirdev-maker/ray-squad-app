@@ -17,6 +17,22 @@ body {
     position: relative;
 }
 
+/* На мобильных отключаем fixed фон (вызывает глюки) */
+@media (max-width: 768px) {
+    body {
+        background-attachment: scroll;
+        background-size: cover;
+        min-height: auto;
+    }
+}
+
+@media (max-width: 576px) {
+    body {
+        padding: 10px;
+        background-size: cover;
+    }
+}
+
 body::before {
     content: '';
     position: fixed;
