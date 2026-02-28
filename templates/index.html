@@ -1420,7 +1420,7 @@
                     
                     messageDiv.textContent = message;
                     document.getElementById('applicantForm').reset();
-                    loadApplicants();
+                    loadOperators();
                     setTimeout(() => { messageDiv.textContent = ''; }, 5000);
                 } else {
                     messageDiv.className = 'message error';
@@ -1444,7 +1444,7 @@
                     
                     const result = await response.json();
                     if (result.success) {
-                        loadApplicants();
+                        loadOperators();
                     } else {
                         alert('Ошибка при удалении: ' + result.message);
                     }
@@ -1469,7 +1469,7 @@
                     
                     const result = await response.json();
                     if (result.success) {
-                        loadApplicants();
+                        loadOperators();
                     } else {
                         alert('Ошибка при обновлении статуса: ' + result.message);
                     }
@@ -1572,7 +1572,7 @@
                 if (result.success) {
                     alert('✅ ' + result.message);
                     closeEditModal();
-                    loadApplicants();
+                    loadOperators();
                 } else {
                     alert('❌ Ошибка: ' + result.message);
                 }
@@ -1591,7 +1591,7 @@
         }
 
         // Кнопка обновления
-        document.getElementById('refreshBtn').addEventListener('click', loadApplicants);
+        document.getElementById('refreshBtn').addEventListener('click', loadOperators);
 
         const refreshModelsBtn = document.getElementById('refreshModelsBtn');
         if (refreshModelsBtn) {
@@ -1607,7 +1607,7 @@
         const clearAllBtn = document.getElementById('clearAllBtn');
         if (clearAllBtn) {
             clearAllBtn.addEventListener('click', async () => {
-                if (confirm('⚠️ Внимание! Вы уверены, что хотите удалить ВСЕ анкеты кроме тех, что ожидают рассмотрения (статус "Ожидает")?')) {
+                if (confirm('⚠️ Внимание! Вы уверены, что хотите удалить все анкеты со статусом "Ожидает"? Анкеты со статусами "Одобрено" и "Отклонено" будут сохранены.')) {
                     try {
                         const response = await fetch('/api/delete-all', {
                             method: 'DELETE'
@@ -1616,7 +1616,7 @@
                         const result = await response.json();
                         if (result.success) {
                             alert('✅ ' + result.message);
-                            loadApplicants();
+                            loadOperators();
                         } else {
                             alert('❌ Ошибка: ' + result.message);
                         }
@@ -1629,7 +1629,7 @@
         }
 
         // Загрузка при открытии страницы
-        loadApplicants();
+        loadOperators();
 
         // ==================== КАЛЕНДАРЬ ====================
         let currentCalendarDate = new Date();
