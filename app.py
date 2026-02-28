@@ -1591,12 +1591,15 @@ def delete_all_applicants():
         user = User.query.get(session['user_id'])
         if not user.is_admin:
             return jsonify({'success': False, 'message': 'Forbidden'}), 403
-        # Мягкое удаление - помечаем все анкеты как удаленные
-        applicants = Applicant.query.all()
+        # Мягкое удаление - помечаем только анкеты со статусом "pending" как удаленные
+        # Сохраняем анкеты со статусом approved и rejected
+        applicants = Applicant.query.filter_by(status='pending').all()
+        deleted_count = 0
         for applicant in applicants:
             applicant.is_deleted = True
+            deleted_count += 1
         db.session.commit()
-        return jsonify({'success': True, 'message': 'Все анкеты удалены'}), 200
+        return jsonify({'success': True, 'message': f'Удалено {deleted_count} анкет со статусом "Ожидает". Анкеты со статусами "Одобрено" и "Отклонено" сохранены.'}), 200
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
