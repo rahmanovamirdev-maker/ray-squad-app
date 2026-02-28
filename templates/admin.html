@@ -1283,6 +1283,7 @@
             <button class="tab-btn {% if current_tab == 'chatters' %}active{% endif %}" onclick="switchTab('chatters')">💬 Чаттеры</button>
             <button class="tab-btn {% if current_tab == 'interviews' %}active{% endif %}" onclick="switchTab('interviews')">🗓️ Открытые собеседования</button>
             <button class="tab-btn {% if current_tab == 'all_applicants' %}active{% endif %}" onclick="switchTab('all_applicants')">📋 Все анкеты</button>
+            <button class="tab-btn {% if current_tab == 'archive' %}active{% endif %}" onclick="switchTab('archive')">📚 Полный архив</button>
         </div>
 
         <!-- Вкладка: Управление пользователями -->
@@ -1546,6 +1547,21 @@
                 <p class="loading">Загрузка анкет...</p>
             </div>
         </div>
+
+        <!-- Вкладка: Полный архив (ВСЕ анкеты БЕЗ ИСКЛЮЧЕНИЙ) -->
+        <div id="archive-tab" class="tab-content {% if current_tab == 'archive' %}active{% endif %}">
+            <div class="actions-bar">
+                <h2>📚 Полный архив всех анкет (ПОЛНАЯ ИСТОРИЯ)</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="loadFullArchive()">🔄 Обновить</button>
+                    <span style="color: #b0b0b0; font-size: 0.9em; margin-left: 15px;">⚠️ Здесь хранятся ВСЕ анкеты когда-либо добавленные. Ничего не удаляется.</span>
+                </div>
+            </div>
+            
+            <div class="applicants-grid" id="fullArchiveList">
+                <p class="loading">Загрузка архива...</p>
+            </div>
+        </div>
     </div>
 
     <!-- Модальное окно для отображения нового пароля -->
@@ -1651,6 +1667,9 @@
             }
             if (tabName === 'all_applicants') {
                 loadAllApplicants();
+            }
+            if (tabName === 'archive') {
+                loadFullArchive();
             }
         }
 
@@ -2907,6 +2926,60 @@
             }
         }
 
+        // Загрузка ПОЛНОГО АРХИВА всех анкет (БЕЗ ИСКЛЮЧЕНИЙ)
+        async function loadFullArchive() {
+            try {
+                const response = await fetch('/api/admin/applicants-full-archive');
+                const data = await response.json();
+                const container = document.getElementById('fullArchiveList');
+
+                if (!data.success || !data.applicants || data.applicants.length === 0) {
+                    container.innerHTML = '<p class="empty">Архив пуст</p>';
+                    return;
+                }
+
+                const totalCount = data.total_count || data.applicants.length;
+                container.innerHTML = `
+                    <div style="margin-bottom: 20px; padding: 15px; background: #2d2d3d; border-radius: 8px; border-left: 4px solid #6366f1;">
+                        <strong>📊 Общее количество анкет в архиве: ${totalCount}</strong>
+                    </div>
+                ` + data.applicants.map((app, index) => {
+                    const statusEmoji = app.status === 'approved' ? '✅' : app.status === 'rejected' ? '❌' : '⏳';
+                    const deletedBadge = app.is_deleted ? '<span style="background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; margin-left: 10px;">🗑️ УДАЛЕНО ИЗ СПИСКА</span>' : '<span style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; margin-left: 10px;">✔️ АКТИВНО</span>';
+                    const teamBadge = app.team ? `<span style="background: #6366f1; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.85em;">${app.team}</span>` : '';
+                    
+                    return `
+                        <div class="card" style="${app.is_deleted ? 'opacity: 0.7; border: 1px dashed #ef4444;' : 'border: 1px solid #6366f1;'}">
+                            <div class="card-header">
+                                <div>
+                                    <h3>#${index + 1} - ${statusEmoji} ${app.full_name}</h3>
+                                    <small style="color: #888;">ID: ${app.id}</small>
+                                </div>
+                                <div>${teamBadge} ${deletedBadge}</div>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Телефон:</strong> ${app.phone || 'Не указан'}</p>
+                                <p><strong>Telegram:</strong> ${app.telegram || 'Не указан'}</p>
+                                <p><strong>Дата рождения:</strong> ${app.date_of_birth || 'Не указано'}</p>
+                                <p><strong>Английский:</strong> ${app.english_level || 'Не указан'}</p>
+                                <p><strong>CPU:</strong> ${app.cpu_model || 'Не указан'}</p>
+                                <p><strong>GPU:</strong> ${app.gpu_model || 'Не указан'}</p>
+                                <p><strong>Скорость интернета:</strong> ${app.internet_speed || 'Не указана'}</p>
+                                <p><strong>Опыт:</strong> ${app.work_experience || 'Не указан'}</p>
+                                <p><strong>Время собеседования:</strong> ${app.interview_time || 'Не указано'}</p>
+                                <p><strong>Ответственный:</strong> ${app.owner_username || 'Система'}</p>
+                                <p><strong>Дата добавления:</strong> ${app.date_added}</p>
+                                <p><strong>Статус:</strong> ${app.status === 'approved' ? 'Одобрена ✅' : app.status === 'rejected' ? 'Отклонена ❌' : 'На рассмотрении ⏳'}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки архива:', error);
+                document.getElementById('fullArchiveList').innerHTML = '<p class="empty">Ошибка загрузки</p>';
+            }
+        }
+
         // Переопределяем switchTab для загрузки данных
         const originalSwitchTab = switchTab;
         window.switchTab = function(tabName) {
@@ -2919,6 +2992,8 @@
                 loadChatters();
             } else if (tabName === 'all_applicants') {
                 loadAllApplicants();
+            } else if (tabName === 'archive') {
+                loadFullArchive();
             }
         };
 
@@ -2933,6 +3008,8 @@
                 loadChatters();
             } else if (currentTab && currentTab.id === 'all_applicants-tab') {
                 loadAllApplicants();
+            } else if (currentTab && currentTab.id === 'archive-tab') {
+                loadFullArchive();
             }
         });
     </script>

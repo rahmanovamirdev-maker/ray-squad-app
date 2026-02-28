@@ -1093,6 +1093,27 @@ def admin_get_all_applicants():
         return jsonify({'success': False, 'message': str(e)}), 400
 
 
+@app.route('/api/admin/applicants-full-archive')
+def admin_get_full_archive():
+    """API для получения ПОЛНОГО АРХИВА всех анкет (когда-либо добавленных) - НИКАКИЕ НЕ УДАЛЯЮТСЯ"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    user = User.query.get(session['user_id'])
+    if not user or not user.is_admin:
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    try:
+        # Получаем АБСОЛЮТНО ВСЕ анкеты БЕЗ ИСКЛЮЧЕНИЙ - это полный архив
+        all_applicants = db.session.query(Applicant).order_by(Applicant.date_added.desc()).all()
+        return jsonify({
+            'success': True,
+            'total_count': len(all_applicants),
+            'applicants': [app.to_dict() for app in all_applicants]
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
