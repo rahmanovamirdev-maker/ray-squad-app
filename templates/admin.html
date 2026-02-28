@@ -1280,6 +1280,7 @@
             <button class="tab-btn {% if current_tab == 'users' %}active{% endif %}" onclick="switchTab('users')">👤 Создание аккаунта</button>
             <button class="tab-btn {% if current_tab == 'operators' %}active{% endif %}" onclick="switchTab('operators')">👨‍💼 Операторы</button>
             <button class="tab-btn {% if current_tab == 'models' %}active{% endif %}" onclick="switchTab('models')">👩‍🎬 Модели</button>
+            <button class="tab-btn {% if current_tab == 'chatters' %}active{% endif %}" onclick="switchTab('chatters')">💬 Чаттеры</button>
             <button class="tab-btn {% if current_tab == 'interviews' %}active{% endif %}" onclick="switchTab('interviews')">🗓️ Открытые собеседования</button>
         </div>
 
@@ -1446,6 +1447,28 @@
                 <p class="loading">Загрузка анкет моделей...</p>
             </div>
         </div>
+
+        <!-- Вкладка: Чаттеры -->
+        <div id="chatters-tab" class="tab-content {% if current_tab == 'chatters' %}active{% endif %}">
+            <div class="actions-bar">
+                <h2>💬 Анкеты Чаттеров</h2>
+                <select id="chattersTeamFilter" class="team-filter-select" onchange="filterAndLoadChatters()">
+                    <option value="">📄 Все анкеты</option>
+                    <option value="Delta">🔴 Delta</option>
+                    <option value="Den">🔵 Den</option>
+                    <option value="Amir">🟢 Amir</option>
+                    <option value="404">🟡 404</option>
+                    <option value="Bobik">🟣 Bobik</option>
+                    <option value="Oir">🟠 Oir</option>
+                    <option value="Gordon">⚫ Gordon</option>
+                    <option value="Rey">💎 Rey</option>
+                </select>
+            </div>
+            <div id="chattersContainer" class="applicants-list">
+                <p class="loading">Загрузка анкет Чаттеров...</p>
+            </div>
+        </div>
+
         <!-- Вкладка: Открытые собеседования -->
         <div id="interviews-tab" class="tab-content {% if current_tab == 'interviews' %}active{% endif %}">
             <div class="actions-bar">
@@ -2727,6 +2750,90 @@
             }
         }
 
+        // Загрузка всех Чаттеров
+        async function loadChatters() {
+            try {
+                const response = await fetch('/api/chatters');
+                const chatters = await response.json();
+                const container = document.getElementById('chattersContainer');
+                
+                if (!chatters || chatters.length === 0) {
+                    container.innerHTML = '<p class="empty">Анкет Чаттеров нет</p>';
+                    return;
+                }
+
+                container.innerHTML = chatters.map((chatter, idx) => {
+                    return `
+                        <div class="applicant-card">
+                            <div class="applicant-header">
+                                <h3>#${idx + 1} - ${chatter.full_name} ${chatter.team ? `<span style="font-size: 0.85em; color: #6366f1;">${getTeamEmoji(chatter.team)} ${chatter.team}</span>` : ''}</h3>
+                                <span class="status-badge ${chatter.status}">${
+                                    chatter.status === 'approved' ? '✅ Одобрено' :
+                                    chatter.status === 'rejected' ? '❌ Отклонено' :
+                                    '⏳ На рассмотрении'
+                                }</span>
+                            </div>
+                            <div class="applicant-details">
+                                <p><strong>Возраст:</strong> ${chatter.age}</p>
+                                <p><strong>Гео (документы):</strong> ${chatter.geo}</p>
+                                <p><strong>Опыт в адалте:</strong> ${chatter.experience || '-'}</p>
+                                <p><strong>Номер оффера:</strong> ${chatter.offer_number}</p>
+                                <p><strong>Телефон:</strong> ${chatter.phone}</p>
+                                <p><strong>Телега:</strong> ${chatter.telegram || '-'}</p>
+                                <p><strong>Дата добавления:</strong> ${chatter.date_added}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки Чаттеров:', error);
+            }
+        }
+
+        // Фильтрация и загрузка Чаттеров по команде
+        async function filterAndLoadChatters() {
+            const selectedTeam = document.getElementById('chattersTeamFilter').value;
+            try {
+                const response = await fetch('/api/chatters');
+                const chatters = await response.json();
+                const container = document.getElementById('chattersContainer');
+                
+                // Фильтруем по команде
+                const filtered = selectedTeam ? chatters.filter(c => c.team === selectedTeam) : chatters;
+                
+                if (!filtered || filtered.length === 0) {
+                    container.innerHTML = '<p class="empty">Анкет нет</p>';
+                    return;
+                }
+
+                container.innerHTML = filtered.map((chatter, idx) => {
+                    return `
+                        <div class="applicant-card">
+                            <div class="applicant-header">
+                                <h3>#${idx + 1} - ${chatter.full_name} ${chatter.team ? `<span style="font-size: 0.85em; color: #6366f1;">${getTeamEmoji(chatter.team)} ${chatter.team}</span>` : ''}</h3>
+                                <span class="status-badge ${chatter.status}">${
+                                    chatter.status === 'approved' ? '✅ Одобрено' :
+                                    chatter.status === 'rejected' ? '❌ Отклонено' :
+                                    '⏳ На рассмотрении'
+                                }</span>
+                            </div>
+                            <div class="applicant-details">
+                                <p><strong>Возраст:</strong> ${chatter.age}</p>
+                                <p><strong>Гео (документы):</strong> ${chatter.geo}</p>
+                                <p><strong>Опыт в адалте:</strong> ${chatter.experience || '-'}</p>
+                                <p><strong>Номер оффера:</strong> ${chatter.offer_number}</p>
+                                <p><strong>Телефон:</strong> ${chatter.phone}</p>
+                                <p><strong>Телега:</strong> ${chatter.telegram || '-'}</p>
+                                <p><strong>Дата добавления:</strong> ${chatter.date_added}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки Чаттеров:', error);
+            }
+        }
+
         // Открыть фото в модальном окне
         function openPhotoModal(photoUrl) {
             const modal = document.createElement('div');
@@ -2744,6 +2851,8 @@
                 loadOperators();
             } else if (tabName === 'models') {
                 loadModels();
+            } else if (tabName === 'chatters') {
+                loadChatters();
             }
         };
 
@@ -2754,6 +2863,8 @@
                 loadOperators();
             } else if (currentTab && currentTab.id === 'models-tab') {
                 loadModels();
+            } else if (currentTab && currentTab.id === 'chatters-tab') {
+                loadChatters();
             }
         });
     </script>
