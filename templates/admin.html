@@ -2940,36 +2940,111 @@
 
                 const totalCount = data.total_count || data.applicants.length;
                 container.innerHTML = `
-                    <div style="margin-bottom: 20px; padding: 15px; background: #2d2d3d; border-radius: 8px; border-left: 4px solid #6366f1;">
-                        <strong>📊 Общее количество анкет в архиве: ${totalCount}</strong>
+                    <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #1e1e2e 0%, #2d2d3d 100%); border-radius: 12px; border-left: 5px solid #6366f1; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                            <div>
+                                <h2 style="margin: 0; color: #e0e0e0; font-size: 1.8em;">📚 Полный архив анкет</h2>
+                                <p style="margin: 5px 0 0 0; color: #b0b0b0; font-size: 0.95em;">Полная история всех анкет, когда-либо добавленных в систему</p>
+                            </div>
+                            <div style="background: #6366f1; color: white; padding: 15px 25px; border-radius: 10px; font-weight: 600; font-size: 1.2em; text-align: center;">
+                                <div style="font-size: 0.8em; color: rgba(255,255,255,0.8); margin-bottom: 5px;">Всего анкет</div>
+                                <div style="font-size: 2em;">${totalCount}</div>
+                            </div>
+                        </div>
                     </div>
                 ` + data.applicants.map((app, index) => {
                     const statusEmoji = app.status === 'approved' ? '✅' : app.status === 'rejected' ? '❌' : '⏳';
-                    const deletedBadge = app.is_deleted ? '<span style="background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; margin-left: 10px;">🗑️ УДАЛЕНО ИЗ СПИСКА</span>' : '<span style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; margin-left: 10px;">✔️ АКТИВНО</span>';
-                    const teamBadge = app.team ? `<span style="background: #6366f1; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.85em;">${app.team}</span>` : '';
+                    const statusText = app.status === 'approved' ? 'Одобрено' : app.status === 'rejected' ? 'Отклонено' : 'На рассмотрении';
+                    const statusColor = app.status === 'approved' ? '#10b981' : app.status === 'rejected' ? '#ef4444' : '#f59e0b';
+                    
+                    const deletedBadge = app.is_deleted ? 
+                        '<span style="background: #ef4444; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: 600;">🗑️ Удалено из списка</span>' : 
+                        '<span style="background: #10b981; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: 600;">✔️ В списке</span>';
+                    
+                    const teamBadge = app.team ? `<span style="background: #6366f1; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: 600;">👥 ${app.team}</span>` : '';
                     
                     return `
-                        <div class="card" style="${app.is_deleted ? 'opacity: 0.7; border: 1px dashed #ef4444;' : 'border: 1px solid #6366f1;'}">
-                            <div class="card-header">
-                                <div>
-                                    <h3>#${index + 1} - ${statusEmoji} ${app.full_name}</h3>
-                                    <small style="color: #888;">ID: ${app.id}</small>
+                        <div class="card" style="border: 1px solid ${app.is_deleted ? '#ef4444' : '#6366f1'}; border-radius: 12px; overflow: hidden; transition: all 0.3s; ${app.is_deleted ? 'opacity: 0.75; background: rgba(239, 68, 68, 0.05);' : ''} box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <!-- Заголовок с номером и именем -->
+                            <div style="background: ${app.is_deleted ? 'linear-gradient(135deg, #1e1e2e 0%, #2d2d3d 100%)' : 'linear-gradient(135deg, #1e1e2e 0%, #2d2d3d 100%)'}; padding: 20px; border-bottom: 2px solid ${app.is_deleted ? '#ef4444' : '#6366f1'};">
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                                    <div style="flex: 1; min-width: 300px;">
+                                        <h3 style="margin: 0; font-size: 1.3em; color: #e0e0e0;">
+                                            <span style="background: ${statusColor}; color: white; padding: 4px 10px; border-radius: 6px; margin-right: 10px; font-weight: 600; font-size: 0.9em;">#${index + 1}</span>
+                                            ${statusEmoji} ${app.full_name}
+                                        </h3>
+                                        <p style="margin: 8px 0 0 0; color: #9ca3af; font-size: 0.9em;">
+                                            👤 Добавил: <strong style="color: #6366f1;">${app.owner_username || 'Система'}</strong>
+                                        </p>
+                                    </div>
+                                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                        <span style="background: ${statusColor}; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: 600;">${statusEmoji} ${statusText}</span>
+                                        ${deletedBadge}
+                                        ${teamBadge}
+                                    </div>
                                 </div>
-                                <div>${teamBadge} ${deletedBadge}</div>
                             </div>
-                            <div class="card-body">
-                                <p><strong>Телефон:</strong> ${app.phone || 'Не указан'}</p>
-                                <p><strong>Telegram:</strong> ${app.telegram || 'Не указан'}</p>
-                                <p><strong>Дата рождения:</strong> ${app.date_of_birth || 'Не указано'}</p>
-                                <p><strong>Английский:</strong> ${app.english_level || 'Не указан'}</p>
-                                <p><strong>CPU:</strong> ${app.cpu_model || 'Не указан'}</p>
-                                <p><strong>GPU:</strong> ${app.gpu_model || 'Не указан'}</p>
-                                <p><strong>Скорость интернета:</strong> ${app.internet_speed || 'Не указана'}</p>
-                                <p><strong>Опыт:</strong> ${app.work_experience || 'Не указан'}</p>
-                                <p><strong>Время собеседования:</strong> ${app.interview_time || 'Не указано'}</p>
-                                <p><strong>Ответственный:</strong> ${app.owner_username || 'Система'}</p>
-                                <p><strong>Дата добавления:</strong> ${app.date_added}</p>
-                                <p><strong>Статус:</strong> ${app.status === 'approved' ? 'Одобрена ✅' : app.status === 'rejected' ? 'Отклонена ❌' : 'На рассмотрении ⏳'}</p>
+                            
+                            <!-- Основная информация -->
+                            <div style="padding: 20px;">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                                    <!-- Левая колонка -->
+                                    <div>
+                                        <p style="margin: 0 0 12px 0;"><strong style="color: #6366f1;">📱 Контакты</strong></p>
+                                        <p style="margin: 6px 0; color: #e0e0e0;">
+                                            <span style="color: #b0b0b0;">Телефон:</span> ${app.phone || '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                        </p>
+                                        <p style="margin: 6px 0; color: #e0e0e0;">
+                                            <span style="color: #b0b0b0;">Telegram:</span> ${app.telegram ? `<code style="background: #2d2d3d; padding: 2px 6px; border-radius: 4px; color: #6366f1;">${app.telegram}</code>` : '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Средняя колонка -->
+                                    <div>
+                                        <p style="margin: 0 0 12px 0;"><strong style="color: #6366f1;">💻 Техника</strong></p>
+                                        <p style="margin: 6px 0; color: #e0e0e0;">
+                                            <span style="color: #b0b0b0;">CPU:</span> ${app.cpu_model || '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                        </p>
+                                        <p style="margin: 6px 0; color: #e0e0e0;">
+                                            <span style="color: #b0b0b0;">GPU:</span> ${app.gpu_model || '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                        </p>
+                                        <p style="margin: 6px 0; color: #e0e0e0;">
+                                            <span style="color: #b0b0b0;">Интернет:</span> ${app.internet_speed || '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Правая колонка -->
+                                    <div>
+                                        <p style="margin: 0 0 12px 0;"><strong style="color: #6366f1;">📚 Опыт</strong></p>
+                                        <p style="margin: 6px 0; color: #e0e0e0;">
+                                            <span style="color: #b0b0b0;">Возраст:</span> ${app.date_of_birth || '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                        </p>
+                                        <p style="margin: 6px 0; color: #e0e0e0;">
+                                            <span style="color: #b0b0b0;">English:</span> ${app.english_level || '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                        </p>
+                                        <p style="margin: 6px 0; color: #e0e0e0;">
+                                            <span style="color: #b0b0b0;">Опыт работы:</span> ${app.work_experience || '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Разделитель -->
+                                <div style="margin: 15px 0; border-top: 1px solid #2d2d3d;"></div>
+                                
+                                <!-- Дополнительная информация -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                                    <div>
+                                        <p style="margin: 0; color: #b0b0b0; font-size: 0.9em;">
+                                            📅 Добавлено: <strong style="color: #e0e0e0;">${app.date_added}</strong>
+                                        </p>
+                                        ${app.interview_time ? `<p style="margin: 4px 0 0 0; color: #b0b0b0; font-size: 0.9em;">
+                                            🗓️ Собеседование: <strong style="color: #e0e0e0;">${app.interview_time}</strong>
+                                        </p>` : ''}
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <span style="color: #6366f1; font-weight: 600; font-size: 0.85em;">ID: ${app.id}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     `;
