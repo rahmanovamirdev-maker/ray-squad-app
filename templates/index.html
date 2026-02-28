@@ -178,6 +178,116 @@
             text-align: center;
         }
 
+        /* Адаптивность календаря */
+        @media (max-width: 1024px) {
+            .calendar-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .calendar-container {
+                padding: 15px;
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .calendar-header h3 {
+                font-size: 1.1em;
+            }
+
+            .calendar-nav {
+                width: 36px;
+                height: 36px;
+                font-size: 1em;
+            }
+
+            .calendar-day {
+                font-size: 0.9em;
+            }
+
+            .weekday {
+                font-size: 0.75em;
+                padding: 6px;
+            }
+
+            .calendar-weekdays {
+                gap: 6px;
+            }
+
+            .calendar-grid {
+                gap: 6px;
+            }
+
+            .legend-item {
+                font-size: 0.8em;
+            }
+
+            .time-slot {
+                padding: 8px 10px;
+                font-size: 0.9em;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .calendar-container {
+                padding: 12px;
+                border-radius: 8px;
+            }
+
+            .calendar-header h3 {
+                font-size: 1em;
+            }
+
+            .calendar-nav {
+                width: 32px;
+                height: 32px;
+                font-size: 0.9em;
+            }
+
+            .calendar-day {
+                font-size: 0.8em;
+                border-radius: 8px;
+            }
+
+            .weekday {
+                font-size: 0.7em;
+                padding: 4px;
+            }
+
+            .calendar-weekdays {
+                gap: 4px;
+            }
+
+            .calendar-grid {
+                gap: 4px;
+            }
+
+            .calendar-times {
+                gap: 8px;
+            }
+
+            .calendar-times-header {
+                font-size: 0.8em;
+                padding: 0 8px;
+            }
+
+            .time-slot {
+                padding: 7px 8px;
+                font-size: 0.85em;
+            }
+
+            .legend-item {
+                font-size: 0.75em;
+            }
+
+            .legend-color {
+                width: 12px;
+                height: 12px;
+            }
+        }
+
         .time-slot:hover {
             background: #3a3a4a;
             border-left-color: #ff6b6b;

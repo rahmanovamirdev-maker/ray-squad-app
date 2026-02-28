@@ -886,9 +886,36 @@ header h1 {
 }
 
 /* Адаптивный дизайн */
+
+/* Планшеты и средние устройства */
+@media (max-width: 1024px) {
+    .container {
+        padding: 0 15px;
+    }
+
+    .main-content {
+        gap: 20px;
+    }
+}
+
+/* Малые планшеты и большие телефоны */
 @media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    header {
+        padding: 15px 18px;
+        margin-bottom: 20px;
+    }
+
     header h1 {
-        font-size: 1.8em;
+        font-size: 1.6em;
+        letter-spacing: 0.3px;
+    }
+
+    .subtitle {
+        font-size: 0.95em;
     }
 
     .form-row {
@@ -897,10 +924,12 @@ header h1 {
 
     .action-buttons {
         flex-direction: column;
+        gap: 8px;
     }
 
     .action-buttons .btn {
         min-width: auto;
+        width: 100%;
     }
 
     .main-content {
@@ -910,6 +939,376 @@ header h1 {
     .left-column .form-section,
     .right-column {
         padding: 20px;
+    }
+
+    .form-section h2 {
+        font-size: 1.5em;
+    }
+
+    /* Табы/панели */
+    .panel-tabs,
+    .admin-tabs {
+        flex-wrap: wrap;
+        gap: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .panel-tabs::-webkit-scrollbar,
+    .admin-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .panel-tab,
+    .tab-btn {
+        font-size: 0.9em;
+        padding: 10px 16px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* Карточки анкет */
+    .applicant-card {
+        padding: 18px;
+        margin-bottom: 15px;
+    }
+
+    .applicant-header h3 {
+        font-size: 1.1em;
+        word-break: break-word;
+    }
+
+    .applicant-details p {
+        font-size: 0.9em;
+        margin-bottom: 8px;
+    }
+
+    /* Фильтры */
+    .actions-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .actions-bar h2 {
+        font-size: 1.3em;
+    }
+
+    .team-filter-select,
+    select {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* Формы */
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        font-size: 16px; /* Предотвращает zoom на iOS */
+    }
+
+    /* Кнопки переключения типа формы */
+    .form-group[style*="display: flex"] {
+        gap: 8px !important;
+    }
+
+    .form-type-btn {
+        padding: 10px 12px !important;
+        font-size: 0.85em !important;
+    }
+
+    /* Модальные окна */
+    .modal-content {
+        width: 95%;
+        max-width: 95%;
+        padding: 20px;
+    }
+}
+
+/* Телефоны */
+@media (max-width: 576px) {
+    body {
+        padding: 8px;
+    }
+
+    header {
+        padding: 12px 15px;
+        margin-bottom: 15px;
+        border-radius: 12px;
+    }
+
+    header h1 {
+        font-size: 1.4em;
+    }
+
+    .subtitle {
+        font-size: 0.9em;
+    }
+
+    .nav-link {
+        padding: 8px 12px;
+        font-size: 0.9em;
+    }
+
+    .user-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .nav-user {
+        font-size: 0.85em;
+    }
+
+    /* Основной контент */
+    .main-content {
+        gap: 15px;
+    }
+
+    .left-column .form-section,
+    .right-column {
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+    .form-section h2 {
+        font-size: 1.3em;
+        margin-bottom: 20px;
+    }
+
+    /* Формы */
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        font-size: 0.9em;
+        margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        padding: 10px;
+        font-size: 16px; /* Важно для iOS */
+        border-radius: 8px;
+    }
+
+    .form-hint {
+        font-size: 0.8em;
+    }
+
+    /* Кнопки */
+    .btn {
+        padding: 10px 18px;
+        font-size: 0.95em;
+        border-radius: 8px;
+    }
+
+    .btn-primary {
+        padding: 12px 20px;
+    }
+
+    /* Табы */
+    .panel-tabs,
+    .admin-tabs {
+        gap: 6px;
+        margin-bottom: 15px;
+    }
+
+    .panel-tab,
+    .tab-btn {
+        font-size: 0.85em;
+        padding: 8px 12px;
+    }
+
+    /* Карточки */
+    .applicant-card {
+        padding: 15px;
+        margin-bottom: 12px;
+        border-radius: 8px;
+    }
+
+    .applicant-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .applicant-header h3 {
+        font-size: 1em;
+        margin-bottom: 0;
+    }
+
+    .applicant-details p {
+        font-size: 0.85em;
+        margin-bottom: 6px;
+        line-height: 1.4;
+    }
+
+    .status-badge {
+        font-size: 0.8em;
+        padding: 4px 8px;
+    }
+
+    /* Кнопки действий */
+    .btn-delete,
+    .btn-edit {
+        font-size: 1em;
+        width: 32px;
+        height: 32px;
+    }
+
+    /* Действия с кнопками (одобрить/отклонить) */
+    .applicant-card button[style*="flex: 1"] {
+        padding: 8px !important;
+        font-size: 0.85em !important;
+    }
+
+    /* Фильтры */
+    .actions-bar {
+        gap: 10px;
+    }
+
+    .actions-bar h2 {
+        font-size: 1.2em;
+    }
+
+    .action-buttons {
+        width: 100%;
+    }
+
+    .action-buttons .btn {
+        font-size: 0.85em;
+        padding: 8px 14px;
+    }
+
+    /* Списки анкет */
+    .applicants-list {
+        max-height: none;
+        overflow-y: visible;
+    }
+
+    /* Календарь */
+    .calendar-container {
+        grid-template-columns: 1fr;
+        padding: 15px;
+        gap: 15px;
+    }
+
+    .calendar-header h3 {
+        font-size: 1.1em;
+    }
+
+    .calendar-nav {
+        width: 36px;
+        height: 36px;
+        font-size: 1em;
+    }
+
+    .calendar-day {
+        font-size: 0.95em;
+    }
+
+    .weekday {
+        font-size: 0.8em;
+        padding: 6px;
+    }
+
+    /* Сообщения */
+    .message {
+        font-size: 0.9em;
+        padding: 10px 12px;
+        border-radius: 8px;
+    }
+
+    .loading,
+    .empty {
+        padding: 30px 15px;
+        font-size: 1em;
+    }
+
+    /* Профиль пользователя */
+    .profile-header,
+    .profile-section {
+        padding: 15px;
+    }
+
+    .profile-header h2 {
+        font-size: 1.3em;
+    }
+
+    /* Админ панель */
+    .admin-tabs button {
+        padding: 12px 20px;
+        font-size: 0.9em;
+    }
+
+    /* Фото модели */
+    .applicant-card img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+
+    /* Улучшение читаемости */
+    strong {
+        display: inline-block;
+        min-width: 100px;
+    }
+}
+
+/* Очень маленькие телефоны */
+@media (max-width: 375px) {
+    header h1 {
+        font-size: 1.2em;
+    }
+
+    .subtitle {
+        font-size: 0.85em;
+    }
+
+    .form-section h2 {
+        font-size: 1.1em;
+    }
+
+    .panel-tab,
+    .tab-btn {
+        font-size: 0.8em;
+        padding: 7px 10px;
+    }
+
+    .applicant-header h3 {
+        font-size: 0.95em;
+    }
+
+    .applicant-details p {
+        font-size: 0.8em;
+    }
+
+    .btn {
+        padding: 8px 14px;
+        font-size: 0.9em;
+    }
+}
+
+/* Ландшафтная ориентация на мобильных */
+@media (max-width: 768px) and (orientation: landscape) {
+    body {
+        padding: 10px 15px;
+    }
+
+    header {
+        margin-bottom: 15px;
+    }
+
+    .main-content {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .applicants-list {
+        max-height: 400px;
+        overflow-y: auto;
     }
 }
 
@@ -927,4 +1326,20 @@ header h1 {
 
 .applicant-card {
     animation: slideIn 0.3s ease-out;
+}
+
+/* Улучшение производительности на мобильных */
+@media (max-width: 768px) {
+    * {
+        -webkit-tap-highlight-color: rgba(99, 102, 241, 0.2);
+    }
+
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    button, a, input, select, textarea {
+        touch-action: manipulation;
+    }
 }
