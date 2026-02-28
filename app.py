@@ -1623,17 +1623,37 @@ def delete_all_applicants():
         if 'user_id' not in session:
             return jsonify({'success': False, 'message': 'Unauthorized'}), 401
         user = User.query.get(session['user_id'])
-        if not user.is_admin:
+        if not user:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        if not user.is_admin and not user.is_owner and not (user.prefix and user.prefix == 'Developer'):
             return jsonify({'success': False, 'message': 'Forbidden'}), 403
-        # Мягкое удаление - помечаем как удаленные анкеты со статусами "approved" и "rejected"
-        # Сохраняем анкеты со статусом "pending"
-        applicants = Applicant.query.filter(Applicant.status.in_(['approved', 'rejected'])).all()
+
+        statuses_to_delete = ['approved', 'rejected']
+
+        # Owner и Developer могут очищать все доступные анкеты
+        if user.is_owner or (user.prefix and user.prefix == 'Developer'):
+            applicants = Applicant.query.filter(
+                Applicant.status.in_(statuses_to_delete),
+                Applicant.is_deleted == False
+            ).all()
+            success_scope = 'по всем командам'
+        # Обычный админ очищает только анкеты своей команды
+        elif user.team:
+            applicants = Applicant.query.filter(
+                Applicant.team == user.team,
+                Applicant.status.in_(statuses_to_delete),
+                Applicant.is_deleted == False
+            ).all()
+            success_scope = f'в команде "{user.team}"'
+        else:
+            return jsonify({'success': False, 'message': 'Для очистки назначьте админу команду'}), 400
+
         deleted_count = 0
         for applicant in applicants:
             applicant.is_deleted = True
             deleted_count += 1
         db.session.commit()
-        return jsonify({'success': True, 'message': f'Удалено {deleted_count} анкет со статусами "Одобрено" и "Отклонено". Анкеты со статусом "Ожидает" сохранены.'}), 200
+        return jsonify({'success': True, 'message': f'Удалено {deleted_count} анкет со статусами "Одобрено" и "Отклонено" {success_scope}. Анкеты со статусом "Ожидает" сохранены.'}), 200
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
