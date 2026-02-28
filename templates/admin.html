@@ -2862,7 +2862,7 @@
             document.body.appendChild(modal);
         }
 
-        // Загрузка ПОЛНОГО АРХИВА всех анкет (БЕЗ ИСКЛЮЧЕНИЙ)
+        // Загрузка ПОЛНОГО АРХИВА всех анкет (БЕЗ ИСКЛЮЧЕНИЙ) - ВСЕ ТИПЫ
         async function loadFullArchive() {
             try {
                 const response = await fetch('/api/admin/applicants-full-archive');
@@ -2875,16 +2875,34 @@
                 }
 
                 const totalCount = data.total_count || data.applicants.length;
+                const operatorsCount = data.operators_count || 0;
+                const modelsCount = data.models_count || 0;
+                const chattersCount = data.chatters_count || 0;
+
                 container.innerHTML = `
                     <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #1e1e2e 0%, #2d2d3d 100%); border-radius: 12px; border-left: 5px solid #6366f1; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                             <div>
                                 <h2 style="margin: 0; color: #e0e0e0; font-size: 1.8em;">📚 Полный архив анкет</h2>
-                                <p style="margin: 5px 0 0 0; color: #b0b0b0; font-size: 0.95em;">Полная история всех анкет, когда-либо добавленных в систему</p>
+                                <p style="margin: 5px 0 0 0; color: #b0b0b0; font-size: 0.95em;">Полная история ВСЕХ анкет (операторов, моделей, чаттеров)</p>
                             </div>
-                            <div style="background: #6366f1; color: white; padding: 15px 25px; border-radius: 10px; font-weight: 600; font-size: 1.2em; text-align: center;">
-                                <div style="font-size: 0.8em; color: rgba(255,255,255,0.8); margin-bottom: 5px;">Всего анкет</div>
-                                <div style="font-size: 2em;">${totalCount}</div>
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                <div style="background: #3b82f6; color: white; padding: 12px 20px; border-radius: 10px; font-weight: 600; text-align: center;">
+                                    <div style="font-size: 0.75em; color: rgba(255,255,255,0.8); margin-bottom: 3px;">👨‍💼 Операторы</div>
+                                    <div style="font-size: 1.5em;">${operatorsCount}</div>
+                                </div>
+                                <div style="background: #ec4899; color: white; padding: 12px 20px; border-radius: 10px; font-weight: 600; text-align: center;">
+                                    <div style="font-size: 0.75em; color: rgba(255,255,255,0.8); margin-bottom: 3px;">👩‍🎬 Модели</div>
+                                    <div style="font-size: 1.5em;">${modelsCount}</div>
+                                </div>
+                                <div style="background: #8b5cf6; color: white; padding: 12px 20px; border-radius: 10px; font-weight: 600; text-align: center;">
+                                    <div style="font-size: 0.75em; color: rgba(255,255,255,0.8); margin-bottom: 3px;">💬 Чаттеры</div>
+                                    <div style="font-size: 1.5em;">${chattersCount}</div>
+                                </div>
+                                <div style="background: #6366f1; color: white; padding: 12px 20px; border-radius: 10px; font-weight: 600; text-align: center;">
+                                    <div style="font-size: 0.75em; color: rgba(255,255,255,0.8); margin-bottom: 3px;">Всего</div>
+                                    <div style="font-size: 1.5em;">${totalCount}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2899,70 +2917,137 @@
                     
                     const teamBadge = app.team ? `<span style="background: #6366f1; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: 600;">👥 ${app.team}</span>` : '';
                     
+                    // Информация о телефоне и телеграме
+                    const phone = app.phone || (app.type === 'operator' ? 'Не указан' : '');
+                    const telegram = app.telegram || '';
+                    
                     return `
-                        <div class="card" style="border: 1px solid ${app.is_deleted ? '#ef4444' : '#6366f1'}; border-radius: 12px; overflow: hidden; transition: all 0.3s; ${app.is_deleted ? 'opacity: 0.75; background: rgba(239, 68, 68, 0.05);' : ''} box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div class="card" style="border: 1px solid ${app.type_color}; border-radius: 12px; overflow: hidden; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                             <!-- Заголовок с номером и именем -->
-                            <div style="background: ${app.is_deleted ? 'linear-gradient(135deg, #1e1e2e 0%, #2d2d3d 100%)' : 'linear-gradient(135deg, #1e1e2e 0%, #2d2d3d 100%)'}; padding: 20px; border-bottom: 2px solid ${app.is_deleted ? '#ef4444' : '#6366f1'};">
+                            <div style="background: linear-gradient(135deg, #1e1e2e 0%, #2d2d3d 100%); padding: 20px; border-bottom: 2px solid ${app.type_color};">
                                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
                                     <div style="flex: 1; min-width: 300px;">
                                         <h3 style="margin: 0; font-size: 1.3em; color: #e0e0e0;">
-                                            <span style="background: ${statusColor}; color: white; padding: 4px 10px; border-radius: 6px; margin-right: 10px; font-weight: 600; font-size: 0.9em;">#${index + 1}</span>
-                                            ${statusEmoji} ${app.full_name}
+                                            <span style="background: ${app.type_color}; color: white; padding: 4px 10px; border-radius: 6px; margin-right: 10px; font-weight: 600; font-size: 0.9em;">${app.type_emoji} ${app.type_name}</span>
+                                            #${index + 1} - ${app.full_name}
                                         </h3>
                                         <p style="margin: 8px 0 0 0; color: #9ca3af; font-size: 0.9em;">
-                                            👤 Добавил: <strong style="color: #6366f1;">${app.owner_username || 'Система'}</strong>
+                                            👤 Добавил: <strong style="color: ${app.type_color};">${app.owner_username || 'Система'}</strong>
                                         </p>
                                     </div>
                                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                                         <span style="background: ${statusColor}; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: 600;">${statusEmoji} ${statusText}</span>
-                                        ${deletedBadge}
+                                        ${app.is_deleted ? deletedBadge : deletedBadge}
                                         ${teamBadge}
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Основная информация -->
+                            <!-- Основная информация (зависит от типа анкеты) -->
                             <div style="padding: 20px;">
-                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                                    <!-- Левая колонка -->
-                                    <div>
-                                        <p style="margin: 0 0 12px 0;"><strong style="color: #6366f1;">📱 Контакты</strong></p>
-                                        <p style="margin: 6px 0; color: #e0e0e0;">
-                                            <span style="color: #b0b0b0;">Телефон:</span> ${app.phone || '<span style="color: #888; font-style: italic;">Не указан</span>'}
-                                        </p>
-                                        <p style="margin: 6px 0; color: #e0e0e0;">
-                                            <span style="color: #b0b0b0;">Telegram:</span> ${app.telegram ? `<code style="background: #2d2d3d; padding: 2px 6px; border-radius: 4px; color: #6366f1;">${app.telegram}</code>` : '<span style="color: #888; font-style: italic;">Не указан</span>'}
-                                        </p>
+                                ${app.type === 'operator' ? `
+                                    <!-- ОПЕРАТОР -->
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                                        <div>
+                                            <p style="margin: 0 0 12px 0;"><strong style="color: #3b82f6;">📱 Контакты</strong></p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Телефон:</span> ${app.phone || '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Telegram:</span> ${app.telegram ? `<code style="background: #2d2d3d; padding: 2px 6px; border-radius: 4px; color: #3b82f6;">${app.telegram}</code>` : '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p style="margin: 0 0 12px 0;"><strong style="color: #3b82f6;">💻 Техника</strong></p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">CPU:</span> ${app.cpu_model || '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">GPU:</span> ${app.gpu_model || '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p style="margin: 0 0 12px 0;"><strong style="color: #3b82f6;">📚 Опыт</strong></p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Возраст:</span> ${app.date_of_birth || '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">English:</span> ${app.english_level || '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                            </p>
+                                        </div>
                                     </div>
-                                    
-                                    <!-- Средняя колонка -->
-                                    <div>
-                                        <p style="margin: 0 0 12px 0;"><strong style="color: #6366f1;">💻 Техника</strong></p>
-                                        <p style="margin: 6px 0; color: #e0e0e0;">
-                                            <span style="color: #b0b0b0;">CPU:</span> ${app.cpu_model || '<span style="color: #888; font-style: italic;">Не указан</span>'}
-                                        </p>
-                                        <p style="margin: 6px 0; color: #e0e0e0;">
-                                            <span style="color: #b0b0b0;">GPU:</span> ${app.gpu_model || '<span style="color: #888; font-style: italic;">Не указан</span>'}
-                                        </p>
-                                        <p style="margin: 6px 0; color: #e0e0e0;">
-                                            <span style="color: #b0b0b0;">Интернет:</span> ${app.internet_speed || '<span style="color: #888; font-style: italic;">Не указан</span>'}
-                                        </p>
+                                ` : app.type === 'model' ? `
+                                    <!-- МОДЕЛЬ -->
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                                        <div>
+                                            <p style="margin: 0 0 12px 0;"><strong style="color: #ec4899;">📱 Контакты</strong></p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Телефон:</span> ${app.phone}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Telegram:</span> ${app.telegram ? `<code style="background: #2d2d3d; padding: 2px 6px; border-radius: 4px; color: #ec4899;">${app.telegram}</code>` : '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Город:</span> ${app.city}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p style="margin: 0 0 12px 0;"><strong style="color: #ec4899;">💻 Техника</strong></p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Девайс:</span> ${app.device_model || '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">2 девайса:</span> ${app.has_dual_devices || '-'}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Наушники:</span> ${app.has_headphones || '-'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p style="margin: 0 0 12px 0;"><strong style="color: #ec4899;">📚 Информация</strong></p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Возраст:</span> ${app.age || '-'}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Одна:</span> ${app.residence || '-'}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Часы работы:</span> ${app.work_hours || '-'}
+                                            </p>
+                                        </div>
                                     </div>
-                                    
-                                    <!-- Правая колонка -->
-                                    <div>
-                                        <p style="margin: 0 0 12px 0;"><strong style="color: #6366f1;">📚 Опыт</strong></p>
-                                        <p style="margin: 6px 0; color: #e0e0e0;">
-                                            <span style="color: #b0b0b0;">Возраст:</span> ${app.date_of_birth || '<span style="color: #888; font-style: italic;">Не указан</span>'}
-                                        </p>
-                                        <p style="margin: 6px 0; color: #e0e0e0;">
-                                            <span style="color: #b0b0b0;">English:</span> ${app.english_level || '<span style="color: #888; font-style: italic;">Не указан</span>'}
-                                        </p>
-                                        <p style="margin: 6px 0; color: #e0e0e0;">
-                                            <span style="color: #b0b0b0;">Опыт работы:</span> ${app.work_experience || '<span style="color: #888; font-style: italic;">Не указан</span>'}
-                                        </p>
+                                ` : `
+                                    <!-- ЧАТТЕР -->
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                                        <div>
+                                            <p style="margin: 0 0 12px 0;"><strong style="color: #8b5cf6;">📱 Контакты</strong></p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Телефон:</span> ${app.phone}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Telegram:</span> ${app.telegram ? `<code style="background: #2d2d3d; padding: 2px 6px; border-radius: 4px; color: #8b5cf6;">${app.telegram}</code>` : '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p style="margin: 0 0 12px 0;"><strong style="color: #8b5cf6;">📚 Информация</strong></p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Возраст:</span> ${app.age}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">География:</span> ${app.geo}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Оффер:</span> #${app.offer_number}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p style="margin: 0 0 12px 0;"><strong style="color: #8b5cf6;">💼 Опыт</strong></p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Опыт:</span> ${app.experience || '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
+                                `}
                                 
                                 <!-- Разделитель -->
                                 <div style="margin: 15px 0; border-top: 1px solid #2d2d3d;"></div>
@@ -2973,12 +3058,9 @@
                                         <p style="margin: 0; color: #b0b0b0; font-size: 0.9em;">
                                             📅 Добавлено: <strong style="color: #e0e0e0;">${app.date_added}</strong>
                                         </p>
-                                        ${app.interview_time ? `<p style="margin: 4px 0 0 0; color: #b0b0b0; font-size: 0.9em;">
-                                            🗓️ Собеседование: <strong style="color: #e0e0e0;">${app.interview_time}</strong>
-                                        </p>` : ''}
                                     </div>
                                     <div style="text-align: right;">
-                                        <span style="color: #6366f1; font-weight: 600; font-size: 0.85em;">ID: ${app.id}</span>
+                                        <span style="color: ${app.type_color}; font-weight: 600; font-size: 0.85em;">ID: ${app.id}</span>
                                     </div>
                                 </div>
                             </div>

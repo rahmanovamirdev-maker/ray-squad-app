@@ -1103,12 +1103,49 @@ def admin_get_full_archive():
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
     try:
-        # Получаем АБСОЛЮТНО ВСЕ анкеты БЕЗ ИСКЛЮЧЕНИЙ - это полный архив
-        all_applicants = db.session.query(Applicant).order_by(Applicant.date_added.desc()).all()
+        # Собираем ВСЕ анкеты из трёх таблиц
+        all_records = []
+        
+        # 1. ОПЕРАТОРЫ (Applicant)
+        operators = db.session.query(Applicant).all()
+        for op in operators:
+            record = op.to_dict()
+            record['type'] = 'operator'
+            record['type_emoji'] = '👨‍💼'
+            record['type_name'] = 'Оператор'
+            record['type_color'] = '#3b82f6'
+            all_records.append(record)
+        
+        # 2. МОДЕЛИ (ModelOperatorApplication)
+        models = db.session.query(ModelOperatorApplication).all()
+        for model in models:
+            record = model.to_dict()
+            record['type'] = 'model'
+            record['type_emoji'] = '👩‍🎬'
+            record['type_name'] = 'Модель'
+            record['type_color'] = '#ec4899'
+            all_records.append(record)
+        
+        # 3. ЧАТТЕРЫ (ChatApplication)
+        chatters = db.session.query(ChatApplication).all()
+        for chatter in chatters:
+            record = chatter.to_dict()
+            record['type'] = 'chatter'
+            record['type_emoji'] = '💬'
+            record['type_name'] = 'Чаттер'
+            record['type_color'] = '#8b5cf6'
+            all_records.append(record)
+        
+        # Сортируем по дате добавления (новые в начале)
+        all_records.sort(key=lambda x: x['date_added'], reverse=True)
+        
         return jsonify({
             'success': True,
-            'total_count': len(all_applicants),
-            'applicants': [app.to_dict() for app in all_applicants]
+            'total_count': len(all_records),
+            'operators_count': len(operators),
+            'models_count': len(models),
+            'chatters_count': len(chatters),
+            'applicants': all_records
         }), 200
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
