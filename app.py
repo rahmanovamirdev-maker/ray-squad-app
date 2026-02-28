@@ -1211,14 +1211,31 @@ def profile():
         return redirect(url_for('profile'))
 
     # Статистика - считаем ВСЕ анкеты включая удаленные (статистика не должна меняться при удалении)
-    applicants_count = Applicant.query.filter_by(owner_username=user.username).count()
-    approved_applicants = Applicant.query.filter_by(owner_username=user.username, status='approved').count()
-    rejected_applicants = Applicant.query.filter_by(owner_username=user.username, status='rejected').count()
+    operator_total = Applicant.query.filter_by(owner_username=user.username).count()
+    operator_approved = Applicant.query.filter_by(owner_username=user.username, status='approved').count()
+    operator_rejected = Applicant.query.filter_by(owner_username=user.username, status='rejected').count()
+
+    model_total = ModelOperatorApplication.query.filter_by(owner_username=user.username).count()
+    model_approved = ModelOperatorApplication.query.filter_by(owner_username=user.username, status='approved').count()
+    model_rejected = ModelOperatorApplication.query.filter_by(owner_username=user.username, status='rejected').count()
+
+    chatter_total = ChatApplication.query.filter_by(owner_username=user.username).count()
+    chatter_approved = ChatApplication.query.filter_by(owner_username=user.username, status='approved').count()
+    chatter_rejected = ChatApplication.query.filter_by(owner_username=user.username, status='rejected').count()
 
     stats = {
-        'applicants_count': applicants_count,
-        'approved_applicants': approved_applicants,
-        'rejected_applicants': rejected_applicants
+        'applicants_count': operator_total + model_total + chatter_total,
+        'approved_applicants': operator_approved + model_approved + chatter_approved,
+        'rejected_applicants': operator_rejected + model_rejected + chatter_rejected,
+        'operators_total': operator_total,
+        'operators_approved': operator_approved,
+        'operators_rejected': operator_rejected,
+        'models_total': model_total,
+        'models_approved': model_approved,
+        'models_rejected': model_rejected,
+        'chatters_total': chatter_total,
+        'chatters_approved': chatter_approved,
+        'chatters_rejected': chatter_rejected
     }
 
     return render_template('profile.html', current_user=user, stats=stats, is_admin_view=False)
@@ -1247,14 +1264,31 @@ def admin_view_user_profile(user_id):
         return redirect(url_for('admin_view_user_profile', user_id=user_id))
     
     # Получение статистики - считаем ВСЕ анкеты включая удаленные (статистика не должна меняться при удалении)
-    applicants_count = Applicant.query.filter_by(owner_username=user.username).count()
-    approved_applicants = Applicant.query.filter_by(owner_username=user.username, status='approved').count()
-    rejected_applicants = Applicant.query.filter_by(owner_username=user.username, status='rejected').count()
+    operator_total = Applicant.query.filter_by(owner_username=user.username).count()
+    operator_approved = Applicant.query.filter_by(owner_username=user.username, status='approved').count()
+    operator_rejected = Applicant.query.filter_by(owner_username=user.username, status='rejected').count()
+
+    model_total = ModelOperatorApplication.query.filter_by(owner_username=user.username).count()
+    model_approved = ModelOperatorApplication.query.filter_by(owner_username=user.username, status='approved').count()
+    model_rejected = ModelOperatorApplication.query.filter_by(owner_username=user.username, status='rejected').count()
+
+    chatter_total = ChatApplication.query.filter_by(owner_username=user.username).count()
+    chatter_approved = ChatApplication.query.filter_by(owner_username=user.username, status='approved').count()
+    chatter_rejected = ChatApplication.query.filter_by(owner_username=user.username, status='rejected').count()
 
     stats = {
-        'applicants_count': applicants_count,
-        'approved_applicants': approved_applicants,
-        'rejected_applicants': rejected_applicants
+        'applicants_count': operator_total + model_total + chatter_total,
+        'approved_applicants': operator_approved + model_approved + chatter_approved,
+        'rejected_applicants': operator_rejected + model_rejected + chatter_rejected,
+        'operators_total': operator_total,
+        'operators_approved': operator_approved,
+        'operators_rejected': operator_rejected,
+        'models_total': model_total,
+        'models_approved': model_approved,
+        'models_rejected': model_rejected,
+        'chatters_total': chatter_total,
+        'chatters_approved': chatter_approved,
+        'chatters_rejected': chatter_rejected
     }
 
     return render_template('profile.html', current_user=user, stats=stats, is_admin_view=True, admin_user=admin)

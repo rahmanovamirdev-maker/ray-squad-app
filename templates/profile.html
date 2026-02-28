@@ -84,6 +84,42 @@
                             <span class="stat-value" style="color: #ef4444;">{{ stats.rejected_applicants }}</span>
                         </div>
                         <div class="stat-card">
+                            <span class="stat-label">👨‍💻 Операторы: всего</span>
+                            <span class="stat-value">{{ stats.operators_total }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">👨‍💻 Операторы: ✅</span>
+                            <span class="stat-value" style="color: #22c55e;">{{ stats.operators_approved }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">👨‍💻 Операторы: ❌</span>
+                            <span class="stat-value" style="color: #ef4444;">{{ stats.operators_rejected }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">💃 Модели: всего</span>
+                            <span class="stat-value">{{ stats.models_total }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">💃 Модели: ✅</span>
+                            <span class="stat-value" style="color: #22c55e;">{{ stats.models_approved }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">💃 Модели: ❌</span>
+                            <span class="stat-value" style="color: #ef4444;">{{ stats.models_rejected }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">💬 Чаттеры: всего</span>
+                            <span class="stat-value">{{ stats.chatters_total }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">💬 Чаттеры: ✅</span>
+                            <span class="stat-value" style="color: #22c55e;">{{ stats.chatters_approved }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">💬 Чаттеры: ❌</span>
+                            <span class="stat-value" style="color: #ef4444;">{{ stats.chatters_rejected }}</span>
+                        </div>
+                        <div class="stat-card">
                             <span class="stat-label">💰 Вы заработали</span>
                             <span class="stat-value" style="color: #f59e0b; font-size: 1.5em;">${{ current_user.earned_amount if current_user.earned_amount else 0 }}</span>
                         </div>
