@@ -6,7 +6,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-image: url('/static/backgroung.jpg');
+    background-image: url('/static/background.jpg'), url('/static/backgroung.jpg');
     background-attachment: fixed;
     background-position: center;
     background-size: cover;
@@ -22,6 +22,7 @@ body {
     body {
         background-attachment: scroll;
         background-size: cover;
+        background-position: center top;
         min-height: auto;
     }
 }
