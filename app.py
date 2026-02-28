@@ -38,6 +38,7 @@ class Applicant(db.Model):
     owner_username = db.Column(db.String(100))
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
     team = db.Column(db.String(50))  # Команда (Team 1 - Team 8)
+    is_deleted = db.Column(db.Boolean, default=False)  # Мягкое удаление
 
     def to_dict(self):
         return {
@@ -55,7 +56,8 @@ class Applicant(db.Model):
             'date_added': self.date_added.strftime('%d.%m.%Y %H:%M'),
             'owner_username': self.owner_username,
             'status': self.status,
-            'team': self.team
+            'team': self.team,
+            'is_deleted': self.is_deleted
         }
 
 # Модель пользователей
@@ -373,9 +375,11 @@ def index():
     user = User.query.get(session['user_id'])
     page = request.args.get('page', 1, type=int)
     if user and user.is_admin:
-        applicants = Applicant.query.order_by(Applicant.date_added.desc()).paginate(page=page, per_page=10)
+        # На главной странице показываем только не удаленные анкеты
+        applicants = Applicant.query.filter_by(is_deleted=False).order_by(Applicant.date_added.desc()).paginate(page=page, per_page=10)
     else:
-        applicants = Applicant.query.filter_by(owner_username=user.username).order_by(Applicant.date_added.desc()).paginate(page=page, per_page=10)
+        # Пользователь видит только свои не удаленные анкеты
+        applicants = Applicant.query.filter_by(owner_username=user.username, is_deleted=False).order_by(Applicant.date_added.desc()).paginate(page=page, per_page=10)
     return render_template('index.html', applicants=applicants, current_user=user)
 
 @app.route('/manual')
@@ -420,10 +424,10 @@ def check_duplicate_applicants(phone, telegram, full_name):
     """
     duplicates = []
     
-    # Проверка по телефону (точное совпадение)
+    # Проверка по телефону (точное совпадение) только среди не удаленных анкет
     if phone:
         phone_clean = phone.strip()
-        existing_by_phone = Applicant.query.filter_by(phone=phone_clean).all()
+        existing_by_phone = Applicant.query.filter_by(phone=phone_clean, is_deleted=False).all()
         for app in existing_by_phone:
             duplicates.append({
                 'id': app.id,
@@ -435,11 +439,11 @@ def check_duplicate_applicants(phone, telegram, full_name):
                 'status': app.status
             })
     
-    # Проверка по телеграму (точное совпадение, игнорируя @)
+    # Проверка по телеграму (точное совпадение, игнорируя @) только среди не удаленных
     if telegram:
         telegram_clean = telegram.strip().lstrip('@').lower()
         if telegram_clean:
-            all_applicants = Applicant.query.all()
+            all_applicants = Applicant.query.filter_by(is_deleted=False).all()
             for app in all_applicants:
                 if app.telegram:
                     app_tg_clean = app.telegram.strip().lstrip('@').lower()
@@ -456,10 +460,10 @@ def check_duplicate_applicants(phone, telegram, full_name):
                                 'status': app.status
                             })
     
-    # Проверка по полному имени (точное совпадение)
+    # Проверка по полному имени (точное совпадение) только среди не удаленных
     if full_name:
         name_clean = full_name.strip().lower()
-        all_applicants = Applicant.query.all()
+        all_applicants = Applicant.query.filter_by(is_deleted=False).all()
         for app in all_applicants:
             if app.full_name and app.full_name.strip().lower() == name_clean:
                 # Проверяем, не добавили ли уже эту анкету
@@ -728,22 +732,22 @@ def get_applicants():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
     
-    # Owner и Developer видят все анкеты
+    # Owner и Developer видят все НЕ УДАЛЕННЫЕ анкеты
     if user.is_owner or (user.prefix and user.prefix == 'Developer'):
-        applicants = Applicant.query.order_by(Applicant.date_added.desc()).all()
-    # Обычные админы видят только анкеты своей команды
+        applicants = Applicant.query.filter_by(is_deleted=False).order_by(Applicant.date_added.desc()).all()
+    # Обычные админы видят только НЕ УДАЛЕННЫЕ анкеты своей команды
     elif user.is_admin and user.team:
-        applicants = Applicant.query.filter_by(team=user.team).order_by(Applicant.date_added.desc()).all()
+        applicants = Applicant.query.filter_by(team=user.team, is_deleted=False).order_by(Applicant.date_added.desc()).all()
         # Автоматически привязываем анкеты без команды к команде текущего админа
-        for applicant in Applicant.query.filter_by(team=None).all():
+        for applicant in Applicant.query.filter_by(team=None, is_deleted=False).all():
             applicant.team = user.team
         db.session.commit()
-    # Админы без команды видят все анкеты (для обратной совместимости)
+    # Админы без команды видят все НЕ УДАЛЕННЫЕ анкеты (для обратной совместимости)
     elif user.is_admin:
-        applicants = Applicant.query.order_by(Applicant.date_added.desc()).all()
-    # Обычные пользователи видят только свои анкеты
+        applicants = Applicant.query.filter_by(is_deleted=False).order_by(Applicant.date_added.desc()).all()
+    # Обычные пользователи видят только свои НЕ УДАЛЕННЫЕ анкеты
     else:
-        applicants = Applicant.query.filter_by(owner_username=user.username).order_by(Applicant.date_added.desc()).all()
+        applicants = Applicant.query.filter_by(owner_username=user.username, is_deleted=False).order_by(Applicant.date_added.desc()).all()
     
     return jsonify([a.to_dict() for a in applicants])
 
@@ -1054,6 +1058,25 @@ def admin_save_hours():
         return jsonify({'success': False, 'message': str(e)}), 400
 
 
+@app.route('/api/admin/all-applicants')
+def admin_get_all_applicants():
+    """API для получения всех анкет, включая удаленные (только для админов)"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    user = User.query.get(session['user_id'])
+    if not user or not user.is_admin:
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    try:
+        # Получаем ВСЕ анкеты без фильтрации по is_deleted
+        applicants = Applicant.query.order_by(Applicant.date_added.desc()).all()
+        return jsonify({
+            'success': True,
+            'applicants': [app.to_dict() for app in applicants]
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -1114,10 +1137,10 @@ def profile():
         flash('Профиль обновлен', 'success')
         return redirect(url_for('profile'))
 
-    # Статистика
-    applicants_count = Applicant.query.filter_by(owner_username=user.username).count()
-    approved_applicants = Applicant.query.filter_by(owner_username=user.username, status='approved').count()
-    rejected_applicants = Applicant.query.filter_by(owner_username=user.username, status='rejected').count()
+    # Статистика - только по не удаленным анкетам
+    applicants_count = Applicant.query.filter_by(owner_username=user.username, is_deleted=False).count()
+    approved_applicants = Applicant.query.filter_by(owner_username=user.username, status='approved', is_deleted=False).count()
+    rejected_applicants = Applicant.query.filter_by(owner_username=user.username, status='rejected', is_deleted=False).count()
 
     stats = {
         'applicants_count': applicants_count,
@@ -1150,10 +1173,10 @@ def admin_view_user_profile(user_id):
             flash('Некорректная сумма', 'error')
         return redirect(url_for('admin_view_user_profile', user_id=user_id))
     
-    # Получение статистики
-    applicants_count = Applicant.query.filter_by(owner_username=user.username).count()
-    approved_applicants = Applicant.query.filter_by(owner_username=user.username, status='approved').count()
-    rejected_applicants = Applicant.query.filter_by(owner_username=user.username, status='rejected').count()
+    # Получение статистики - только по не удаленным анкетам
+    applicants_count = Applicant.query.filter_by(owner_username=user.username, is_deleted=False).count()
+    approved_applicants = Applicant.query.filter_by(owner_username=user.username, status='approved', is_deleted=False).count()
+    rejected_applicants = Applicant.query.filter_by(owner_username=user.username, status='rejected', is_deleted=False).count()
 
     stats = {
         'applicants_count': applicants_count,
@@ -1306,7 +1329,8 @@ def delete_applicant(applicant_id):
         # allow admin or owner
         if not user.is_admin and applicant.owner_username != user.username:
             return jsonify({'success': False, 'message': 'Forbidden'}), 403
-        db.session.delete(applicant)
+        # Мягкое удаление - помечаем как удаленную, но не удаляем физически
+        applicant.is_deleted = True
         db.session.commit()
         return jsonify({'success': True, 'message': 'Запись удалена'}), 200
     except Exception as e:
@@ -1494,7 +1518,10 @@ def delete_all_applicants():
         user = User.query.get(session['user_id'])
         if not user.is_admin:
             return jsonify({'success': False, 'message': 'Forbidden'}), 403
-        Applicant.query.delete()
+        # Мягкое удаление - помечаем все анкеты как удаленные
+        applicants = Applicant.query.all()
+        for applicant in applicants:
+            applicant.is_deleted = True
         db.session.commit()
         return jsonify({'success': True, 'message': 'Все анкеты удалены'}), 200
     except Exception as e:
@@ -1503,8 +1530,8 @@ def delete_all_applicants():
 @app.route('/download-report')
 def download_report():
     try:
-        # Получаем все анкеты, кроме отклоненных (rejected)
-        applicants = Applicant.query.filter(Applicant.status != 'rejected').order_by(Applicant.date_added.desc()).all()
+        # Получаем все НЕ УДАЛЕННЫЕ анкеты, кроме отклоненных (rejected)
+        applicants = Applicant.query.filter(Applicant.status != 'rejected', Applicant.is_deleted == False).order_by(Applicant.date_added.desc()).all()
         
         # Создание текстового отчета
         report_content = "=" * 80 + "\n"
