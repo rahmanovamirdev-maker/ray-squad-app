@@ -1038,7 +1038,7 @@
 
         // Загрузка списка операторов
         function loadOperators() {
-            fetch('/api/applicants')
+            fetch('/api/applicants?t=' + Date.now())
                 .then(response => response.json())
                 .then(applicants => {
                     const container = document.getElementById('operatorsList');
@@ -1316,7 +1316,7 @@
 
         // Загрузка списка кандидатов
         function loadApplicants() {
-            fetch('/api/applicants')
+            fetch('/api/applicants?t=' + Date.now())
                 .then(response => response.json())
                 .then(applicants => {
                     const container = document.getElementById('applicantsList');

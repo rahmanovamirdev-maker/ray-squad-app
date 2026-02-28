@@ -17,6 +17,16 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev_secret_key')
 
 db = SQLAlchemy(app)
 
+# Отключение кэширования для всех API ответов
+@app.after_request
+def disable_caching(response):
+    """Отключить кэширование для API ответов"""
+    if request.path.startswith('/api/'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
+
 # Функция для получения московского времени (UTC+3)
 def moscow_now():
     return datetime.now(timezone(timedelta(hours=3)))
