@@ -238,6 +238,11 @@ with app.app_context():
                 db.session.execute(text("ALTER TABLE applicant ADD COLUMN team VARCHAR(50)"))
                 db.session.commit()
                 print("[MIGRATION] Столбец team добавлен успешно")
+            if 'is_deleted' not in cols:
+                print("[MIGRATION] Добавляю столбец is_deleted в таблицу applicant...")
+                db.session.execute(text("ALTER TABLE applicant ADD COLUMN is_deleted BOOLEAN DEFAULT 0"))
+                db.session.commit()
+                print("[MIGRATION] Столбец is_deleted добавлен успешно")
         if 'model_operator_application' in insp.get_table_names():
             cols = [c['name'] for c in insp.get_columns('model_operator_application')]
             if 'team' not in cols:
