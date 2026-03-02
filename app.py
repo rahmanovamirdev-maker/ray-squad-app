@@ -191,6 +191,10 @@ class ScoutJoinApplication(db.Model):
     telegram_username = db.Column(db.String(120), nullable=False)
     work_time = db.Column(db.String(200), nullable=False)
     date_added = db.Column(db.DateTime, default=moscow_now)
+    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    approved_by = db.Column(db.String(120), nullable=True)
+    rejected_by = db.Column(db.String(120), nullable=True)
+    reviewed_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
         return {
@@ -200,7 +204,11 @@ class ScoutJoinApplication(db.Model):
             'persuasion_text': self.persuasion_text,
             'telegram_username': self.telegram_username,
             'work_time': self.work_time,
-            'date_added': self.date_added.strftime('%d.%m.%Y %H:%M')
+            'date_added': self.date_added.strftime('%d.%m.%Y %H:%M'),
+            'status': self.status,
+            'approved_by': self.approved_by,
+            'rejected_by': self.rejected_by,
+            'reviewed_at': self.reviewed_at.strftime('%d.%m.%Y %H:%M') if self.reviewed_at else None
         }
 
 # Модель для истории синхронизации статусов с внешним API
@@ -1256,6 +1264,62 @@ def admin_clear_scouters():
             'success': True,
             'message': f'Удалено анкет: {count}',
             'deleted_count': count
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+
+@app.route('/api/admin/scout/<int:scout_id>/approve', methods=['POST'])
+def admin_approve_scout(scout_id):
+    """API для одобрения заявки скаутера (только для админов)."""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    user = User.query.get(session['user_id'])
+    if not user or not user.is_admin:
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    try:
+        application = ScoutJoinApplication.query.get(scout_id)
+        if not application:
+            return jsonify({'success': False, 'message': 'Application not found'}), 404
+
+        application.status = 'approved'
+        application.approved_by = user.username
+        application.reviewed_at = moscow_now()
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'message': 'Заявка одобрена',
+            'application': application.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+
+@app.route('/api/admin/scout/<int:scout_id>/reject', methods=['POST'])
+def admin_reject_scout(scout_id):
+    """API для отклонения заявки скаутера (только для админов)."""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    user = User.query.get(session['user_id'])
+    if not user or not user.is_admin:
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    try:
+        application = ScoutJoinApplication.query.get(scout_id)
+        if not application:
+            return jsonify({'success': False, 'message': 'Application not found'}), 404
+
+        application.status = 'rejected'
+        application.rejected_by = user.username
+        application.reviewed_at = moscow_now()
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'message': 'Заявка отклонена',
+            'application': application.to_dict()
         }), 200
     except Exception as e:
         db.session.rollback()

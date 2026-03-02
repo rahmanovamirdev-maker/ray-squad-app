@@ -2956,27 +2956,98 @@
                     return;
                 }
 
-                container.innerHTML = data.applications.map((application, index) => `
-                    <div class="applicant-card" style="border-left: 4px solid #6366f1;">
-                        <div class="applicant-header" style="align-items: flex-start;">
-                            <h3 style="margin-bottom: 8px;">
-                                🕵️ #${index + 1} — ${application.full_name}
-                                <span class="user-badge admin" style="margin-left: 8px;">${application.age} лет</span>
-                            </h3>
-                        </div>
+                container.innerHTML = data.applications.map((application, index) => {
+                    let statusBadge = '';
+                    let actionButtons = '';
+                    
+                    if (application.status === 'approved') {
+                        statusBadge = `<span class="user-badge" style="background: #10b981; color: white;">✓ Одобрено</span>`;
+                        if (application.approved_by) {
+                            statusBadge += `<span class="user-badge" style="margin-left: 6px; background: #14532d; color: #6ee7b7; font-size: 0.85em;">Одобрил: ${application.approved_by}</span>`;
+                        }
+                    } else if (application.status === 'rejected') {
+                        statusBadge = `<span class="user-badge" style="background: #ef4444; color: white;">✗ Отклонено</span>`;
+                        if (application.rejected_by) {
+                            statusBadge += `<span class="user-badge" style="margin-left: 6px; background: #7f1d1d; color: #fca5a5; font-size: 0.85em;">Отклонил: ${application.rejected_by}</span>`;
+                        }
+                    } else {
+                        statusBadge = `<span class="user-badge" style="background: #f59e0b; color: white;">⏳ На рассмотрении</span>`;
+                        actionButtons = `
+                            <div style="margin-top: 12px; display: flex; gap: 10px;">
+                                <button onclick="approveScout(${application.id})" class="btn btn-success" style="background: #10b981; border-color: #10b981; padding: 8px 16px; flex: 1;">✓ Одобрить</button>
+                                <button onclick="rejectScout(${application.id})" class="btn btn-danger" style="background: #ef4444; border-color: #ef4444; padding: 8px 16px; flex: 1;">✗ Отклонить</button>
+                            </div>
+                        `;
+                    }
+                    
+                    return `
+                        <div class="applicant-card" style="border-left: 4px solid #6366f1;">
+                            <div class="applicant-header" style="align-items: flex-start; justify-content: space-between;">
+                                <div>
+                                    <h3 style="margin-bottom: 8px;">
+                                        🕵️ #${index + 1} — ${application.full_name}
+                                        <span class="user-badge admin" style="margin-left: 8px;">${application.age} лет</span>
+                                    </h3>
+                                    <div style="margin-top: 6px;">${statusBadge}</div>
+                                </div>
+                            </div>
 
-                        <p><strong>Telegram:</strong> ${application.telegram_username}</p>
-                        <p><strong>Готовность по времени:</strong> ${application.work_time}</p>
-                        <p><strong>Дата отправки:</strong> ${application.date_added}</p>
+                            <p><strong>Telegram:</strong> ${application.telegram_username}</p>
+                            <p><strong>Готовность по времени:</strong> ${application.work_time}</p>
+                            <p><strong>Дата отправки:</strong> ${application.date_added}</p>
+                            ${application.reviewed_at ? `<p><strong>Рассмотрено:</strong> ${application.reviewed_at}</p>` : ''}
 
-                        <div style="margin-top: 12px; padding: 12px; background: #232335; border: 1px solid #34344a; border-radius: 8px;">
-                            <p style="margin: 0 0 6px 0;"><strong>Ответ на задание:</strong></p>
-                            <p style="margin: 0; white-space: pre-wrap; line-height: 1.5;">${application.persuasion_text}</p>
+                            <div style="margin-top: 12px; padding: 12px; background: #232335; border: 1px solid #34344a; border-radius: 8px;">
+                                <p style="margin: 0 0 6px 0;"><strong>Ответ на задание:</strong></p>
+                                <p style="margin: 0; white-space: pre-wrap; line-height: 1.5;">${application.persuasion_text}</p>
+                            </div>
+                            
+                            ${actionButtons}
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             } catch (error) {
                 document.getElementById('scoutersContainer').innerHTML = '<p class="empty">Ошибка загрузки</p>';
+            }
+        }
+
+        async function approveScout(scoutId) {
+            try {
+                const response = await fetch(`/api/admin/scout/${scoutId}/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    loadScouters();
+                } else {
+                    alert('✗ Ошибка: ' + (data.message || 'Не удалось одобрить заявку'));
+                }
+            } catch (error) {
+                alert('✗ Ошибка: ' + error.message);
+            }
+        }
+
+        async function rejectScout(scoutId) {
+            if (!confirm('Вы уверены что хотите отклонить эту заявку?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/admin/scout/${scoutId}/reject`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    loadScouters();
+                } else {
+                    alert('✗ Ошибка: ' + (data.message || 'Не удалось отклонить заявку'));
+                }
+            } catch (error) {
+                alert('✗ Ошибка: ' + error.message);
             }
         }
 
