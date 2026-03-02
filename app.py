@@ -204,8 +204,8 @@ class ScoutJoinApplication(db.Model):
             'persuasion_text': self.persuasion_text,
             'telegram_username': self.telegram_username,
             'work_time': self.work_time,
-            'date_added': self.date_added.strftime('%d.%m.%Y %H:%M'),
-            'status': self.status,
+            'date_added': self.date_added.strftime('%d.%m.%Y %H:%M') if self.date_added else None,
+            'status': self.status or 'pending',
             'approved_by': self.approved_by,
             'rejected_by': self.rejected_by,
             'reviewed_at': self.reviewed_at.strftime('%d.%m.%Y %H:%M') if self.reviewed_at else None
