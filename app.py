@@ -91,6 +91,19 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'display_name': self.display_name,
+            'prefix': self.prefix,
+            'is_admin': self.is_admin,
+            'is_owner': self.is_owner,
+            'team': self.team,
+            'created_at': self.created_at.strftime('%d.%m.%Y %H:%M') if self.created_at else None,
+            'last_login_at': self.last_login_at.strftime('%d.%m.%Y %H:%M') if self.last_login_at else None
+        }
+
 # Модель для вопросов отбора
 
 
@@ -1323,6 +1336,26 @@ def admin_reject_scout(scout_id):
         }), 200
     except Exception as e:
         db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+
+@app.route('/api/admin/users')
+def admin_get_users():
+    """API для получения списка всех пользователей (только для админов)."""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    user = User.query.get(session['user_id'])
+    if not user or not user.is_admin:
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    try:
+        users = User.query.order_by(User.created_at.desc()).all()
+        return jsonify({
+            'success': True,
+            'count': len(users),
+            'users': [u.to_dict() for u in users]
+        }), 200
+    except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
 
