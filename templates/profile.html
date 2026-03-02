@@ -17,6 +17,7 @@
                 <button class="nav-burger" type="button" aria-label="Открыть меню" onclick="toggleHeaderNav()">☰</button>
                 <nav class="user-info nav-links" id="topNav">
                     <a href="{{ url_for('index') }}" class="nav-link">Главная</a>
+                    <a href="{{ url_for('dashboard') }}" class="nav-link">Анкеты</a>
                     <a href="{{ url_for('manual') }}" class="nav-link">Мануал</a>
                     {% if is_admin_view %}
                         <a href="{{ url_for('admin_panel') }}" class="nav-link active">← Вернуться в админку</a>

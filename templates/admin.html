@@ -6,23 +6,62 @@
     <title>Админ-панель — LiamKing Agency</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
+        .burger-menu-btn {
+            display: none;
+            background: transparent;
+            border: 2px solid #6366f1;
+            color: #6366f1;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .burger-menu-btn:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
         .admin-tabs {
             display: flex;
-            gap: 15px;
+            gap: 8px;
             margin-bottom: 30px;
             border-bottom: 2px solid #2d2d3d;
+            flex-wrap: wrap;
+        }
+
+        .admin-tabs.mobile-open {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            flex-direction: column;
+            background: rgba(30, 30, 46, 0.98);
+            border: none;
+            border-bottom: 2px solid #2d2d3d;
+            gap: 0;
+            padding: 15px;
+            z-index: 100;
+            margin-bottom: 0;
         }
 
         .admin-tabs button {
-            padding: 15px 30px;
+            padding: 10px 18px;
             background: transparent;
             border: none;
             border-bottom: 3px solid transparent;
             color: #b0b0b0;
-            font-size: 1.05em;
+            font-size: 0.95em;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
+        }
+
+        .admin-tabs.mobile-open button {
+            padding: 15px 10px;
+            width: 100%;
+            text-align: left;
         }
 
         .admin-tabs button.active {
@@ -30,8 +69,28 @@
             border-bottom-color: #6366f1;
         }
 
+        .admin-tabs.mobile-open button.active {
+            background: rgba(99, 102, 241, 0.15);
+            border-left: 3px solid #6366f1;
+            border-bottom: none;
+        }
+
         .admin-tabs button:hover {
             color: #e0e0e0;
+        }
+
+        @media (max-width: 1200px) {
+            .burger-menu-btn {
+                display: block;
+            }
+
+            .admin-tabs {
+                display: none;
+            }
+
+            .admin-tabs.mobile-open {
+                display: flex;
+            }
         }
 
         .tab-content {
@@ -1267,6 +1326,7 @@
                 <button class="nav-burger" type="button" aria-label="Открыть меню" onclick="toggleHeaderNav()">☰</button>
                 <nav class="user-info nav-links" id="topNav">
                     <a href="{{ url_for('index') }}" class="nav-link">Главная</a>
+                    <a href="{{ url_for('dashboard') }}" class="nav-link">Анкеты</a>
                     <a href="{{ url_for('manual') }}" class="nav-link">Мануал</a>
                     <a href="{{ url_for('profile') }}" class="nav-link">Профиль</a>
                     <a href="{{ url_for('admin_panel') }}" class="nav-link active">Админка</a>
@@ -1275,12 +1335,16 @@
             </div>
         </header>
 
+        <!-- Кнопка бургер меню -->
+        <button class="burger-menu-btn" id="burgerMenuBtn" onclick="toggleBurgerMenu()">☰</button>
+
         <!-- Вкладки навигации -->
-        <div class="admin-tabs">
+        <div class="admin-tabs" id="adminTabs">
             <button class="tab-btn {% if current_tab == 'users' %}active{% endif %}" onclick="switchTab('users')">👤 Создание аккаунта</button>
             <button class="tab-btn {% if current_tab == 'operators' %}active{% endif %}" onclick="switchTab('operators')">👨‍💼 Операторы</button>
             <button class="tab-btn {% if current_tab == 'models' %}active{% endif %}" onclick="switchTab('models')">👩‍🎬 Модели</button>
             <button class="tab-btn {% if current_tab == 'chatters' %}active{% endif %}" onclick="switchTab('chatters')">💬 Чаттеры</button>
+            <button class="tab-btn {% if current_tab == 'scouters' %}active{% endif %}" onclick="switchTab('scouters')">🕵️ Скаутеры</button>
             <button class="tab-btn {% if current_tab == 'interviews' %}active{% endif %}" onclick="switchTab('interviews')">🗓️ Открытые собеседования</button>
             <button class="tab-btn {% if current_tab == 'archive' %}active{% endif %}" onclick="switchTab('archive')">📚 Полный архив</button>
         </div>
@@ -1470,6 +1534,19 @@
             </div>
         </div>
 
+        <!-- Вкладка: Скаутеры -->
+        <div id="scouters-tab" class="tab-content {% if current_tab == 'scouters' %}active{% endif %}">
+            <div class="actions-bar">
+                <h2>🕵️ Анкеты Скаутеров</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="loadScouters()">🔄 Обновить</button>
+                </div>
+            </div>
+            <div id="scoutersContainer" class="applicants-list">
+                <p class="loading">Загрузка анкет Скаутеров...</p>
+            </div>
+        </div>
+
         <!-- Вкладка: Открытые собеседования -->
         <div id="interviews-tab" class="tab-content {% if current_tab == 'interviews' %}active{% endif %}">
             <div class="actions-bar">
@@ -1634,6 +1711,11 @@
             }
         });
 
+        function toggleBurgerMenu() {
+            const tabs = document.getElementById('adminTabs');
+            tabs.classList.toggle('mobile-open');
+        }
+
         function switchTab(tabName) {
             // Скрываем все табы
             document.querySelectorAll('.tab-content').forEach(tab => {
@@ -1646,6 +1728,10 @@
             // Показываем выбранный таб
             document.getElementById(tabName + '-tab').classList.add('active');
             event.target.classList.add('active');
+
+            // Закрываем бургер меню
+            const tabs = document.getElementById('adminTabs');
+            tabs.classList.remove('mobile-open');
 
             if (tabName === 'interviews') {
                 loadInterviewSlotsAdmin();
@@ -2853,6 +2939,46 @@
             }
         }
 
+        async function loadScouters() {
+            try {
+                const response = await fetch('/api/admin/scouters');
+                const data = await response.json();
+                const container = document.getElementById('scoutersContainer');
+
+                if (!response.ok || !data.success) {
+                    container.innerHTML = '<p class="empty">Ошибка загрузки анкет скаутеров</p>';
+                    return;
+                }
+
+                if (!data.applications || data.applications.length === 0) {
+                    container.innerHTML = '<p class="empty">Анкет скаутеров пока нет</p>';
+                    return;
+                }
+
+                container.innerHTML = data.applications.map((application, index) => `
+                    <div class="applicant-card" style="border-left: 4px solid #6366f1;">
+                        <div class="applicant-header" style="align-items: flex-start;">
+                            <h3 style="margin-bottom: 8px;">
+                                🕵️ #${index + 1} — ${application.full_name}
+                                <span class="user-badge admin" style="margin-left: 8px;">${application.age} лет</span>
+                            </h3>
+                        </div>
+
+                        <p><strong>Telegram:</strong> ${application.telegram_username}</p>
+                        <p><strong>Готовность по времени:</strong> ${application.work_time}</p>
+                        <p><strong>Дата отправки:</strong> ${application.date_added}</p>
+
+                        <div style="margin-top: 12px; padding: 12px; background: #232335; border: 1px solid #34344a; border-radius: 8px;">
+                            <p style="margin: 0 0 6px 0;"><strong>Ответ на задание:</strong></p>
+                            <p style="margin: 0; white-space: pre-wrap; line-height: 1.5;">${application.persuasion_text}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('scoutersContainer').innerHTML = '<p class="empty">Ошибка загрузки</p>';
+            }
+        }
+
         // Открыть фото в модальном окне
         function openPhotoModal(photoUrl) {
             const modal = document.createElement('div');
@@ -3083,6 +3209,8 @@
                 loadModels();
             } else if (tabName === 'chatters') {
                 loadChatters();
+            } else if (tabName === 'scouters') {
+                loadScouters();
             } else if (tabName === 'archive') {
                 loadFullArchive();
             }
@@ -3097,6 +3225,8 @@
                 loadModels();
             } else if (currentTab && currentTab.id === 'chatters-tab') {
                 loadChatters();
+            } else if (currentTab && currentTab.id === 'scouters-tab') {
+                loadScouters();
             } else if (currentTab && currentTab.id === 'archive-tab') {
                 loadFullArchive();
             }

@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiamKing Agency - Агентство по подбору талантов</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #e0e0e0;
+            overflow-x: hidden;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Навигация */
+        .landing-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(30, 30, 46, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 18px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            font-size: 1.8em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 0 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            line-height: 1;
+            height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            margin: 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #e0e0e0;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Секция Hero */
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 100px 50px 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            max-width: 900px;
+            z-index: 2;
+            animation: fadeInUp 1s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-title {
+            font-size: 4em;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.5em;
+            color: #b0b0b0;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn-large {
+            font-size: 1.1em !important;
+            padding: 0 36px !important;
+            height: 52px !important;
+        }
+
+        /* Фоновая анимация */
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+            opacity: 0.1;
+        }
+
+        .hero-bg::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, #667eea 0%, transparent 70%);
+            top: -250px;
+            left: -250px;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        .hero-bg::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, #764ba2 0%, transparent 70%);
+            bottom: -200px;
+            right: -200px;
+            animation: pulse 4s ease-in-out infinite 2s;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.2;
+            }
+        }
+
+        /* Секция преимуществ */
+        .features-section {
+            padding: 100px 50px;
+            background: rgba(30, 30, 46, 0.5);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 60px;
+            color: #e0e0e0;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: rgba(45, 45, 61, 0.8);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .feature-description {
+            color: #b0b0b0;
+            line-height: 1.6;
+        }
+
+        /* Секция "Как это работает" */
+        .how-section {
+            padding: 100px 50px;
+        }
+
+        .steps-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            margin-bottom: 60px;
+            padding: 30px;
+            background: rgba(45, 45, 61, 0.5);
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .step:nth-child(even) {
+            flex-direction: row-reverse;
+            border-left: none;
+            border-right: 4px solid #764ba2;
+        }
+
+        .step-number {
+            font-size: 4em;
+            font-weight: bold;
+            color: #667eea;
+            opacity: 0.3;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .step-content h3 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            color: #e0e0e0;
+        }
+
+        .step-content p {
+            color: #b0b0b0;
+            line-height: 1.6;
+            font-size: 1.1em;
+        }
+
+        /* Секция призыва к действию */
+        .cta-section {
+            padding: 88px 24px 72px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            text-align: center;
+        }
+
+        .cta-card {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 56px 48px;
+            border-radius: 24px;
+            border: 1px solid rgba(130, 144, 255, 0.28);
+            background: linear-gradient(180deg, rgba(50, 52, 102, 0.58) 0%, rgba(37, 35, 74, 0.58) 100%);
+            box-shadow: 0 18px 45px rgba(17, 16, 41, 0.45);
+        }
+
+        .cta-title {
+            font-size: 2.5em;
+            margin-bottom: 18px;
+        }
+
+        .cta-subtitle {
+            font-size: 1.2em;
+            color: #b0b0b0;
+            margin: 0 auto 34px;
+            max-width: 760px;
+            line-height: 1.55;
+        }
+
+        .cta-section .btn-primary {
+            width: auto !important;
+            min-width: 260px;
+            max-width: 100%;
+            padding: 0 36px !important;
+            height: 52px !important;
+            border-radius: 999px;
+            font-size: 1.08em;
+        }
+
+        /* Footer */
+        .landing-footer {
+            padding: 30px 50px;
+            background: rgba(20, 20, 30, 0.8);
+            text-align: center;
+            color: #808080;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scout-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .scout-modal.open {
+            display: flex;
+        }
+
+        .scout-modal-content {
+            width: 100%;
+            max-width: 760px;
+            max-height: 90vh;
+            overflow-y: auto;
+            background: #1e1e2e;
+            border: 1px solid #3d3d4d;
+            border-radius: 16px;
+            padding: 26px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.45);
+        }
+
+        .scout-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .scout-modal-title {
+            margin: 0;
+            font-size: 1.5em;
+            color: #e0e0e0;
+        }
+
+        .scout-close {
+            background: transparent;
+            border: 1px solid #4b4b5d;
+            color: #c9c9d6;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+        }
+
+        .scout-form {
+            display: grid;
+            gap: 14px;
+        }
+
+        .scout-field label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #d8d8e5;
+            line-height: 1.4;
+        }
+
+        .scout-field input,
+        .scout-field textarea {
+            width: 100%;
+            background: #2a2a3a;
+            color: #e8e8f1;
+            border: 1px solid #3d3d4d;
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 1em;
+            font-family: inherit;
+        }
+
+        .scout-field textarea {
+            min-height: 140px;
+            resize: vertical;
+        }
+
+        .scout-field input:focus,
+        .scout-field textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        .scout-help {
+            color: #a9a9bb;
+            font-size: 0.95em;
+            margin-top: -4px;
+        }
+
+        .scout-actions {
+            display: grid;
+            grid-template-columns: minmax(130px, 180px) minmax(220px, 1fr);
+            gap: 12px;
+            margin-top: 6px;
+            align-items: stretch;
+        }
+
+        .scout-actions .btn-primary,
+        .scout-actions .btn-secondary {
+            width: 100%;
+            height: 44px;
+            padding: 0 20px !important;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scout-status {
+            min-height: 22px;
+            color: #7ee787;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5em;
+            }
+
+            .hero-subtitle {
+                font-size: 1.2em;
+            }
+
+            .landing-nav {
+                padding: 12px 16px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .cta-card {
+                padding: 34px 20px;
+                border-radius: 18px;
+            }
+
+            .cta-section {
+                padding: 64px 16px 56px;
+            }
+
+            .cta-section .btn-primary {
+                width: 100% !important;
+                min-width: 0;
+                padding: 0 20px !important;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .step {
+                flex-direction: column !important;
+                border-left: 4px solid #667eea !important;
+                border-right: none !important;
+            }
+
+            .step-number {
+                font-size: 3em;
+            }
+
+            .scout-modal-content {
+                padding: 18px;
+            }
+
+            .scout-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .scout-actions .btn-primary,
+            .scout-actions .btn-secondary {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="landing-nav">
+        <div class="logo">⚡ LiamKing</div>
+        <div class="nav-buttons">
+            <a href="{{ url_for('login') }}" class="btn-secondary">Войти</a>
+            <a href="{{ url_for('login') }}" class="btn-primary">Начать работу</a>
+        </div>
+    </nav>
+
+    <!-- Hero секция -->
+    <section class="hero-section">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">LiamKing Agency</h1>
+            <p class="hero-subtitle">
+                Профессиональное агентство по подбору операторов, моделей и чаттеров.<br>
+                Мы помогаем найти лучших специалистов для вашего бизнеса.
+            </p>
+            <div class="hero-buttons">
+                <button type="button" class="btn-primary btn-large" onclick="openScoutModal()">Присоединиться к команде</button>
+                <a href="#features" class="btn-secondary btn-large">Узнать больше</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Секция преимуществ -->
+    <section id="features" class="features-section">
+        <h2 class="section-title">Почему выбирают нас</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3 class="feature-title">Профессиональный скаутинг</h3>
+                <p class="feature-description">
+                    Наши опытные скаутеры находят и отбирают лучших кандидатов с необходимыми навыками и опытом работы.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📋</div>
+                <h3 class="feature-title">Структурированный процесс</h3>
+                <p class="feature-description">
+                    Удобная система управления анкетами, собеседованиями и статусами кандидатов в одном месте.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3 class="feature-title">Быстрый подбор</h3>
+                <p class="feature-description">
+                    Эффективная система фильтрации и координации позволяет быстро находить подходящих специалистов.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3 class="feature-title">Работа в команде</h3>
+                <p class="feature-description">
+                    Распределение кандидатов по командам и скаутерам для максимально эффективной работы.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3 class="feature-title">Аналитика и отчеты</h3>
+                <p class="feature-description">
+                    Отслеживайте статистику, прогресс и эффективность работы вашей команды скаутеров.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3 class="feature-title">Качественный отбор</h3>
+                <p class="feature-description">
+                    Тщательная проверка технических навыков, опыта и соответствия требованиям каждой позиции.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Секция "Как это работает" -->
+    <section class="how-section">
+        <h2 class="section-title">Как это работает</h2>
+        <div class="steps-container">
+            <div class="step">
+                <div class="step-number">01</div>
+                <div class="step-content">
+                    <h3>Регистрация скаутера</h3>
+                    <p>Создайте аккаунт в системе и получите доступ к панели управления кандидатами. Система поддерживает несколько уровней доступа для эффективной работы.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">02</div>
+                <div class="step-content">
+                    <h3>Поиск талантов</h3>
+                    <p>Находите кандидатов - операторов, моделей и чаттеров. Проверяйте их навыки, опыт работы и технические характеристики оборудования.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">03</div>
+                <div class="step-content">
+                    <h3>Заполнение анкет</h3>
+                    <p>Вносите данные кандидатов в систему: контактная информация, опыт, уровень английского, технические характеристики и предпочитаемое время собеседования.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">04</div>
+                <div class="step-content">
+                    <h3>Координация и интервью</h3>
+                    <p>Назначайте собеседования, отслеживайте статусы кандидатов (в ожидании, одобрен, отклонен) и распределяйте их по командам.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">05</div>
+                <div class="step-content">
+                    <h3>Управление командой</h3>
+                    <p>Следите за работой всей команды скаутеров, просматривайте статистику, управляйте командами и оптимизируйте процесс подбора персонала.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Призыв к действию -->
+    <section class="cta-section">
+        <div class="cta-card">
+            <h2 class="cta-title">Готовы начать?</h2>
+            <p class="cta-subtitle">Присоединяйтесь к LiamKing Agency и станьте частью профессиональной команды скаутеров</p>
+            <a href="{{ url_for('login') }}" class="btn-primary">Войти в систему</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <p>&copy; 2026 LiamKing Agency. Все права защищены.</p>
+    </footer>
+
+    <div id="scoutModal" class="scout-modal" aria-hidden="true">
+        <div class="scout-modal-content" role="dialog" aria-modal="true" aria-labelledby="scoutModalTitle">
+            <div class="scout-modal-header">
+                <h3 id="scoutModalTitle" class="scout-modal-title">Анкета для вступления в команду</h3>
+                <button type="button" class="scout-close" aria-label="Закрыть" onclick="closeScoutModal()">✕</button>
+            </div>
+
+            <form id="scoutJoinForm" class="scout-form">
+                <div class="scout-field">
+                    <label for="joinFullName">1. Имя</label>
+                    <input id="joinFullName" name="full_name" type="text" placeholder="Введите имя" required>
+                </div>
+
+                <div class="scout-field">
+                    <label for="joinAge">2. Возраст</label>
+                    <input id="joinAge" name="age" type="text" placeholder="Например: 22" required>
+                </div>
+
+                <div class="scout-field">
+                    <label for="joinPersuasion">3. Задание: «Представим такую ситуацию, я — ищу работу чаттером, повесил вакансию на доске, ваша задача — переманить меня на работу оператором: зп от 65к ₽, график 5/2 или 4/3 (смысл заключается в модерации стримов модели no-nude формата, то есть без 18+), смены от 6 часов»</label>
+                    <textarea id="joinPersuasion" name="persuasion_text" placeholder="Напишите ваш ответ на задание" required></textarea>
+                </div>
+
+                <div class="scout-field">
+                    <label for="joinTelegram">4. Телеграм юзер</label>
+                    <input id="joinTelegram" name="telegram_username" type="text" placeholder="@username" required>
+                </div>
+
+                <div class="scout-field">
+                    <label for="joinWorkTime">5. Сколько времени готовы уделять работе?</label>
+                    <input id="joinWorkTime" name="work_time" type="text" placeholder="Например: 6-8 часов в день" required>
+                    <div class="scout-help">После отправки анкеты с вами свяжутся в Telegram.</div>
+                </div>
+
+                <div id="scoutStatus" class="scout-status"></div>
+
+                <div class="scout-actions">
+                    <button type="button" class="btn-secondary" onclick="closeScoutModal()">Отмена</button>
+                    <button type="submit" class="btn-primary" id="scoutSubmitBtn">Отправить анкету</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const scoutModal = document.getElementById('scoutModal');
+        const scoutForm = document.getElementById('scoutJoinForm');
+        const scoutStatus = document.getElementById('scoutStatus');
+        const scoutSubmitBtn = document.getElementById('scoutSubmitBtn');
+
+        function openScoutModal() {
+            scoutModal.classList.add('open');
+            scoutModal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeScoutModal() {
+            scoutModal.classList.remove('open');
+            scoutModal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            scoutStatus.textContent = '';
+        }
+
+        scoutModal.addEventListener('click', function (e) {
+            if (e.target === scoutModal) {
+                closeScoutModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && scoutModal.classList.contains('open')) {
+                closeScoutModal();
+            }
+        });
+
+        scoutForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            scoutStatus.textContent = '';
+            scoutSubmitBtn.disabled = true;
+            scoutSubmitBtn.textContent = 'Отправка...';
+
+            const payload = {
+                full_name: scoutForm.full_name.value.trim(),
+                age: scoutForm.age.value.trim(),
+                persuasion_text: scoutForm.persuasion_text.value.trim(),
+                telegram_username: scoutForm.telegram_username.value.trim(),
+                work_time: scoutForm.work_time.value.trim()
+            };
+
+            try {
+                const response = await fetch('/api/public-scout-application', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Не удалось отправить анкету');
+                }
+
+                scoutStatus.textContent = 'Спасибо! Анкета успешно отправлена.';
+                scoutForm.reset();
+                setTimeout(closeScoutModal, 1200);
+            } catch (error) {
+                scoutStatus.style.color = '#ff7b7b';
+                scoutStatus.textContent = error.message || 'Ошибка отправки анкеты';
+            } finally {
+                scoutSubmitBtn.disabled = false;
+                scoutSubmitBtn.textContent = 'Отправить анкету';
+                if (!scoutStatus.textContent || scoutStatus.textContent.includes('Спасибо')) {
+                    scoutStatus.style.color = '#7ee787';
+                }
+            }
+        });
+
+        // Плавная прокрутка к секциям
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

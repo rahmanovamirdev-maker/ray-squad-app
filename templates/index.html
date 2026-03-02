@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Система управления анкетами кандидатов</title>
+    <title>Анкеты - LiamKing Agency</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         /* Стили для календаря */
@@ -587,13 +587,14 @@
             <div class="header-row">
                 <div>
                     <h1>LiamKing Agency</h1>
-                    <p class="subtitle">Система поиска и управления кандидатами</p>
+                    <p class="subtitle">Панель управления анкетами кандидатов</p>
                 </div>
                 <button class="nav-burger" type="button" aria-label="Открыть меню" onclick="toggleHeaderNav()">☰</button>
                 <nav class="user-info nav-links" id="topNav">
                     {% if current_user %}
                         <span class="nav-user">Вход как: <strong>{{ current_user.username }}</strong></span>
-                        <a href="{{ url_for('index') }}" class="nav-link active">Главная</a>
+                        <a href="{{ url_for('index') }}" class="nav-link">Главная</a>
+                        <a href="{{ url_for('dashboard') }}" class="nav-link active">Анкеты</a>
                         <a href="{{ url_for('manual') }}" class="nav-link">Мануал</a>
                         <a href="{{ url_for('profile') }}" class="nav-link">Профиль</a>
                         {% if current_user.is_admin %}

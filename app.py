@@ -182,6 +182,27 @@ class ChatApplication(db.Model):
             'team': self.team
         }
 
+
+class ScoutJoinApplication(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    full_name = db.Column(db.String(120), nullable=False)
+    age = db.Column(db.String(30), nullable=False)
+    persuasion_text = db.Column(db.Text, nullable=False)
+    telegram_username = db.Column(db.String(120), nullable=False)
+    work_time = db.Column(db.String(200), nullable=False)
+    date_added = db.Column(db.DateTime, default=moscow_now)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'full_name': self.full_name,
+            'age': self.age,
+            'persuasion_text': self.persuasion_text,
+            'telegram_username': self.telegram_username,
+            'work_time': self.work_time,
+            'date_added': self.date_added.strftime('%d.%m.%Y %H:%M')
+        }
+
 # Модель для истории синхронизации статусов с внешним API
 
 
@@ -385,12 +406,19 @@ logger.setLevel(logging.INFO)
 
 @app.route('/')
 def index():
+    """Главная landing страница"""
+    return render_template('landing.html')
+
+@app.route('/dashboard')
+def dashboard():
+    """Панель управления анкетами"""
     if 'user_id' not in session:
         return redirect(url_for('login'))
+    
     user = User.query.get(session['user_id'])
     page = request.args.get('page', 1, type=int)
     if user and user.is_admin:
-        # На главной странице показываем только не удаленные анкеты
+        # Показываем только не удаленные анкеты
         applicants = Applicant.query.filter_by(is_deleted=False).order_by(Applicant.date_added.desc()).paginate(page=page, per_page=10)
     else:
         # Пользователь видит только свои не удаленные анкеты
@@ -791,6 +819,46 @@ def get_model_operators():
     
     return jsonify([m.to_dict() for m in models])
 
+
+@app.route('/api/public-scout-application', methods=['POST'])
+def add_public_scout_application():
+    """Публичная анкета для кнопки 'Присоединиться к команде' на landing."""
+    try:
+        data = request.get_json(silent=True) or {}
+
+        full_name = (data.get('full_name') or '').strip()
+        age = (data.get('age') or '').strip()
+        persuasion_text = (data.get('persuasion_text') or '').strip()
+        telegram_username = (data.get('telegram_username') or '').strip()
+        work_time = (data.get('work_time') or '').strip()
+
+        if not full_name:
+            return jsonify({'success': False, 'message': 'Укажите имя'}), 400
+        if not age:
+            return jsonify({'success': False, 'message': 'Укажите возраст'}), 400
+        if not persuasion_text:
+            return jsonify({'success': False, 'message': 'Заполните задание'}), 400
+        if not telegram_username:
+            return jsonify({'success': False, 'message': 'Укажите Telegram юзер'}), 400
+        if not work_time:
+            return jsonify({'success': False, 'message': 'Укажите, сколько времени готовы уделять работе'}), 400
+
+        application = ScoutJoinApplication(
+            full_name=full_name,
+            age=age,
+            persuasion_text=persuasion_text,
+            telegram_username=telegram_username,
+            work_time=work_time
+        )
+
+        db.session.add(application)
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Анкета отправлена'}), 201
+    except Exception as e:
+        print(f'[ERROR] Ошибка при отправке публичной анкеты: {str(e)}')
+        return jsonify({'success': False, 'message': f'Ошибка: {str(e)}'}), 400
+
 @app.route('/api/chatters')
 def get_chatters():
     if 'user_id' not in session:
@@ -1151,6 +1219,26 @@ def admin_get_full_archive():
         return jsonify({'success': False, 'message': str(e)}), 400
 
 
+@app.route('/api/admin/scouters')
+def admin_get_scouters():
+    """API для получения анкет скаутеров с landing (только для админов)."""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    user = User.query.get(session['user_id'])
+    if not user or not user.is_admin:
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    try:
+        applications = ScoutJoinApplication.query.order_by(ScoutJoinApplication.date_added.desc()).all()
+        return jsonify({
+            'success': True,
+            'count': len(applications),
+            'applications': [application.to_dict() for application in applications]
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -1165,7 +1253,7 @@ def login():
             if user.is_admin:
                 return redirect(url_for('admin_panel'))
             else:
-                return redirect(url_for('index'))
+                return redirect(url_for('dashboard'))
         else:
             flash('Неверные учётные данные', 'error')
     return render_template('login.html')
@@ -1248,7 +1336,7 @@ def admin_view_user_profile(user_id):
         return redirect(url_for('login'))
     admin = User.query.get(session['user_id'])
     if not admin or not admin.is_admin:
-        return redirect(url_for('index'))
+        return redirect(url_for('dashboard'))
     
     user = User.query.get_or_404(user_id)
     
@@ -1300,7 +1388,7 @@ def admin_panel():
         return redirect(url_for('login'))
     user = User.query.get(session['user_id'])
     if not user or not user.is_admin:
-        return redirect(url_for('index'))
+        return redirect(url_for('dashboard'))
     users = User.query.order_by(User.created_at.desc()).all()
     return render_template('admin.html', users=users, current_user=user, current_tab='users')
 
@@ -1311,7 +1399,7 @@ def admin_create_user():
         return redirect(url_for('login'))
     admin = User.query.get(session['user_id'])
     if not admin or not admin.is_admin:
-        return redirect(url_for('index'))
+        return redirect(url_for('dashboard'))
     username = request.form.get('username')
     password = request.form.get('password')
     is_worker = request.form.get('is_worker') == 'on'
@@ -1344,7 +1432,7 @@ def admin_delete_user(user_id):
         return redirect(url_for('login'))
     admin = User.query.get(session['user_id'])
     if not admin or not admin.is_admin:
-        return redirect(url_for('index'))
+        return redirect(url_for('dashboard'))
     
     user = User.query.get_or_404(user_id)
     
