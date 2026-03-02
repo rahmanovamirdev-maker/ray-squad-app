@@ -466,6 +466,39 @@
             margin-top: 2px;
         }
 
+        .scout-success-content {
+            max-width: 500px;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .scout-success-icon {
+            font-size: 4em;
+            color: #7ee787;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background: rgba(126, 231, 135, 0.1);
+            border-radius: 50%;
+            border: 2px solid #7ee787;
+        }
+
+        .scout-success-title {
+            font-size: 2em;
+            color: #e0e0e0;
+            margin: 20px 0 15px;
+        }
+
+        .scout-success-message {
+            font-size: 1.1em;
+            color: #b0b0b0;
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
         /* Адаптивность */
         @media (max-width: 768px) {
             .hero-title {
@@ -701,8 +734,20 @@
         </div>
     </div>
 
+    <!-- Модалка успешной отправки -->
+    <div id="scoutSuccessModal" class="scout-modal" aria-hidden="true">
+        <div class="scout-modal-content scout-success-content" role="dialog" aria-modal="true">
+            <div class="scout-success-icon">✓</div>
+            <h2 class="scout-success-title">Спасибо!</h2>
+            <p class="scout-success-message">Вы успешно отправили анкету на вступление.</p>
+            <p class="scout-success-message">В течении 24 часов Вам напишут в Телеграм</p>
+            <button type="button" class="btn-primary" onclick="closeSuccessModal()" style="margin-top: 24px; width: auto;">Понял</button>
+        </div>
+    </div>
+
     <script>
         const scoutModal = document.getElementById('scoutModal');
+        const scoutSuccessModal = document.getElementById('scoutSuccessModal');
         const scoutForm = document.getElementById('scoutJoinForm');
         const scoutStatus = document.getElementById('scoutStatus');
         const scoutSubmitBtn = document.getElementById('scoutSubmitBtn');
@@ -720,15 +765,36 @@
             scoutStatus.textContent = '';
         }
 
+        function openSuccessModal() {
+            scoutSuccessModal.classList.add('open');
+            scoutSuccessModal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSuccessModal() {
+            scoutSuccessModal.classList.remove('open');
+            scoutSuccessModal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
         scoutModal.addEventListener('click', function (e) {
             if (e.target === scoutModal) {
                 closeScoutModal();
             }
         });
 
+        scoutSuccessModal.addEventListener('click', function (e) {
+            if (e.target === scoutSuccessModal) {
+                closeSuccessModal();
+            }
+        });
+
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && scoutModal.classList.contains('open')) {
                 closeScoutModal();
+            }
+            if (e.key === 'Escape' && scoutSuccessModal.classList.contains('open')) {
+                closeSuccessModal();
             }
         });
 
@@ -758,9 +824,9 @@
                     throw new Error(result.message || 'Не удалось отправить анкету');
                 }
 
-                scoutStatus.textContent = 'Спасибо! Анкета успешно отправлена.';
                 scoutForm.reset();
-                setTimeout(closeScoutModal, 1200);
+                closeScoutModal();
+                openSuccessModal();
             } catch (error) {
                 scoutStatus.style.color = '#ff7b7b';
                 scoutStatus.textContent = error.message || 'Ошибка отправки анкеты';
