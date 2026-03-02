@@ -1239,6 +1239,29 @@ def admin_get_scouters():
         return jsonify({'success': False, 'message': str(e)}), 400
 
 
+@app.route('/api/admin/scouters/clear', methods=['POST'])
+def admin_clear_scouters():
+    """API для удаления всех анкет скаутеров (только для админов)."""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    user = User.query.get(session['user_id'])
+    if not user or not user.is_admin:
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    try:
+        count = ScoutJoinApplication.query.count()
+        ScoutJoinApplication.query.delete()
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'message': f'Удалено анкет: {count}',
+            'deleted_count': count
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':

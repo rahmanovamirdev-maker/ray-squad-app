@@ -1540,6 +1540,7 @@
                 <h2>🕵️ Анкеты Скаутеров</h2>
                 <div class="action-buttons">
                     <button class="btn btn-secondary" onclick="loadScouters()">🔄 Обновить</button>
+                    <button class="btn btn-danger" onclick="clearAllScouters()" style="background: #dc3545; border-color: #dc3545;">🗑️ Очистить всё</button>
                 </div>
             </div>
             <div id="scoutersContainer" class="applicants-list">
@@ -2976,6 +2977,29 @@
                 `).join('');
             } catch (error) {
                 document.getElementById('scoutersContainer').innerHTML = '<p class="empty">Ошибка загрузки</p>';
+            }
+        }
+
+        async function clearAllScouters() {
+            if (!confirm('Вы уверены? Это удалит все анкеты скаутеров!!!')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/scouters/clear', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    alert('✓ Все анкеты скаутеров удалены');
+                    loadScouters();
+                } else {
+                    alert('✗ Ошибка: ' + (data.message || 'Не удалось удалить анкеты'));
+                }
+            } catch (error) {
+                alert('✗ Ошибка при удалении: ' + error.message);
             }
         }
 
