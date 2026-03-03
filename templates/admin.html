@@ -1684,12 +1684,30 @@
 
         // Закрываем dropdown при клике вне меню
         document.addEventListener('click', function(event) {
-            if (!event.target.closest('.user-actions-menu')) {
+            const userActionsMenu = event.target.closest('.user-actions-menu');
+            const dropdownMenu = event.target.closest('.dropdown-menu');
+            
+            // Если клик не в меню и не в dropdown, закрываем все dropdown меню
+            if (!userActionsMenu && !dropdownMenu) {
                 document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
                     menu.classList.remove('active');
                 });
             }
         });
+
+        // Предотвращаем закрытие меню при клике на кнопки внутри dropdown
+        document.addEventListener('click', function(event) {
+            const button = event.target.closest('.dropdown-menu button, .dropdown-menu a');
+            if (button && button.closest('.dropdown-menu')) {
+                // Не закрываем меню сразу, дадим время на обработку события
+                setTimeout(() => {
+                    const menu = button.closest('.dropdown-menu');
+                    if (menu) {
+                        menu.classList.remove('active');
+                    }
+                }, 100);
+            }
+        }, true);
 
         function toggleBurgerMenu() {
             const tabs = document.getElementById('adminTabs');
@@ -3110,9 +3128,9 @@
                                     <div class="dropdown-menu">
                                         <a href="/admin/user/${u.id}/profile"><span class="action-icon">👁️</span>Профиль</a>
                                         ${showActions ? `
-                                        <button onclick="resetPassword(${u.id}, '${u.username}')"><span class="action-icon">🔑</span>Сбросить пароль</button>
-                                        <button onclick="openTeamModal(${u.id}, '${u.username}', '${u.team || ''}')"><span class="action-icon">👥</span>Изменить команду</button>
-                                        <button class="danger" onclick="if (confirm('Удалить пользователя?')) { deleteUser(${u.id}); }"><span class="action-icon">✕</span>Удалить</button>
+                                        <button type="button" onclick="event.stopPropagation(); resetPassword(${u.id}, '${u.username}')"><span class="action-icon">🔑</span>Сбросить пароль</button>
+                                        <button type="button" onclick="event.stopPropagation(); openTeamModal(${u.id}, '${u.username}', '${u.team || ''}')"><span class="action-icon">👥</span>Изменить команду</button>
+                                        <button type="button" class="danger" onclick="event.stopPropagation(); if (confirm('Удалить пользователя?')) { deleteUser(${u.id}); }"><span class="action-icon">✕</span>Удалить</button>
                                         ` : ''}
                                     </div>
                                 </div>
