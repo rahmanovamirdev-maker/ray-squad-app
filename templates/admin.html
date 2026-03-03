@@ -3128,7 +3128,18 @@
             console.log('🔄 filterAndLoadUsers: начало загрузки, фильтр:', selectedTeam);
             
             try {
-                const response = await fetch('/api/admin/users');
+                // Создаем AbortController для timeout (10 секунд)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    console.warn('⏰ Timeout: запрос не ответил за 10 сек');
+                    controller.abort();
+                }, 10000);
+                
+                const response = await fetch('/api/admin/users', {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                
                 console.log('✅ Получен ответ от API, статус:', response.status);
                 
                 const data = await response.json();
@@ -3198,10 +3209,14 @@
                 }).join('');
                 console.log('✅ filterAndLoadUsers: успешно загружено и отрисовано');
             } catch (error) {
-                console.error('❌ Ошибка загрузки пользователей:', error);
+                console.error('❌ Ошибка загрузки пользователей:', error.name, error.message);
                 const container = document.getElementById('usersContainer');
                 if (container) {
-                    container.innerHTML = '<p class="empty">Ошибка загрузки пользователей</p>';
+                    if (error.name === 'AbortError') {
+                        container.innerHTML = '<p class="empty">Ошибка: запрос слишком долго ждал ответа. Попробуйте переподключиться или переключить фильтр.</p>';
+                    } else {
+                        container.innerHTML = '<p class="empty">Ошибка загрузки пользователей</p>';
+                    }
                 }
             }
         }
@@ -3456,19 +3471,30 @@
 
         // Загрузить при загрузке страницы если нужно
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 DOMContentLoaded: инициализация админ-панели');
             const currentTab = document.querySelector('.tab-content.active');
+            console.log('📋 Активная вкладка:', currentTab?.id);
+            
             if (currentTab && currentTab.id === 'users-tab') {
+                console.log('👥 Загружаю пользователей...');
                 filterAndLoadUsers();
             } else if (currentTab && currentTab.id === 'operators-tab') {
+                console.log('👨‍💼 Загружаю операторов...');
                 filterAndLoadOperators();
             } else if (currentTab && currentTab.id === 'models-tab') {
+                console.log('👩‍🦰 Загружаю моделей...');
                 filterAndLoadModels();
             } else if (currentTab && currentTab.id === 'chatters-tab') {
+                console.log('💬 Загружаю чаттеров...');
                 loadChatters();
             } else if (currentTab && currentTab.id === 'scouters-tab') {
+                console.log('🔍 Загружаю скаутеров...');
                 loadScouters();
             } else if (currentTab && currentTab.id === 'archive-tab') {
+                console.log('📦 Загружаю архив...');
                 loadFullArchive();
+            } else {
+                console.log('⚠️ Неизвестная или нет активной вкладки');
             }
         });
     </script>
