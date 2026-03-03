@@ -37,62 +37,111 @@ async def send_telegram_notification(telegram_username, status):
     Отправить уведомление в Telegram по username
     status: 'approved' или 'rejected'
     """
+def normalize_telegram_username(raw_username):
+    username = (raw_username or '').strip()
+    if not username:
+        return ''
+    return username if username.startswith('@') else f"@{username}"
+
+
+def is_numeric_chat_id(value):
+    value_str = str(value or '').strip()
+    return bool(re.fullmatch(r'-?\d+', value_str))
+
+
+async def resolve_chat_id_by_username(telegram_username):
+    normalized = normalize_telegram_username(telegram_username)
+    if not normalized:
+        return None
+
+    expected = normalized.lstrip('@').lower()
+
+    try:
+        updates = await telegram_bot.get_updates(limit=100, timeout=0)
+        for update in updates:
+            message = update.message or update.edited_message
+            if not message or not message.chat:
+                continue
+            if message.chat.type != 'private':
+                continue
+
+            candidates = []
+            if message.chat.username:
+                candidates.append(message.chat.username.lower())
+            if message.from_user and message.from_user.username:
+                candidates.append(message.from_user.username.lower())
+
+            if expected in candidates:
+                return str(message.chat.id)
+    except Exception as e:
+        logging.error(f"Ошибка при resolve_chat_id_by_username({normalized}): {e}")
+
+    return None
+
+
+async def send_telegram_notification(telegram_username, status, telegram_chat_id=None):
+    """
+    Возвращает tuple: (sent: bool, resolved_chat_id: str|None, error_message: str|None)
+    """
     try:
         if not telegram_bot:
             logging.warning("Telegram notifications disabled: missing bot dependency or TELEGRAM_BOT_TOKEN")
-            return False
+            return False, None, 'Бот не настроен на сервере'
 
-        if not telegram_username:
-            return False
-
-        # Убираем @ если есть
-        username = telegram_username.lstrip('@')
-        
         if status == 'approved':
             message = (
                 "✅ <b>ОТЛИЧНО!</b>\n\n"
-                "Вашу заявку одобрили и с Вами свяжутся в течении некоторого времени.\n\n"
+                "Вашу заявку одобрили и с вами свяжутся в течение некоторого времени.\n\n"
                 "Спасибо, что присоединяетесь к нашей команде! 🚀"
             )
         elif status == 'rejected':
             message = (
                 "❌ <b>К СОЖАЛЕНИЮ</b>\n\n"
                 "Вашу заявку отклонили. Вы не справились с заданием.\n\n"
-                "Не расстраивайтесь! Вы можете попробовать снова позже. 💪"
+                "Не расстраивайтесь — вы можете попробовать снова позже. 💪"
             )
         else:
-            return False
-        
-        # Отправляем сообщение
+            return False, None, 'Неизвестный статус уведомления'
+
+        resolved_chat_id = None
+        if is_numeric_chat_id(telegram_chat_id):
+            resolved_chat_id = str(telegram_chat_id).strip()
+        else:
+            resolved_chat_id = await resolve_chat_id_by_username(telegram_username)
+
+        if not resolved_chat_id:
+            return False, None, 'Пользователь не найден в диалогах бота. Нужно нажать /start боту.'
+
         await telegram_bot.send_message(
-            chat_id=f"@{username}",
+            chat_id=resolved_chat_id,
             text=message,
             parse_mode='HTML'
         )
-        
-        logging.info(f"✅ Telegram уведомление отправлено @{username} (статус: {status})")
-        return True
-        
+
+        logging.info(f"✅ Telegram уведомление отправлено chat_id={resolved_chat_id} (status={status})")
+        return True, resolved_chat_id, None
+
     except TelegramError as e:
-        logging.error(f"❌ Ошибка Telegram для @{telegram_username}: {e}")
-        return False
+        logging.error(f"❌ Ошибка Telegram для {telegram_username}: {e}")
+        return False, None, str(e)
     except Exception as e:
         logging.error(f"❌ Неожиданная ошибка при отправке в Telegram: {e}")
-        return False
+        return False, None, str(e)
 
-def send_telegram_notification_sync(telegram_username, status):
+
+def send_telegram_notification_sync(telegram_username, status, telegram_chat_id=None):
     """Синхронная обертка для отправки уведомлений"""
     try:
         try:
-            return asyncio.run(send_telegram_notification(telegram_username, status))
+            return asyncio.run(send_telegram_notification(telegram_username, status, telegram_chat_id))
         except RuntimeError:
             loop = asyncio.new_event_loop()
-            result = loop.run_until_complete(send_telegram_notification(telegram_username, status))
+            result = loop.run_until_complete(send_telegram_notification(telegram_username, status, telegram_chat_id))
             loop.close()
             return result
     except Exception as e:
         logging.error(f"Ошибка при отправке уведомления: {e}")
-        return False
+        return False, None, str(e)
 
 # ===================================================
 
@@ -285,6 +334,7 @@ class ScoutJoinApplication(db.Model):
     age = db.Column(db.String(30), nullable=False)
     persuasion_text = db.Column(db.Text, nullable=False)
     telegram_username = db.Column(db.String(120), nullable=False)
+    telegram_chat_id = db.Column(db.String(50), nullable=True)
     work_time = db.Column(db.String(200), nullable=False)
     date_added = db.Column(db.DateTime, default=moscow_now)
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
@@ -299,6 +349,7 @@ class ScoutJoinApplication(db.Model):
             'age': self.age,
             'persuasion_text': self.persuasion_text,
             'telegram_username': self.telegram_username,
+            'telegram_chat_id': self.telegram_chat_id,
             'work_time': self.work_time,
             'date_added': self.date_added.strftime('%d.%m.%Y %H:%M') if self.date_added else None,
             'status': self.status or 'pending',
@@ -385,6 +436,13 @@ with app.app_context():
                 db.session.execute(text("ALTER TABLE model_operator_application ADD COLUMN team VARCHAR(50)"))
                 db.session.commit()
                 print("[MIGRATION] Столбец team добавлен успешно")
+        if 'scout_join_application' in insp.get_table_names():
+            cols = [c['name'] for c in insp.get_columns('scout_join_application')]
+            if 'telegram_chat_id' not in cols:
+                print("[MIGRATION] Добавляю столбец telegram_chat_id в таблицу scout_join_application...")
+                db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN telegram_chat_id VARCHAR(50)"))
+                db.session.commit()
+                print("[MIGRATION] Столбец telegram_chat_id добавлен успешно")
         if 'guest_answer' in insp.get_table_names():
             cols = [c['name'] for c in insp.get_columns('guest_answer')]
             if 'user_id' not in cols:
@@ -933,7 +991,7 @@ def add_public_scout_application():
         full_name = (data.get('full_name') or '').strip()
         age = (data.get('age') or '').strip()
         persuasion_text = (data.get('persuasion_text') or '').strip()
-        telegram_username = (data.get('telegram_username') or '').strip()
+        telegram_username = normalize_telegram_username((data.get('telegram_username') or '').strip())
         work_time = (data.get('work_time') or '').strip()
 
         if not full_name:
@@ -1386,12 +1444,23 @@ def admin_approve_scout(scout_id):
         db.session.commit()
         
         # Отправляем уведомление в Telegram
+        notify_sent = False
+        notify_error = None
         if application.telegram_username:
-            send_telegram_notification_sync(application.telegram_username, 'approved')
+            notify_sent, resolved_chat_id, notify_error = send_telegram_notification_sync(
+                application.telegram_username,
+                'approved',
+                application.telegram_chat_id
+            )
+            if notify_sent and resolved_chat_id and application.telegram_chat_id != resolved_chat_id:
+                application.telegram_chat_id = resolved_chat_id
+                db.session.commit()
         
         return jsonify({
             'success': True,
             'message': 'Заявка одобрена',
+            'telegram_notified': notify_sent,
+            'telegram_error': notify_error,
             'application': application.to_dict()
         }), 200
     except Exception as e:
@@ -1419,12 +1488,23 @@ def admin_reject_scout(scout_id):
         db.session.commit()
         
         # Отправляем уведомление в Telegram
+        notify_sent = False
+        notify_error = None
         if application.telegram_username:
-            send_telegram_notification_sync(application.telegram_username, 'rejected')
+            notify_sent, resolved_chat_id, notify_error = send_telegram_notification_sync(
+                application.telegram_username,
+                'rejected',
+                application.telegram_chat_id
+            )
+            if notify_sent and resolved_chat_id and application.telegram_chat_id != resolved_chat_id:
+                application.telegram_chat_id = resolved_chat_id
+                db.session.commit()
         
         return jsonify({
             'success': True,
             'message': 'Заявка отклонена',
+            'telegram_notified': notify_sent,
+            'telegram_error': notify_error,
             'application': application.to_dict()
         }), 200
     except Exception as e:
