@@ -1949,6 +1949,43 @@ def download_models_report():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
+@app.route('/admin/delete-all-answers', methods=['POST'])
+def delete_all_answers():
+    """Удаление всех ответов гостей"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    
+    user = User.query.get(session['user_id'])
+    if not user or not user.is_admin:
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+    
+    try:
+        # Получаем таблицу из инспектора
+        from sqlalchemy import inspect
+        insp = inspect(db.engine)
+        
+        if 'guest_answer' in insp.get_table_names():
+            # Удаляем все ответы
+            db.session.execute(text("DELETE FROM guest_answer"))
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Все ответы гостей удалены'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Таблица ответов не найдена'
+            }), 404
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] Ошибка при удалении ответов: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Ошибка при удалении: {str(e)}'
+        }), 400
+
 if __name__ == '__main__':
     import os
     
