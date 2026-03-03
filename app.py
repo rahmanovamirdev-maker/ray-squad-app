@@ -9,6 +9,10 @@ import logging
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from pyngrok import ngrok
+import asyncio
+from telegram import Bot
+from telegram.error import TelegramError
+import re
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -16,6 +20,65 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.environ.get('SECRET_KEY', 'dev_secret_key')
 
 db = SQLAlchemy(app)
+
+# ============= TELEGRAM BOT CONFIGURATION =============
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '8605769417:AAGZYyF8tOvhWwEqq8iO8SC8iCK08DwEZh0')
+telegram_bot = Bot(token=TELEGRAM_BOT_TOKEN)
+
+async def send_telegram_notification(telegram_username, status):
+    """
+    Отправить уведомление в Telegram по username
+    status: 'approved' или 'rejected'
+    """
+    try:
+        # Убираем @ если есть
+        username = telegram_username.lstrip('@')
+        
+        if status == 'approved':
+            message = (
+                "✅ <b>ОТЛИЧНО!</b>\n\n"
+                "Вашу заявку одобрили и с Вами свяжутся в течении некоторого времени.\n\n"
+                "Спасибо, что присоединяетесь к нашей команде! 🚀"
+            )
+        elif status == 'rejected':
+            message = (
+                "❌ <b>К СОЖАЛЕНИЮ</b>\n\n"
+                "Вашу заявку отклонили. Вы не справились с заданием.\n\n"
+                "Не расстраивайтесь! Вы можете попробовать снова позже. 💪"
+            )
+        else:
+            return False
+        
+        # Отправляем сообщение
+        await telegram_bot.send_message(
+            chat_id=f"@{username}",
+            text=message,
+            parse_mode='HTML'
+        )
+        
+        logging.info(f"✅ Telegram уведомление отправлено @{username} (статус: {status})")
+        return True
+        
+    except TelegramError as e:
+        logging.error(f"❌ Ошибка Telegram для @{telegram_username}: {e}")
+        return False
+    except Exception as e:
+        logging.error(f"❌ Неожиданная ошибка при отправке в Telegram: {e}")
+        return False
+
+def send_telegram_notification_sync(telegram_username, status):
+    """Синхронная обертка для отправки уведомлений"""
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(send_telegram_notification(telegram_username, status))
+        loop.close()
+        return result
+    except Exception as e:
+        logging.error(f"Ошибка при отправке уведомления: {e}")
+        return False
+
+# ===================================================
 
 # Отключение кэширования для всех API ответов
 @app.after_request
@@ -1305,6 +1368,11 @@ def admin_approve_scout(scout_id):
         application.approved_by = user.username
         application.reviewed_at = moscow_now()
         db.session.commit()
+        
+        # Отправляем уведомление в Telegram
+        if application.telegram_username:
+            send_telegram_notification_sync(application.telegram_username, 'approved')
+        
         return jsonify({
             'success': True,
             'message': 'Заявка одобрена',
@@ -1333,6 +1401,11 @@ def admin_reject_scout(scout_id):
         application.rejected_by = user.username
         application.reviewed_at = moscow_now()
         db.session.commit()
+        
+        # Отправляем уведомление в Telegram
+        if application.telegram_username:
+            send_telegram_notification_sync(application.telegram_username, 'rejected')
+        
         return jsonify({
             'success': True,
             'message': 'Заявка отклонена',
