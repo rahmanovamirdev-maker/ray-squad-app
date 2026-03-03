@@ -3244,14 +3244,37 @@
         // Загрузка ПОЛНОГО АРХИВА всех анкет (БЕЗ ИСКЛЮЧЕНИЙ) - ВСЕ ТИПЫ
         async function loadFullArchive() {
             try {
+                console.log('🔄 [ARCHIVE] Загрузка полного архива...');
                 const response = await fetch('/api/admin/applicants-full-archive');
+                console.log('🔄 [ARCHIVE] Response.ok:', response.ok, 'Status:', response.status);
+                
                 const data = await response.json();
+                console.log('📦 [ARCHIVE] Получены данные:', data);
+                
                 const container = document.getElementById('fullArchiveList');
+                console.log('📦 [ARCHIVE] Контейнер найден:', container ? 'ДА' : 'НЕТ');
 
-                if (!data.success || !data.applicants || data.applicants.length === 0) {
+                if (!response.ok) {
+                    console.error('❌ [ARCHIVE] Ошибка HTTP:', response.status);
+                    container.innerHTML = '<p class="empty">Ошибка: ' + response.status + '</p>';
+                    return;
+                }
+
+                if (!data.success) {
+                    console.error('❌ [ARCHIVE] data.success = false, message:', data.message);
+                    container.innerHTML = '<p class="empty">Ошибка загрузки: ' + (data.message || 'Unknown error') + '</p>';
+                    return;
+                }
+
+                if (!data.applicants || data.applicants.length === 0) {
+                    console.warn('⚠️ [ARCHIVE] Архив пуст или данные отсутствуют');
+                    console.log('   - data.applicants:', data.applicants);
+                    console.log('   - length:', data.applicants ? data.applicants.length : 'undefined');
                     container.innerHTML = '<p class="empty">Архив пуст</p>';
                     return;
                 }
+
+                console.log('✅ [ARCHIVE] Найдено записей:', data.applicants.length);
 
                 const totalCount = data.total_count || data.applicants.length;
                 const operatorsCount = data.operators_count || 0;
@@ -3447,8 +3470,8 @@
                     `;
                 }).join('');
             } catch (error) {
-                console.error('Ошибка загрузки архива:', error);
-                document.getElementById('fullArchiveList').innerHTML = '<p class="empty">Ошибка загрузки</p>';
+                console.error('❌ [ARCHIVE] Ошибка загрузки архива:', error);
+                document.getElementById('fullArchiveList').innerHTML = '<p class="empty">Ошибка: ' + error.message + '</p>';
             }
         }
 
