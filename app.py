@@ -162,7 +162,8 @@ class ModelOperatorApplication(db.Model):
             'owner_username': self.owner_username,
             'status': self.status,
             'date_added': self.date_added.strftime('%d.%m.%Y %H:%M'),
-            'team': self.team
+            'team': self.team,
+            'is_deleted': self.is_deleted
         }
 
 # Модель для анкет Чаттеров
@@ -194,7 +195,8 @@ class ChatApplication(db.Model):
             'owner_username': self.owner_username,
             'status': self.status,
             'date_added': self.date_added.strftime('%d.%m.%Y %H:%M'),
-            'team': self.team
+            'team': self.team,
+            'is_deleted': self.is_deleted
         }
 
 
