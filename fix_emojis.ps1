@@ -6,7 +6,7 @@ $content = Get-Content -Path $filePath -Raw -Encoding UTF8
 $replacements = @{
     '<option value="Delta">🚩 Delta</option>' = '<option value="Delta">🔴 Delta</option>';
     '<option value="Den">🐺 Den</option>' = '<option value="Den">🔵 Den</option>';
-    '<option value="Amir">💁‍♂️ Amir</option>' = '<option value="Amir">🟢 Amir</option>';
+    '<option value="ХАЦКЕР">💁‍♂️ ХАЦКЕР</option>' = '<option value="ХАЦКЕР">🟢 ХАЦКЕР</option>';
     '<option value="404">📅 404</option>' = '<option value="404">🟡 404</option>';
     '<option value="Bobik">🐶 Bobik</option>' = '<option value="Bobik">🟣 Bobik</option>';
     '<option value="Oir">💅 Oir</option>' = '<option value="Oir">🟠 Oir</option>';

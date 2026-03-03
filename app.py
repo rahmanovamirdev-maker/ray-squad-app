@@ -1615,7 +1615,7 @@ def update_user_team(user_id):
         new_team = data.get('team', '')
         
         # Валидация команды
-        valid_teams = ['Delta', 'Den', 'Amir', '404', 'Bobik', 'Oir', 'Gordon', 'Rey', '']
+        valid_teams = ['Delta', 'Den', 'ХАЦКЕР', '404', 'Bobik', 'Oir', 'Gordon', 'Rey', '']
         if new_team not in valid_teams:
             return jsonify({'success': False, 'message': 'Неверная команда'}), 400
         

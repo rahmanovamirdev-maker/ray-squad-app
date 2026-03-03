@@ -54,7 +54,7 @@ def migrate_teams():
         print("\nЭТИ КОМАНДЫ ДОСТУПНЫ:")
         print("1. Delta")
         print("2. Den")
-        print("3. Amir")
+        print("3. ХАЦКЕР")
         print("4. 404")
         print("5. Bobik")
         print("6. Oir")

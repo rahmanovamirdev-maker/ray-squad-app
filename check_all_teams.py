@@ -1,6 +1,6 @@
 from app import app, db, User, ModelOperatorApplication
 
-TEAMS = ['Delta', 'Den', 'Amir', '404', 'Bobik', 'Oir', 'Gordon', 'Rey']
+TEAMS = ['Delta', 'Den', 'ХАЦКЕР', '404', 'Bobik', 'Oir', 'Gordon', 'Rey']
 
 with app.app_context():
     print("=" * 80)
