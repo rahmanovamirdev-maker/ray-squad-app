@@ -88,7 +88,13 @@ async def send_telegram_notification(telegram_username, status, telegram_chat_id
             logging.warning("Telegram notifications disabled: missing bot dependency or TELEGRAM_BOT_TOKEN")
             return False, None, 'Бот не настроен на сервере'
 
-        if status == 'approved':
+        if status == 'submitted':
+            message = (
+                "📝 <b>ЗАЯВКА ПОЛУЧЕНА!</b>\n\n"
+                "Ваша заявка на вступление в команду успешно получена и находится на рассмотрении.\n\n"
+                "Мы свяжемся с вами в ближайшее время! ⏳"
+            )
+        elif status == 'approved':
             message = (
                 "✅ <b>ОТЛИЧНО!</b>\n\n"
                 "Вашу заявку одобрили и с вами свяжутся в течение некоторого времени.\n\n"
@@ -1015,8 +1021,32 @@ def add_public_scout_application():
 
         db.session.add(application)
         db.session.commit()
-
-        return jsonify({'success': True, 'message': 'Анкета отправлена'}), 201
+        
+        # Отправляем подтверждающее уведомление в Telegram
+        notify_sent = False
+        notify_error = None
+        if telegram_username:
+            notify_sent, resolved_chat_id, notify_error = send_telegram_notification_sync(
+                telegram_username,
+                'submitted',
+                None
+            )
+            if notify_sent and resolved_chat_id:
+                application.telegram_chat_id = resolved_chat_id
+                db.session.commit()
+        
+        response_data = {
+            'success': True,
+            'message': 'Анкета отправлена'
+        }
+        
+        # Добавляем информацию о статусе уведомления (для отладки)
+        if notify_sent:
+            response_data['telegram_notified'] = True
+        elif notify_error:
+            response_data['telegram_warning'] = 'Анкета сохранена, но не удалось отправить уведомление. Напишите боту /start.'
+        
+        return jsonify(response_data), 201
     except Exception as e:
         print(f'[ERROR] Ошибка при отправке публичной анкеты: {str(e)}')
         return jsonify({'success': False, 'message': f'Ошибка: {str(e)}'}), 400
