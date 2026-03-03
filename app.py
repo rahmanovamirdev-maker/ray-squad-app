@@ -10,9 +10,16 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from pyngrok import ngrok
 import asyncio
-from telegram import Bot
-from telegram.error import TelegramError
 import re
+
+try:
+    from telegram import Bot
+    from telegram.error import TelegramError
+except Exception:
+    Bot = None
+
+    class TelegramError(Exception):
+        pass
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -22,8 +29,8 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev_secret_key')
 db = SQLAlchemy(app)
 
 # ============= TELEGRAM BOT CONFIGURATION =============
-TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '8605769417:AAGZYyF8tOvhWwEqq8iO8SC8iCK08DwEZh0')
-telegram_bot = Bot(token=TELEGRAM_BOT_TOKEN)
+TELEGRAM_BOT_TOKEN = (os.environ.get('TELEGRAM_BOT_TOKEN') or '').strip()
+telegram_bot = Bot(token=TELEGRAM_BOT_TOKEN) if (Bot and TELEGRAM_BOT_TOKEN) else None
 
 async def send_telegram_notification(telegram_username, status):
     """
@@ -31,6 +38,13 @@ async def send_telegram_notification(telegram_username, status):
     status: 'approved' или 'rejected'
     """
     try:
+        if not telegram_bot:
+            logging.warning("Telegram notifications disabled: missing bot dependency or TELEGRAM_BOT_TOKEN")
+            return False
+
+        if not telegram_username:
+            return False
+
         # Убираем @ если есть
         username = telegram_username.lstrip('@')
         
@@ -69,11 +83,13 @@ async def send_telegram_notification(telegram_username, status):
 def send_telegram_notification_sync(telegram_username, status):
     """Синхронная обертка для отправки уведомлений"""
     try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(send_telegram_notification(telegram_username, status))
-        loop.close()
-        return result
+        try:
+            return asyncio.run(send_telegram_notification(telegram_username, status))
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            result = loop.run_until_complete(send_telegram_notification(telegram_username, status))
+            loop.close()
+            return result
     except Exception as e:
         logging.error(f"Ошибка при отправке уведомления: {e}")
         return False
