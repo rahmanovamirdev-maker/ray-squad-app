@@ -827,20 +827,20 @@ def get_model_operators():
     
     # Owner и Developer видят все анкеты (кроме удаленных)
     if user.is_owner or (user.prefix and user.prefix == 'Developer'):
-        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted == False).order_by(ModelOperatorApplication.date_added.desc()).all()
+        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted != True).order_by(ModelOperatorApplication.date_added.desc()).all()
     # Обычные админы видят только анкеты своей команды (кроме удаленных)
     elif user.is_admin and user.team:
-        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted == False, ModelOperatorApplication.team == user.team).order_by(ModelOperatorApplication.date_added.desc()).all()
+        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted != True, ModelOperatorApplication.team == user.team).order_by(ModelOperatorApplication.date_added.desc()).all()
         # Автоматически привязываем анкеты без команды к команде текущего админа
-        for model in ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted == False, ModelOperatorApplication.team == None).all():
+        for model in ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted != True, ModelOperatorApplication.team == None).all():
             model.team = user.team
         db.session.commit()
     # Админы без команды видят все анкеты (кроме удаленных)
     elif user.is_admin:
-        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted == False).order_by(ModelOperatorApplication.date_added.desc()).all()
+        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted != True).order_by(ModelOperatorApplication.date_added.desc()).all()
     # Обычные пользователи видят только свои анкеты (кроме удаленных)
     else:
-        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted == False, ModelOperatorApplication.owner_username == user.username).order_by(ModelOperatorApplication.date_added.desc()).all()
+        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted != True, ModelOperatorApplication.owner_username == user.username).order_by(ModelOperatorApplication.date_added.desc()).all()
     
     return jsonify([m.to_dict() for m in models])
 
@@ -892,20 +892,20 @@ def get_chatters():
     
     # Owner и Developer видят все анкеты (кроме удаленных)
     if user.is_owner or (user.prefix and user.prefix == 'Developer'):
-        chatters = ChatApplication.query.filter(ChatApplication.is_deleted == False).order_by(ChatApplication.date_added.desc()).all()
+        chatters = ChatApplication.query.filter(ChatApplication.is_deleted != True).order_by(ChatApplication.date_added.desc()).all()
     # Обычные админы видят только анкеты своей команды (кроме удаленных)
     elif user.is_admin and user.team:
-        chatters = ChatApplication.query.filter(ChatApplication.is_deleted == False, ChatApplication.team == user.team).order_by(ChatApplication.date_added.desc()).all()
+        chatters = ChatApplication.query.filter(ChatApplication.is_deleted != True, ChatApplication.team == user.team).order_by(ChatApplication.date_added.desc()).all()
         # Автоматически привязываем анкеты без команды к команде текущего админа
-        for chatter in ChatApplication.query.filter(ChatApplication.is_deleted == False, ChatApplication.team == None).all():
+        for chatter in ChatApplication.query.filter(ChatApplication.is_deleted != True, ChatApplication.team == None).all():
             chatter.team = user.team
         db.session.commit()
     # Админы без команды видят все анкеты (кроме удаленных)
     elif user.is_admin:
-        chatters = ChatApplication.query.filter(ChatApplication.is_deleted == False).order_by(ChatApplication.date_added.desc()).all()
+        chatters = ChatApplication.query.filter(ChatApplication.is_deleted != True).order_by(ChatApplication.date_added.desc()).all()
     # Обычные пользователи видят только свои анкеты (кроме удаленных)
     else:
-        chatters = ChatApplication.query.filter(ChatApplication.is_deleted == False, ChatApplication.owner_username == user.username).order_by(ChatApplication.date_added.desc()).all()
+        chatters = ChatApplication.query.filter(ChatApplication.is_deleted != True, ChatApplication.owner_username == user.username).order_by(ChatApplication.date_added.desc()).all()
     
     return jsonify([c.to_dict() for c in chatters])
 
