@@ -3121,13 +3121,22 @@
         // Загрузка и фильтрация пользователей
         async function filterAndLoadUsers() {
             const selectedTeam = document.getElementById('usersTeamFilter').value;
+            const container = document.getElementById('usersContainer');
+            
+            // Показываем "загрузка" в начале
+            container.innerHTML = '<p class="loading">Загрузка пользователей...</p>';
+            console.log('🔄 filterAndLoadUsers: начало загрузки, фильтр:', selectedTeam);
+            
             try {
                 const response = await fetch('/api/admin/users');
+                console.log('✅ Получен ответ от API, статус:', response.status);
+                
                 const data = await response.json();
-                const container = document.getElementById('usersContainer');
+                console.log('✅ Распарсены данные, success:', data.success, 'пользователей:', data.users?.length);
                 
                 if (!data.success) {
                     container.innerHTML = '<p class="empty">Ошибка загрузки пользователей</p>';
+                    console.error('❌ Ошибка от API:', data);
                     return;
                 }
                 
@@ -3143,8 +3152,11 @@
                     filtered = users;
                 }
                 
+                console.log('📊 После фильтрации:', filtered.length, 'пользователей из', users.length);
+                
                 if (!filtered || filtered.length === 0) {
                     container.innerHTML = '<p class="empty">Пользователей нет</p>';
+                    console.log('ℹ️ Пользователей нет после фильтрации');
                     return;
                 }
 
@@ -3184,9 +3196,13 @@
                         </div>
                     `;
                 }).join('');
+                console.log('✅ filterAndLoadUsers: успешно загружено и отрисовано');
             } catch (error) {
-                console.error('Ошибка загрузки пользователей:', error);
-                document.getElementById('usersContainer').innerHTML = '<p class="empty">Ошибка загрузки пользователей</p>';
+                console.error('❌ Ошибка загрузки пользователей:', error);
+                const container = document.getElementById('usersContainer');
+                if (container) {
+                    container.innerHTML = '<p class="empty">Ошибка загрузки пользователей</p>';
+                }
             }
         }
 
