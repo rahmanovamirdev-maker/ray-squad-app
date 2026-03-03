@@ -1660,6 +1660,9 @@
     </div>
 
     <script>
+        // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+        let currentTeamUserId = null;
+        
         function toggleHeaderNav() {
             const nav = document.getElementById('topNav');
             if (nav) {
@@ -2372,8 +2375,6 @@
         }
 
         // Функции для изменения команды
-        let currentTeamUserId = null;
-
         function openTeamModal(userId, username, currentTeam) {
             console.log('🔧 openTeamModal вызвана', {userId, username, currentTeam, type_id: typeof userId, type_username: typeof username, type_team: typeof currentTeam});
             
