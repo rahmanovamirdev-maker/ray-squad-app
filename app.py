@@ -1450,6 +1450,7 @@ def profile():
 
 
 @app.route('/admin/user/<int:user_id>', methods=['GET', 'POST'])
+@app.route('/admin/user/<int:user_id>/profile', methods=['GET', 'POST'])
 def admin_view_user_profile(user_id):
     """Просмотр профиля пользователя админом"""
     if 'user_id' not in session:
