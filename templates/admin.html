@@ -2342,6 +2342,7 @@
 
         // Функции для сброса пароля
         async function resetPassword(userId, username) {
+            console.log('🔑 resetPassword вызвана:', {userId, username});
             try {
                 const response = await fetch(`/api/reset-password/${userId}`, {
                     method: 'POST',
@@ -2349,18 +2350,19 @@
                 });
 
                 const data = await response.json();
-                console.log('Сброс пароля:', data);
+                console.log('✅ Ответ сброса пароля:', data);
 
                 if (data.success) {
                     // Показываем модальное окно с новым паролем
                     document.getElementById('modalUsername').textContent = username;
                     document.getElementById('passwordDisplay').textContent = data.new_password;
                     document.getElementById('passwordModal').classList.add('active');
+                    console.log('✅ Модальное окно открыто');
                 } else {
                     alert('Ошибка: ' + data.message);
                 }
             } catch (error) {
-                console.error('Ошибка при сбросе пароля:', error);
+                console.error('❌ Ошибка при сбросе пароля:', error);
                 alert('Ошибка подключения');
             }
         }
@@ -2373,24 +2375,40 @@
         let currentTeamUserId = null;
 
         function openTeamModal(userId, username, currentTeam) {
-            console.log('🔧 openTeamModal вызвана', {userId, username, currentTeam});
-            currentTeamUserId = userId;
-            const modalUsername = document.getElementById('teamModalUsername');
-            const teamSelect = document.getElementById('teamSelect');
-            const teamModal = document.getElementById('teamModal');
+            console.log('🔧 openTeamModal вызвана', {userId, username, currentTeam, type_id: typeof userId, type_username: typeof username, type_team: typeof currentTeam});
             
-            console.log('🔍 Элементы найдены:', {
-                modalUsername: !!modalUsername,
-                teamSelect: !!teamSelect,
-                teamModal: !!teamModal
+            currentTeamUserId = userId;
+            
+            const teamModalUsernameEl = document.getElementById('teamModalUsername');
+            const teamSelectEl = document.getElementById('teamSelect');
+            const teamModalEl = document.getElementById('teamModal');
+            
+            console.log('🔍 Проверка элементов:', {
+                'teamModalUsername найден': !!teamModalUsernameEl,
+                'teamSelect найден': !!teamSelectEl,
+                'teamModal найден': !!teamModalEl
             });
             
-            if (modalUsername) modalUsername.textContent = username;
-            if (teamSelect) teamSelect.value = currentTeam || '';
-            if (teamModal) {
-                teamModal.classList.add('active');
-                console.log('✅ Класс active добавлен, classList:', teamModal.classList);
+            if (!teamModalEl) {
+                console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: Элемент #teamModal не найден в DOM!');
+                alert('Ошибка: модальное окно не найдено');
+                return;
             }
+            
+            if (teamModalUsernameEl) {
+                teamModalUsernameEl.textContent = username;
+                console.log('✅ Установлено имя пользователя:', username);
+            }
+            
+            if (teamSelectEl) {
+                teamSelectEl.value = currentTeam || '';
+                console.log('✅ Установлена команда:', currentTeam || 'None');
+            }
+            
+            teamModalEl.classList.add('active');
+            console.log('✅ Класс active добавлен к модальному окну');
+            console.log('📊 classList teamModal:', Array.from(teamModalEl.classList));
+            console.log('🎨 Вычисленный стиль display:', window.getComputedStyle(teamModalEl).display);
         }
 
         function closeTeamModal() {
@@ -3153,9 +3171,9 @@
                                     <div class="dropdown-menu">
                                         <a href="/admin/user/${u.id}/profile"><span class="action-icon">👁️</span>Профиль</a>
                                         ${showActions ? `
-                                        <button type="button" onclick="event.stopPropagation(); resetPassword(${u.id}, '${u.username}')"><span class="action-icon">🔑</span>Сбросить пароль</button>
-                                        <button type="button" onclick="event.stopPropagation(); openTeamModal(${u.id}, '${u.username}', '${u.team || ''}')"><span class="action-icon">👥</span>Изменить команду</button>
-                                        <button type="button" class="danger" onclick="event.stopPropagation(); if (confirm('Удалить пользователя?')) { deleteUser(${u.id}); }"><span class="action-icon">✕</span>Удалить</button>
+                                        <button type="button" data-user-id="${u.id}" data-username="${u.username}" onclick="event.stopPropagation(); const uid = this.getAttribute('data-user-id'); const uname = this.getAttribute('data-username'); resetPassword(parseInt(uid), uname)"><span class="action-icon">🔑</span>Сбросить пароль</button>
+                                        <button type="button" data-user-id="${u.id}" data-username="${u.username}" data-team="${u.team || ''}" onclick="event.stopPropagation(); const uid = this.getAttribute('data-user-id'); const uname = this.getAttribute('data-username'); const team = this.getAttribute('data-team'); console.log('openTeamModal вызвана:', uid, uname, team); openTeamModal(parseInt(uid), uname, team)"><span class="action-icon">👥</span>Изменить команду</button>
+                                        <button type="button" class="danger" data-user-id="${u.id}" onclick="event.stopPropagation(); const uid = this.getAttribute('data-user-id'); if (confirm('Удалить пользователя?')) { deleteUser(parseInt(uid)); }"><span class="action-icon">✕</span>Удалить</button>
                                         ` : ''}
                                     </div>
                                 </div>
@@ -3173,10 +3191,12 @@
 
         // Функция удаления пользователя через форму
         function deleteUser(userId) {
+            console.log('🗑️ deleteUser вызвана:', userId);
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = `/admin/delete-user/${userId}`;
             document.body.appendChild(form);
+            console.log('✅ Форма удаления создана и отправляется');
             form.submit();
         }
 
