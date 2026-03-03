@@ -143,6 +143,7 @@ class ModelOperatorApplication(db.Model):
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
     date_added = db.Column(db.DateTime, default=moscow_now)
     team = db.Column(db.String(50))  # Команда (Team 1 - Team 8)
+    is_deleted = db.Column(db.Boolean, default=False)  # Мягкое удаление
 
     def to_dict(self):
         return {
@@ -178,6 +179,7 @@ class ChatApplication(db.Model):
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
     date_added = db.Column(db.DateTime, default=moscow_now)
     team = db.Column(db.String(50))  # Команда (Team 1 - Team 8)
+    is_deleted = db.Column(db.Boolean, default=False)  # Мягкое удаление
 
     def to_dict(self):
         return {
@@ -821,22 +823,22 @@ def get_model_operators():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
     
-    # Owner и Developer видят все анкеты
+    # Owner и Developer видят все анкеты (кроме удаленных)
     if user.is_owner or (user.prefix and user.prefix == 'Developer'):
-        models = ModelOperatorApplication.query.order_by(ModelOperatorApplication.date_added.desc()).all()
-    # Обычные админы видят только анкеты своей команды
+        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted == False).order_by(ModelOperatorApplication.date_added.desc()).all()
+    # Обычные админы видят только анкеты своей команды (кроме удаленных)
     elif user.is_admin and user.team:
-        models = ModelOperatorApplication.query.filter_by(team=user.team).order_by(ModelOperatorApplication.date_added.desc()).all()
+        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted == False, ModelOperatorApplication.team == user.team).order_by(ModelOperatorApplication.date_added.desc()).all()
         # Автоматически привязываем анкеты без команды к команде текущего админа
-        for model in ModelOperatorApplication.query.filter_by(team=None).all():
+        for model in ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted == False, ModelOperatorApplication.team == None).all():
             model.team = user.team
         db.session.commit()
-    # Админы без команды видят все анкеты (для обратной совместимости)
+    # Админы без команды видят все анкеты (кроме удаленных)
     elif user.is_admin:
-        models = ModelOperatorApplication.query.order_by(ModelOperatorApplication.date_added.desc()).all()
-    # Обычные пользователи видят только свои анкеты
+        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted == False).order_by(ModelOperatorApplication.date_added.desc()).all()
+    # Обычные пользователи видят только свои анкеты (кроме удаленных)
     else:
-        models = ModelOperatorApplication.query.filter_by(owner_username=user.username).order_by(ModelOperatorApplication.date_added.desc()).all()
+        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted == False, ModelOperatorApplication.owner_username == user.username).order_by(ModelOperatorApplication.date_added.desc()).all()
     
     return jsonify([m.to_dict() for m in models])
 
@@ -886,22 +888,22 @@ def get_chatters():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
     
-    # Owner и Developer видят все анкеты
+    # Owner и Developer видят все анкеты (кроме удаленных)
     if user.is_owner or (user.prefix and user.prefix == 'Developer'):
-        chatters = ChatApplication.query.order_by(ChatApplication.date_added.desc()).all()
-    # Обычные админы видят только анкеты своей команды
+        chatters = ChatApplication.query.filter(ChatApplication.is_deleted == False).order_by(ChatApplication.date_added.desc()).all()
+    # Обычные админы видят только анкеты своей команды (кроме удаленных)
     elif user.is_admin and user.team:
-        chatters = ChatApplication.query.filter_by(team=user.team).order_by(ChatApplication.date_added.desc()).all()
+        chatters = ChatApplication.query.filter(ChatApplication.is_deleted == False, ChatApplication.team == user.team).order_by(ChatApplication.date_added.desc()).all()
         # Автоматически привязываем анкеты без команды к команде текущего админа
-        for chatter in ChatApplication.query.filter_by(team=None).all():
+        for chatter in ChatApplication.query.filter(ChatApplication.is_deleted == False, ChatApplication.team == None).all():
             chatter.team = user.team
         db.session.commit()
-    # Админы без команды видят все анкеты (для обратной совместимости)
+    # Админы без команды видят все анкеты (кроме удаленных)
     elif user.is_admin:
-        chatters = ChatApplication.query.order_by(ChatApplication.date_added.desc()).all()
-    # Обычные пользователи видят только свои анкеты
+        chatters = ChatApplication.query.filter(ChatApplication.is_deleted == False).order_by(ChatApplication.date_added.desc()).all()
+    # Обычные пользователи видят только свои анкеты (кроме удаленных)
     else:
-        chatters = ChatApplication.query.filter_by(owner_username=user.username).order_by(ChatApplication.date_added.desc()).all()
+        chatters = ChatApplication.query.filter(ChatApplication.is_deleted == False, ChatApplication.owner_username == user.username).order_by(ChatApplication.date_added.desc()).all()
     
     return jsonify([c.to_dict() for c in chatters])
 
@@ -1662,7 +1664,8 @@ def delete_model(model_id):
         # allow admin or owner
         if not user.is_admin and model.owner_username != user.username:
             return jsonify({'success': False, 'message': 'Forbidden'}), 403
-        db.session.delete(model)
+        # Мягкое удаление - только помечаем isdead флаг
+        model.is_deleted = True
         db.session.commit()
         return jsonify({'success': True, 'message': 'Анкета модели удалена'}), 200
     except Exception as e:
@@ -1795,7 +1798,8 @@ def delete_chatter(chatter_id):
         # allow admin or owner
         if not user.is_admin and chatter.owner_username != user.username:
             return jsonify({'success': False, 'message': 'Forbidden'}), 403
-        db.session.delete(chatter)
+        # Мягкое удаление - только помечаем флаг
+        chatter.is_deleted = True
         db.session.commit()
         return jsonify({'success': True, 'message': 'Анкета Чаттера удалена'}), 200
     except Exception as e:
