@@ -861,44 +861,96 @@
                         </div>
                     </div>
                     
-                    <!-- Календарь с временами -->
-                    <div class="calendar-container">
-                        <div class="calendar-wrapper">
-                            <div class="calendar-header">
-                                <button class="calendar-nav" onclick="previousMonth()">◀</button>
-                                <h3 id="calendarTitle">Февраль 2026</h3>
-                                <button class="calendar-nav" onclick="nextMonth()">▶</button>
-                            </div>
-                            
-                            <div class="calendar-weekdays">
-                                <div class="weekday">Пн</div>
-                                <div class="weekday">Вт</div>
-                                <div class="weekday">Ср</div>
-                                <div class="weekday">Чт</div>
-                                <div class="weekday">Пт</div>
-                                <div class="weekday">Сб</div>
-                                <div class="weekday">Вс</div>
-                            </div>
-                            
-                            <div class="calendar-grid" id="calendarGrid">
-                                <p class="loading">Загрузка календаря...</p>
-                            </div>
-                            
-                            <div class="calendar-legend">
-                                <div class="legend-item">
-                                    <span class="legend-color green"></span> Есть слоты
+                    <!-- Переключатели между типами слотов -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; padding: 15px; background: rgba(99, 102, 241, 0.1); border-radius: 8px;">
+                        <button id="userSlotTypeOperatorBtn" class="btn btn-secondary" style="flex: 1; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border: 2px solid #6366f1;" onclick="switchUserSlotType('operator')">👨‍💼 Собеседование оператора</button>
+                        <button id="userSlotTypeModelBtn" class="btn btn-secondary" style="flex: 1; background: #2d2d3d; color: #e0e0e0; border: 2px solid #3d3d4d;" onclick="switchUserSlotType('model')">👩‍🎬 Собеседование модели</button>
+                    </div>
+                    
+                    <!-- Календарь оператора -->
+                    <div id="operatorCalendarSection" style="display: block;">
+                        <div class="calendar-container">
+                            <div class="calendar-wrapper">
+                                <div class="calendar-header">
+                                    <button class="calendar-nav" onclick="previousMonth()">◀</button>
+                                    <h3 id="calendarTitleOperator">Февраль 2026</h3>
+                                    <button class="calendar-nav" onclick="nextMonth()">▶</button>
                                 </div>
-                                <div class="legend-item">
-                                    <span class="legend-color red"></span> Занято
+                                
+                                <div class="calendar-weekdays">
+                                    <div class="weekday">Пн</div>
+                                    <div class="weekday">Вт</div>
+                                    <div class="weekday">Ср</div>
+                                    <div class="weekday">Чт</div>
+                                    <div class="weekday">Пт</div>
+                                    <div class="weekday">Сб</div>
+                                    <div class="weekday">Вс</div>
+                                </div>
+                                
+                                <div class="calendar-grid" id="calendarGridOperator">
+                                    <p class="loading">Загрузка календаря...</p>
+                                </div>
+                                
+                                <div class="calendar-legend">
+                                    <div class="legend-item">
+                                        <span class="legend-color green"></span> Есть слоты
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="legend-color red"></span> Занято
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Времена справа -->
+                            <div class="calendar-times">
+                                <div class="calendar-times-header">Время</div>
+                                <div id="timesListOperator">
+                                    <p style="text-align: center; color: #b0b0b0; padding: 20px 0;">Выберите день</p>
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Времена справа -->
-                        <div class="calendar-times">
-                            <div class="calendar-times-header">Время</div>
-                            <div id="timesList">
-                                <p style="text-align: center; color: #b0b0b0; padding: 20px 0;">Выберите день</p>
+                    </div>
+
+                    <!-- Календарь модели -->
+                    <div id="modelCalendarSection" style="display: none;">
+                        <div class="calendar-container">
+                            <div class="calendar-wrapper">
+                                <div class="calendar-header">
+                                    <button class="calendar-nav" onclick="previousMonth()">◀</button>
+                                    <h3 id="calendarTitleModel">Февраль 2026</h3>
+                                    <button class="calendar-nav" onclick="nextMonth()">▶</button>
+                                </div>
+                                
+                                <div class="calendar-weekdays">
+                                    <div class="weekday">Пн</div>
+                                    <div class="weekday">Вт</div>
+                                    <div class="weekday">Ср</div>
+                                    <div class="weekday">Чт</div>
+                                    <div class="weekday">Пт</div>
+                                    <div class="weekday">Сб</div>
+                                    <div class="weekday">Вс</div>
+                                </div>
+                                
+                                <div class="calendar-grid" id="calendarGridModel">
+                                    <p class="loading">Загрузка календаря...</p>
+                                </div>
+                                
+                                <div class="calendar-legend">
+                                    <div class="legend-item">
+                                        <span class="legend-color green"></span> Есть слоты
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="legend-color red"></span> Занято
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Времена справа -->
+                            <div class="calendar-times">
+                                <div class="calendar-times-header">Время</div>
+                                <div id="timesListModel">
+                                    <p style="text-align: center; color: #b0b0b0; padding: 20px 0;">Выберите день</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1633,46 +1685,128 @@
         loadOperators();
 
         // ==================== КАЛЕНДАРЬ ====================
-        let currentCalendarDate = new Date();
+        let currentCalendarDateOperator = new Date();  // Дата для слотов оператора
+        let currentCalendarDateModel = new Date();     // Дата для слотов модели
         let selectedCalendarDay = null;
+        let userCurrentSlotType = 'operator';  // Текущий тип слота для пользователя: 'operator' или 'model'
+
+        // Функция для получения текущей даты в зависимости от типа
+        function getCurrentCalendarDate() {
+            return userCurrentSlotType === 'operator' ? currentCalendarDateOperator : currentCalendarDateModel;
+        }
+
+        // Функция для получения id календаря в зависимости от типа
+        function getCalendarGridId() {
+            return userCurrentSlotType === 'operator' ? 'calendarGridOperator' : 'calendarGridModel';
+        }
+
+        // Функция для получения id заголовка в зависимости от типа
+        function getCalendarTitleId() {
+            return userCurrentSlotType === 'operator' ? 'calendarTitleOperator' : 'calendarTitleModel';
+        }
+
+        // Функция для получения id списка времен в зависимости от типа
+        function getTimesListId() {
+            return userCurrentSlotType === 'operator' ? 'timesListOperator' : 'timesListModel';
+        }
+
+        // Переключить тип слота для пользователя
+        function switchUserSlotType(slotType) {
+            console.log(`🔄 [USER] Переключение типа слота с ${userCurrentSlotType} на ${slotType}`);
+            userCurrentSlotType = slotType;
+            
+            // Показываем/скрываем правильные секции календарей
+            const operatorSection = document.getElementById('operatorCalendarSection');
+            const modelSection = document.getElementById('modelCalendarSection');
+            
+            console.log(`👁️ [USER] operatorSection:`, operatorSection);
+            console.log(`👁️ [USER] modelSection:`, modelSection);
+            
+            if (slotType === 'operator') {
+                operatorSection.style.display = 'block';
+                modelSection.style.display = 'none';
+                console.log(`✅ [USER] Показываю календарь оператора, скрываю календарь модели`);
+            } else {
+                operatorSection.style.display = 'none';
+                modelSection.style.display = 'block';
+                console.log(`✅ [USER] Показываю календарь модели, скрываю календарь оператора`);
+            }
+            
+            // Обновляем стили кнопок
+            const operatorBtn = document.getElementById('userSlotTypeOperatorBtn');
+            const modelBtn = document.getElementById('userSlotTypeModelBtn');
+            
+            if (slotType === 'operator') {
+                operatorBtn.style.background = 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
+                operatorBtn.style.color = 'white';
+                operatorBtn.style.borderColor = '#6366f1';
+                
+                modelBtn.style.background = '#2d2d3d';
+                modelBtn.style.color = '#e0e0e0';
+                modelBtn.style.borderColor = '#3d3d4d';
+            } else {
+                operatorBtn.style.background = '#2d2d3d';
+                operatorBtn.style.color = '#e0e0e0';
+                operatorBtn.style.borderColor = '#3d3d4d';
+                
+                modelBtn.style.background = 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
+                modelBtn.style.color = 'white';
+                modelBtn.style.borderColor = '#6366f1';
+            }
+            
+            // Перезагружаем календарь и времена
+            selectedCalendarDay = null;
+            loadCalendar();
+        }
 
         async function loadCalendar() {
-            const year = currentCalendarDate.getFullYear();
-            const month = currentCalendarDate.getMonth() + 1;
+            const currentDate = getCurrentCalendarDate();
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
             
-            console.log(`📅 Загрузка календаря для ${month}/${year}`);
+            console.log(`📅 [USER] Загрузка календаря для ${month}/${year}, Тип: ${userCurrentSlotType}`);
+            console.log(`📅 [USER] ID календаря: ${getCalendarGridId()}, ID заголовка: ${getCalendarTitleId()}`);
             
             try {
-                const response = await fetch(`/api/calendar-availability?year=${year}&month=${month}`);
+                const response = await fetch(`/api/calendar-availability?year=${year}&month=${month}&type=${userCurrentSlotType}`);
                 const data = await response.json();
                 
-                console.log('✅ Данные календаря получены:', data);
+                console.log(`✅ [USER] Данные календаря получены для типа ${userCurrentSlotType}:`, data);
                 
                 if (data.success) {
                     renderCalendar(data.calendar);
                 } else {
-                    console.error('Ошибка загрузки календаря:', data.message);
+                    console.error('❌ [USER] Ошибка загрузки календаря:', data.message);
                 }
             } catch (error) {
-                console.error('Ошибка при загрузке календаря:', error);
+                console.error('❌ [USER] Ошибка при загрузке календаря:', error);
             }
         }
 
         function renderCalendar(calendarData) {
-            console.log('🎨 Рисую календарь с данными:', calendarData);
+            console.log(`🎨 [USER] Рисую календарь для типа ${userCurrentSlotType} с данными:`, calendarData);
             
-            const year = currentCalendarDate.getFullYear();
-            const month = currentCalendarDate.getMonth() + 1;
+            const currentDate = getCurrentCalendarDate();
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
+            
+            // Получаем правильные id для текущего типа календаря
+            const calendarGridId = getCalendarGridId();
+            const calendarTitleId = getCalendarTitleId();
+            
+            console.log(`🎨 [USER] calendarGridId: ${calendarGridId}, calendarTitleId: ${calendarTitleId}`);
             
             // Обновляем заголовок
             const monthNames = ['', 'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
                               'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
             
-            const titleEl = document.getElementById('calendarTitle');
-            const gridEl = document.getElementById('calendarGrid');
+            const titleEl = document.getElementById(calendarTitleId);
+            const gridEl = document.getElementById(calendarGridId);
             
-            if (!titleEl) console.error('❌ Элемент calendarTitle не найден!');
-            if (!gridEl) console.error('❌ Элемент calendarGrid не найден!');
+            console.log(`🎨 [USER] titleEl:`, titleEl, `gridEl:`, gridEl);
+            
+            if (!titleEl) console.error(`❌ Элемент ${calendarTitleId} не найден!`);
+            if (!gridEl) console.error(`❌ Элемент ${calendarGridId} не найден!`);
             
             if (titleEl) {
                 titleEl.textContent = `${monthNames[month]} ${year}`;
@@ -1719,8 +1853,9 @@
 
         function selectDay(day) {
             selectedCalendarDay = day;
-            const year = currentCalendarDate.getFullYear();
-            const month = currentCalendarDate.getMonth() + 1;
+            const currentDate = getCurrentCalendarDate();
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
             
             // Перезагружаем календарь для выбора дня
             loadCalendar();
@@ -1730,10 +1865,10 @@
         }
 
         async function displayTimesForDay(year, month, day) {
-            console.log(`⏰ Загружаю времена для ${day}.${month}.${year}`);
+            console.log(`⏰ Загружаю времена для ${day}.${month}.${year}, Тип: ${userCurrentSlotType}`);
             
             try {
-                const response = await fetch('/api/interview-slots');
+                const response = await fetch(`/api/interview-slots?type=${userCurrentSlotType}`);
                 const data = await response.json();
                 
                 if (data.success && data.slots) {
@@ -1743,7 +1878,8 @@
                         return slot.start_time.includes(selectedDateStr);
                     });
                     
-                    const timesList = document.getElementById('timesList');
+                    const timesListId = getTimesListId();
+                    const timesList = document.getElementById(timesListId);
                     
                     if (slotsForDay.length === 0) {
                         timesList.innerHTML = '<p style="text-align: center; color: #b0b0b0;">Нет слотов</p>';
@@ -1769,13 +1905,17 @@
         }
 
         function previousMonth() {
-            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            const currentDate = getCurrentCalendarDate();
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            setCurrentCalendarDate(currentDate);
             selectedCalendarDay = null;
             loadCalendar();
         }
 
         function nextMonth() {
-            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            const currentDate = getCurrentCalendarDate();
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            setCurrentCalendarDate(currentDate);
             selectedCalendarDay = null;
             loadCalendar();
         }

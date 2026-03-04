@@ -247,6 +247,7 @@ class InterviewSlot(db.Model):
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime)
     is_open = db.Column(db.Boolean, default=True)
+    slot_type = db.Column(db.String(50), default='operator')  # 'operator' или 'model'
     created_at = db.Column(db.DateTime, default=moscow_now)
 
     def to_dict(self):
@@ -256,7 +257,8 @@ class InterviewSlot(db.Model):
             'id': self.id,
             'start_time': start_str,
             'end_time': end_str,
-            'is_open': self.is_open
+            'is_open': self.is_open,
+            'slot_type': self.slot_type
         }
 
 # Модель для анкет моделей/операторов
@@ -492,6 +494,11 @@ with app.app_context():
                 db.session.execute(text("ALTER TABLE interview_slot ADD COLUMN is_open BOOLEAN DEFAULT 1"))
                 db.session.commit()
                 print("[MIGRATION] Столбец is_open добавлен успешно")
+            if 'slot_type' not in cols:
+                print("[MIGRATION] Добавляю столбец slot_type в таблицу interview_slot...")
+                db.session.execute(text("ALTER TABLE interview_slot ADD COLUMN slot_type VARCHAR(50) DEFAULT 'operator'"))
+                db.session.commit()
+                print("[MIGRATION] Столбец slot_type добавлен успешно")
         # Таблица Message должна быть создана автоматически через db.create_all()
         if 'message' not in insp.get_table_names():
             print("[INFO] Таблица Message будет создана при следующей миграции")
@@ -1082,12 +1089,16 @@ def get_interview_slots():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
     include_all = request.args.get('all') == '1'
+    slot_type = request.args.get('type', 'operator')  # По умолчанию получаем слоты для оператора
+
+    print(f"📋 [API] get_interview_slots: include_all={include_all}, type={slot_type}")
 
     if include_all and user and user.is_admin:
-        slots = InterviewSlot.query.order_by(InterviewSlot.start_time.asc()).all()
+        slots = InterviewSlot.query.filter_by(slot_type=slot_type).order_by(InterviewSlot.start_time.asc()).all()
     else:
-        slots = InterviewSlot.query.filter_by(is_open=True).order_by(InterviewSlot.start_time.asc()).all()
+        slots = InterviewSlot.query.filter_by(is_open=True, slot_type=slot_type).order_by(InterviewSlot.start_time.asc()).all()
 
+    print(f"✅ [API] Возвращаю {len(slots)} слотов для типа '{slot_type}'")
     return jsonify({'success': True, 'slots': [s.to_dict() for s in slots]}), 200
 
 
@@ -1104,9 +1115,13 @@ def get_calendar_availability():
         # Получаем год и месяц из параметров запроса
         year = request.args.get('year', moscow_now().year, type=int)
         month = request.args.get('month', moscow_now().month, type=int)
+        slot_type = request.args.get('type', 'operator')  # По умолчанию operator
         
-        # Получаем все слоты для этого месяца
-        all_slots = InterviewSlot.query.all()
+        print(f"📅 [API] get_calendar_availability: year={year}, month={month}, type={slot_type}")
+        
+        # Получаем все слоты для этого месяца и типа
+        all_slots = InterviewSlot.query.filter_by(slot_type=slot_type).all()
+        print(f"📊 [API] Найдено слотов для типа '{slot_type}': {len(all_slots)}")
         
         # Группируем слоты по дням
         days_status = {}
@@ -1129,7 +1144,8 @@ def get_calendar_availability():
                     'id': slot.id,
                     'start': slot.start_time.strftime('%H:%M'),
                     'end': slot.end_time.strftime('%H:%M') if slot.end_time else None,
-                    'is_open': slot.is_open
+                    'is_open': slot.is_open,
+                    'slot_type': slot.slot_type
                 }
                 days_status[day]['slots'].append(slot_info)
                 
@@ -1187,15 +1203,20 @@ def create_interview_slot():
         data = request.json
         start_raw = data.get('start_time')
         end_raw = data.get('end_time')
+        slot_type = data.get('slot_type', 'operator')  # По умолчанию 'operator'
+        
         if not start_raw:
             return jsonify({'success': False, 'message': 'Укажите дату и время начала'}), 400
+        
+        if slot_type not in ['operator', 'model']:
+            return jsonify({'success': False, 'message': 'Неверный тип слота'}), 400
 
         start_time = datetime.fromisoformat(start_raw)
         end_time = datetime.fromisoformat(end_raw) if end_raw else None
         if end_time and end_time <= start_time:
             return jsonify({'success': False, 'message': 'Время окончания должно быть позже начала'}), 400
 
-        slot = InterviewSlot(start_time=start_time, end_time=end_time, is_open=True)
+        slot = InterviewSlot(start_time=start_time, end_time=end_time, is_open=True, slot_type=slot_type)
         db.session.add(slot)
         db.session.commit()
         return jsonify({'success': True, 'slot': slot.to_dict()}), 201
@@ -1284,8 +1305,9 @@ def admin_save_hours():
             
         date_str = data.get('date')
         hours = data.get('hours', [])
+        slot_type = data.get('slot_type', 'operator')  # 🔹 Получаем тип слота
         
-        print(f"📝 [Admin] Received date_str={date_str}, hours={hours}")
+        print(f"📝 [Admin] Received date_str={date_str}, hours={hours}, slot_type={slot_type}")
         
         if not date_str:
             return jsonify({'success': False, 'message': 'Date is required'}), 400
@@ -1295,9 +1317,10 @@ def admin_save_hours():
         # Parse date
         date_obj = datetime.strptime(date_str, '%Y-%m-%d')
         
-        # Delete all slots for this date
+        # 🔹 КРИТИЧНО: Удаляем только слоты ЭТОГО ТИПА для этой даты!
         InterviewSlot.query.filter(
-            db.func.date(InterviewSlot.start_time) == date_obj.date()
+            db.func.date(InterviewSlot.start_time) == date_obj.date(),
+            InterviewSlot.slot_type == slot_type  # 🔹 Фильтр по типу!
         ).delete()
         
         # Create new slots for each selected hour (hour:00 to hour+1:00)
@@ -1308,7 +1331,8 @@ def admin_save_hours():
                 start_time = datetime(date_obj.year, date_obj.month, date_obj.day, hour, 0, 0)
                 end_time = datetime(date_obj.year, date_obj.month, date_obj.day, hour + 1, 0, 0)
                 
-                slot = InterviewSlot(start_time=start_time, end_time=end_time, is_open=True)
+                # 🔹 КРИТИЧНО: Указываем тип слота!
+                slot = InterviewSlot(start_time=start_time, end_time=end_time, is_open=True, slot_type=slot_type)
                 db.session.add(slot)
                 created_slots.append(slot)
             except ValueError as e:
@@ -1316,7 +1340,7 @@ def admin_save_hours():
                 continue
         
         db.session.commit()
-        print(f"✅ [Admin] Saved {len(created_slots)} hours for {date_str}")
+        print(f"✅ [Admin] Saved {len(created_slots)} hours for {date_str} (type: {slot_type})")
         
         return jsonify({
             'success': True, 

@@ -1536,12 +1536,18 @@
                 </div>
             </div>
             
-            <!-- Календарь с временами -->
-            <div class="calendar-container">
+            <!-- Переключатели между типами слотов -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; padding: 15px; background: rgba(99, 102, 241, 0.1); border-radius: 8px;">
+                <button id="slotTypeOperatorBtn" class="btn btn-secondary" style="flex: 1; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border: 2px solid #6366f1;" onclick="switchSlotType('operator')">👨‍💼 Слоты для оператора</button>
+                <button id="slotTypeModelBtn" class="btn btn-secondary" style="flex: 1; background: #2d2d3d; color: #e0e0e0; border: 2px solid #3d3d4d;" onclick="switchSlotType('model')">👩‍🎬 Слоты для модели</button>
+            </div>
+            
+            <!-- 🔹 КАЛЕНДАРЬ ДЛЯ ОПЕРАТОРА -->
+            <div id="adminOperatorCalendarSection" class="calendar-container">
                 <div class="calendar-wrapper">
                     <div class="calendar-header">
                         <button class="calendar-nav" onclick="adminPreviousMonth()">◀</button>
-                        <h3 id="adminCalendarTitle">Февраль 2026</h3>
+                        <h3 id="adminCalendarTitleOperator">Февраль 2026</h3>
                         <button class="calendar-nav" onclick="adminNextMonth()">▶</button>
                     </div>
                     
@@ -1555,7 +1561,7 @@
                         <div class="weekday">Вс</div>
                     </div>
                     
-                    <div class="calendar-grid" id="adminCalendarGrid">
+                    <div class="calendar-grid" id="adminCalendarGridOperator">
                         <p class="loading">Загрузка календаря...</p>
                     </div>
                     
@@ -1575,10 +1581,56 @@
                 <!-- Времена справа -->
                 <div class="calendar-times">
                     <div class="calendar-times-header">Время</div>
-                    <div id="adminTimesPanel">
+                    <div id="adminTimesPanelOperator">
                         <p style="text-align: center; color: #b0b0b0; padding: 20px 0;">Выберите день</p>
                     </div>
                 </div>
+            </div>
+            
+            <!-- 🔹 КАЛЕНДАРЬ ДЛЯ МОДЕЛИ -->
+            <div id="adminModelCalendarSection" class="calendar-container" style="display: none;">
+                <div class="calendar-wrapper">
+                    <div class="calendar-header">
+                        <button class="calendar-nav" onclick="adminPreviousMonth()">◀</button>
+                        <h3 id="adminCalendarTitleModel">Февраль 2026</h3>
+                        <button class="calendar-nav" onclick="adminNextMonth()">▶</button>
+                    </div>
+                    
+                    <div class="calendar-weekdays">
+                        <div class="weekday">Пн</div>
+                        <div class="weekday">Вт</div>
+                        <div class="weekday">Ср</div>
+                        <div class="weekday">Чт</div>
+                        <div class="weekday">Пт</div>
+                        <div class="weekday">Сб</div>
+                        <div class="weekday">Вс</div>
+                    </div>
+                    
+                    <div class="calendar-grid" id="adminCalendarGridModel">
+                        <p class="loading">Загрузка календаря...</p>
+                    </div>
+                    
+                    <div class="calendar-legend">
+                        <div class="legend-item">
+                            <span class="legend-color green"></span> Открыто (есть слоты)
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color red"></span> Занято
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color gray"></span> Нет слотов
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Времена справа -->
+                <div class="calendar-times">
+                    <div class="calendar-times-header">Время</div>
+                    <div id="adminTimesPanelModel">
+                        <p style="text-align: center; color: #b0b0b0; padding: 20px 0;">Выберите день</p>
+                    </div>
+                </div>
+            </div>
                 
                 <!-- Список всех слотов -->
                 <div class="admin-all-slots">
@@ -1746,11 +1798,13 @@
         }
 
         async function loadInterviewSlotsAdmin() {
-            console.log('🔄 [ADMIN] Загрузка слотов...');
+            console.log(`🔄 [ADMIN] Загрузка слотов для типа: ${adminCurrentSlotType}`);
             try {
-                const response = await fetch('/api/interview-slots?all=1');
+                const response = await fetch(`/api/interview-slots?all=1&type=${adminCurrentSlotType}`);
                 const data = await response.json();
                 const container = document.getElementById('adminSlotList');
+                
+                console.log(`✅ [ADMIN] Получено слотов для типа ${adminCurrentSlotType}:`, data.slots ? data.slots.length : 0);
 
                 if (!response.ok || !data.success) {
                     container.innerHTML = '<p class="empty">Ошибка загрузки слотов</p>';
@@ -1863,18 +1917,103 @@
         }
 
         // Переменные состояния для админского календаря
-        let adminCurrentDate = new Date();
-        let adminCalendarData = {};
+        let adminCurrentDateOperator = new Date();  // Дата для слотов оператора
+        let adminCurrentDateModel = new Date();     // Дата для слотов модели
+        let adminCalendarDataOperator = {};  // 🔹 Отдельные данные календаря для оператора
+        let adminCalendarDataModel = {};     // 🔹 Отдельные данные календаря для модели
+        let adminCurrentSlotType = 'operator';  // Текущий тип слота: 'operator' или 'model'
+
+        // Функция для получения текущей даты в зависимости от типа
+        function getAdminCurrentDate() {
+            return adminCurrentSlotType === 'operator' ? adminCurrentDateOperator : adminCurrentDateModel;
+        }
+
+        // Функция для установки текущей даты в зависимости от типа
+        function setAdminCurrentDate(date) {
+            if (adminCurrentSlotType === 'operator') {
+                adminCurrentDateOperator = date;
+            } else {
+                adminCurrentDateModel = date;
+            }
+        }
+
+        // Функция для получения данных календаря в зависимости от типа
+        function getAdminCalendarData() {
+            return adminCurrentSlotType === 'operator' ? adminCalendarDataOperator : adminCalendarDataModel;
+        }
+
+        // Вспомогательные функции для получения правильных ID элементов
+        function getAdminCalendarGridId() {
+            return adminCurrentSlotType === 'operator' ? 'adminCalendarGridOperator' : 'adminCalendarGridModel';
+        }
+
+        function getAdminCalendarTitleId() {
+            return adminCurrentSlotType === 'operator' ? 'adminCalendarTitleOperator' : 'adminCalendarTitleModel';
+        }
+
+        function getAdminTimesPanelId() {
+            return adminCurrentSlotType === 'operator' ? 'adminTimesPanelOperator' : 'adminTimesPanelModel';
+        }
+
+        // Переключить тип слота
+        function switchSlotType(slotType) {
+            console.log(`🔄 [ADMIN] Переключение с ${adminCurrentSlotType} на ${slotType}`);
+            console.log(`📦 [ADMIN] ДО переключения: operatorData=`, adminCalendarDataOperator, `modelData=`, adminCalendarDataModel);
+            adminCurrentSlotType = slotType;
+            
+            // Показываем/скрываем соответствующие секции календарей
+            const operatorSection = document.getElementById('adminOperatorCalendarSection');
+            const modelSection = document.getElementById('adminModelCalendarSection');
+            
+            if (slotType === 'operator') {
+                operatorSection.style.display = '';
+                modelSection.style.display = 'none';
+                console.log('👁️ [ADMIN] Показан календарь ОПЕРАТОРА, скрыт календарь МОДЕЛИ');
+            } else {
+                operatorSection.style.display = 'none';
+                modelSection.style.display = '';
+                console.log('👁️ [ADMIN] Показан календарь МОДЕЛИ, скрыт календарь ОПЕРАТОРА');
+            }
+            
+            // Обновляем стили кнопок
+            const operatorBtn = document.getElementById('slotTypeOperatorBtn');
+            const modelBtn = document.getElementById('slotTypeModelBtn');
+            
+            if (slotType === 'operator') {
+                operatorBtn.style.background = 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
+                operatorBtn.style.color = 'white';
+                operatorBtn.style.borderColor = '#6366f1';
+                
+                modelBtn.style.background = '#2d2d3d';
+                modelBtn.style.color = '#e0e0e0';
+                modelBtn.style.borderColor = '#3d3d4d';
+            } else {
+                operatorBtn.style.background = '#2d2d3d';
+                operatorBtn.style.color = '#e0e0e0';
+                operatorBtn.style.borderColor = '#3d3d4d';
+                
+                modelBtn.style.background = 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
+                modelBtn.style.color = 'white';
+                modelBtn.style.borderColor = '#6366f1';
+            }
+            
+            console.log(`📅 [ADMIN] Загружаю календарь и слоты для типа: ${slotType}`);
+            console.log(`📦 [ADMIN] ПОСЛЕ переключения: operatorData=`, adminCalendarDataOperator, `modelData=`, adminCalendarDataModel);
+            // Перезагружаем календарь И список слотов
+            loadAdminCalendar();
+            loadInterviewSlotsAdmin();  // 🔹 ВАЖНО: загружаем список слотов для нового типа
+        }
 
         // Загрузить данные календаря для админа
         async function loadAdminCalendar() {
             console.log('🟡 [ADMIN] Загрузка календаря...');
             try {
-                const year = adminCurrentDate.getFullYear();
-                const month = adminCurrentDate.getMonth() + 1;
-                console.log(`🟡 [ADMIN] Год: ${year}, Месяц: ${month}`);
+                const currentDate = getAdminCurrentDate();
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth() + 1;
+                console.log(`🟡 [ADMIN] Год: ${year}, Месяц: ${month}, Тип: ${adminCurrentSlotType}`);
 
-                const response = await fetch(`/api/calendar-availability?year=${year}&month=${month}`);
+                const response = await fetch(`/api/calendar-availability?year=${year}&month=${month}&type=${adminCurrentSlotType}`);
                 const data = await response.json();
                 console.log('🟡 [ADMIN] Данные получены:', data);
 
@@ -1883,8 +2022,16 @@
                     return;
                 }
 
-                adminCalendarData = data.calendar || {};
-                console.log('🟡 [ADMIN] Данные календаря:', adminCalendarData);
+                // Сохраняем в правильную переменную в зависимости от типа
+                if (adminCurrentSlotType === 'operator') {
+                    adminCalendarDataOperator = data.calendar || {};
+                    console.log('🟢 [ADMIN] ✅ СОХРАНЕНО в adminCalendarDataOperator:', JSON.stringify(adminCalendarDataOperator));
+                    console.log('🔵 [ADMIN] adminCalendarDataModel остался:', JSON.stringify(adminCalendarDataModel));
+                } else {
+                    adminCalendarDataModel = data.calendar || {};
+                    console.log('🔵 [ADMIN] ✅ СОХРАНЕНО в adminCalendarDataModel:', JSON.stringify(adminCalendarDataModel));
+                    console.log('🟢 [ADMIN] adminCalendarDataOperator остался:', JSON.stringify(adminCalendarDataOperator));
+                }
                 renderAdminCalendar();
             } catch (error) {
                 console.error('❌ [ADMIN] Ошибка при загрузке календаря админа:', error);
@@ -1894,18 +2041,19 @@
         // Отрендерить админский календарь
         function renderAdminCalendar() {
             console.log('🎨 [ADMIN] Рендеринг календаря...');
-            const year = adminCurrentDate.getFullYear();
-            const month = adminCurrentDate.getMonth();
+            const currentDate = getAdminCurrentDate();
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
 
             // Обновляем заголовок
             const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
                 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-            const titleElement = document.getElementById('adminCalendarTitle');
+            const titleElement = document.getElementById(getAdminCalendarTitleId());
             if (titleElement) {
                 titleElement.textContent = `${monthNames[month]} ${year}`;
                 console.log(`🟡 [ADMIN] Заголовок обновлен: ${monthNames[month]} ${year}`);
             } else {
-                console.error('❌ [ADMIN] Элемент adminCalendarTitle не найден!');
+                console.error(`❌ [ADMIN] Элемент ${getAdminCalendarTitleId()} не найден!`);
             }
 
             // Получаем первый день месяца и количество дней
@@ -1915,9 +2063,9 @@
             const startingDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
 
             // Создаем сетку календаря
-            const calendarGrid = document.getElementById('adminCalendarGrid');
+            const calendarGrid = document.getElementById(getAdminCalendarGridId());
             if (!calendarGrid) {
-                console.error('❌ [ADMIN] Элемент adminCalendarGrid не найден!');
+                console.error(`❌ [ADMIN] Элемент ${getAdminCalendarGridId()} не найден!`);
                 return;
             }
             
@@ -1935,11 +2083,13 @@
             let greenDays = 0;
             let redDays = 0;
             let grayDays = 0;
+            const calendarData = getAdminCalendarData();  // 🔹 Получаем правильные данные
+            console.log(`📊 [ADMIN] Используем данные для типа ${adminCurrentSlotType}:`, calendarData);
             for (let day = 1; day <= daysInMonth; day++) {
                 const dayElement = document.createElement('div');
                 dayElement.className = 'calendar-day';
                 
-                const dayData = adminCalendarData[day] || { status: 'gray' };
+                const dayData = calendarData[day] || { status: 'gray' };
                 if (dayData.status === 'green') {
                     dayElement.classList.add('green');
                     greenDays++;
@@ -1971,7 +2121,7 @@
             console.log(`📝 ISO Date: ${isoDate}`);
             
             // Подсвечиваем день в календаре
-            const dayCells = document.querySelectorAll('#adminCalendarGrid .calendar-day');
+            const dayCells = document.querySelectorAll(`#${getAdminCalendarGridId()} .calendar-day`);
             dayCells.forEach(cell => {
                 if (cell.textContent === String(day)) {
                     cell.style.boxShadow = '0 0 10px rgba(99, 102, 241, 0.6)';
@@ -1982,9 +2132,9 @@
                 }
             });
             
-            // Загружаем существующие слоты для этого дня
+            // Загружаем существующие слоты для этого дня (с фильтром по типу)
             try {
-                const response = await fetch('/api/interview-slots?all=1');
+                const response = await fetch(`/api/interview-slots?all=1&type=${adminCurrentSlotType}`);
                 const data = await response.json();
                 
                 if (!data.success || !data.slots) {
@@ -2029,7 +2179,7 @@
                 });
                 
                 // Отображаем часы 12-18 в панели справа
-                const timesPanel = document.getElementById('adminTimesPanel');
+                const timesPanel = document.getElementById(getAdminTimesPanelId());
                 let hoursHTML = '';
                 
                 for (let hour = 12; hour <= 18; hour++) {
@@ -2147,7 +2297,8 @@
                     },
                     body: JSON.stringify({
                         date: date,
-                        hours: hours
+                        hours: hours,
+                        slot_type: adminCurrentSlotType  // 🔹 КРИТИЧНО: передаём тип слота!
                     })
                 });
                 
@@ -2166,13 +2317,17 @@
 
         // Переключить месяц вперед
         function adminNextMonth() {
-            adminCurrentDate.setMonth(adminCurrentDate.getMonth() + 1);
+            const currentDate = getAdminCurrentDate();
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            setAdminCurrentDate(currentDate);
             loadAdminCalendar();
         }
 
         // Переключить месяц назад
         function adminPreviousMonth() {
-            adminCurrentDate.setMonth(adminCurrentDate.getMonth() - 1);
+            const currentDate = getAdminCurrentDate();
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            setAdminCurrentDate(currentDate);
             loadAdminCalendar();
         }
 
@@ -2208,7 +2363,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         start_time: startTime,
-                        end_time: endTime
+                        end_time: endTime,
+                        slot_type: adminCurrentSlotType
                     })
                 });
 
@@ -2250,7 +2406,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         start_time: startTime,
-                        end_time: endTime || null
+                        end_time: endTime || null,
+                        slot_type: adminCurrentSlotType  // 🔹 ВАЖНО: указываем тип слота
                     })
                 });
 
@@ -2319,8 +2476,12 @@
                 
                 if (data.success) {
                     console.log('✅ Слот удалён, перезагружаю календарь...');
-                    // Очищаем кэш календаря
-                    adminCalendarData = {};
+                    // Очищаем кэш календаря для текущего типа
+                    if (adminCurrentSlotType === 'operator') {
+                        adminCalendarDataOperator = {};
+                    } else {
+                        adminCalendarDataModel = {};
+                    }
                     // Перезагружаем оба: слоты И календарь
                     await loadInterviewSlotsAdmin();
                 } else {
