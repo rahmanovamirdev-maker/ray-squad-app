@@ -274,6 +274,7 @@ class ModelOperatorApplication(db.Model):
     work_hours = db.Column(db.String(200))  # Сколько часов и дней в неделю
     has_headphones = db.Column(db.String(50))  # "да" или "нет"
     telegram = db.Column(db.String(100))
+    interview_time = db.Column(db.String(100))  # Время собеседования модели
     photos = db.Column(db.Text)  # Сохраняем пути к фото через запятую или JSON
     owner_username = db.Column(db.String(100))
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
@@ -294,6 +295,7 @@ class ModelOperatorApplication(db.Model):
             'work_hours': self.work_hours,
             'has_headphones': self.has_headphones,
             'telegram': self.telegram,
+            'interview_time': self.interview_time,
             'photos': self.photos,
             'owner_username': self.owner_username,
             'status': self.status,
@@ -499,6 +501,14 @@ with app.app_context():
                 db.session.execute(text("ALTER TABLE interview_slot ADD COLUMN slot_type VARCHAR(50) DEFAULT 'operator'"))
                 db.session.commit()
                 print("[MIGRATION] Столбец slot_type добавлен успешно")
+        # Добавление interview_time для модели
+        if 'model_operator_application' in insp.get_table_names():
+            cols = [c['name'] for c in insp.get_columns('model_operator_application')]
+            if 'interview_time' not in cols:
+                print("[MIGRATION] Добавляю столбец interview_time в таблицу model_operator_application...")
+                db.session.execute(text("ALTER TABLE model_operator_application ADD COLUMN interview_time VARCHAR(100)"))
+                db.session.commit()
+                print("[MIGRATION] Столбец interview_time добавлен успешно")
         # Таблица Message должна быть создана автоматически через db.create_all()
         if 'message' not in insp.get_table_names():
             print("[INFO] Таблица Message будет создана при следующей миграции")
@@ -890,6 +900,7 @@ def add_model_operator():
             work_hours=data.get('work_hours', ''),
             has_headphones=data.get('has_headphones', ''),
             telegram=data.get('telegram', ''),
+            interview_time=data.get('interview_time', ''),  # Время собеседования модели
             photos=','.join(photos) if photos else '',
             owner_username=user.username if user else None,
             team=user.team if user else None

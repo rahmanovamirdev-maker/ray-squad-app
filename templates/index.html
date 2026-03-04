@@ -743,6 +743,12 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="model_interview_time">Время собеседования</label>
+                            <input type="text" id="model_interview_time" name="interview_time" placeholder="Например, 15:30 25.02.2026">
+                            <small class="form-hint">Формат: ДД.ММ.ГГГГ ЧЧ:ММ</small>
+                        </div>
+
+                        <div class="form-group">
                             <label for="model_photos">Фото (в полный рост приветствуется)</label>
                             <input type="file" id="model_photos" name="photos" multiple accept="image/*">
                             <small class="form-hint">Загрузите несколько фото, предпочтительно в полный рост</small>
@@ -1086,6 +1092,49 @@
                 }
 
                 interviewInput.value = formatted;
+            });
+        }
+
+        // Такое же форматирование для поля собеседования модели
+        const modelInterviewInput = document.getElementById('model_interview_time');
+        if (modelInterviewInput) {
+            modelInterviewInput.addEventListener('input', () => {
+                const digits = modelInterviewInput.value.replace(/\D/g, '').slice(0, 12);
+                const parts = [];
+
+                if (digits.length >= 2) {
+                    parts.push(digits.slice(0, 2));
+                } else {
+                    parts.push(digits);
+                }
+
+                if (digits.length >= 4) {
+                    parts.push(digits.slice(2, 4));
+                } else if (digits.length > 2) {
+                    parts.push(digits.slice(2));
+                }
+
+                if (digits.length >= 8) {
+                    parts.push(digits.slice(4, 8));
+                } else if (digits.length > 4) {
+                    parts.push(digits.slice(4));
+                }
+
+                let formatted = parts.join('.');
+
+                if (digits.length > 8) {
+                    const timeDigits = digits.slice(8);
+                    if (timeDigits.length >= 2) {
+                        formatted += ' ' + timeDigits.slice(0, 2);
+                    } else {
+                        formatted += ' ' + timeDigits;
+                    }
+                    if (timeDigits.length > 2) {
+                        formatted += ':' + timeDigits.slice(2, 4);
+                    }
+                }
+
+                modelInterviewInput.value = formatted;
             });
         }
 
