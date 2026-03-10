@@ -817,6 +817,7 @@ class ScoutJoinApplication(db.Model):
     approved_by = db.Column(db.String(120), nullable=True)
     rejected_by = db.Column(db.String(120), nullable=True)
     reviewed_at = db.Column(db.DateTime, nullable=True)
+    team = db.Column(db.String(50), nullable=True)  # Команда (Team 1 - Team 8)
 
     def to_dict(self):
         return {
@@ -1815,9 +1816,9 @@ def get_applicants():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
     
-    # Модератор видит общие анкеты всего сквада
+    # Модератор видит только анкеты своей команды
     if is_moderator_user(user):
-        applicants = Applicant.query.filter_by(is_deleted=False).order_by(Applicant.date_added.desc()).all()
+        applicants = Applicant.query.filter_by(team=user.team, is_deleted=False).order_by(Applicant.date_added.desc()).all()
     # Owner и Developer видят все НЕ УДАЛЕННЫЕ анкеты
     elif user.is_owner or (user.prefix and user.prefix == 'Developer'):
         applicants = Applicant.query.filter_by(is_deleted=False).order_by(Applicant.date_added.desc()).all()
@@ -1843,9 +1844,9 @@ def get_model_operators():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
     
-    # Модератор видит общие анкеты всего сквада
+    # Модератор видит только анкеты своей команды
     if is_moderator_user(user):
-        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted != True).order_by(ModelOperatorApplication.date_added.desc()).all()
+        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted != True, ModelOperatorApplication.team == user.team).order_by(ModelOperatorApplication.date_added.desc()).all()
     # Owner и Developer видят все анкеты (кроме удаленных)
     elif user.is_owner or (user.prefix and user.prefix == 'Developer'):
         models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted != True).order_by(ModelOperatorApplication.date_added.desc()).all()
@@ -1995,9 +1996,9 @@ def get_chatters():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
     
-    # Модератор видит общие анкеты всего сквада
+    # Модератор видит только анкеты своей команды
     if is_moderator_user(user):
-        chatters = ChatApplication.query.filter(ChatApplication.is_deleted != True).order_by(ChatApplication.date_added.desc()).all()
+        chatters = ChatApplication.query.filter(ChatApplication.is_deleted != True, ChatApplication.team == user.team).order_by(ChatApplication.date_added.desc()).all()
     # Owner и Developer видят все анкеты (кроме удаленных)
     elif user.is_owner or (user.prefix and user.prefix == 'Developer'):
         chatters = ChatApplication.query.filter(ChatApplication.is_deleted != True).order_by(ChatApplication.date_added.desc()).all()
@@ -2389,7 +2390,12 @@ def admin_get_scouters():
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
     try:
-        applications = ScoutJoinApplication.query.order_by(ScoutJoinApplication.date_added.desc()).all()
+        # Модератор видит только анкеты своей команды
+        if is_moderator_user(user):
+            applications = ScoutJoinApplication.query.filter_by(team=user.team).order_by(ScoutJoinApplication.date_added.desc()).all()
+        # Администраторы видят все анкеты
+        else:
+            applications = ScoutJoinApplication.query.order_by(ScoutJoinApplication.date_added.desc()).all()
         return jsonify({
             'success': True,
             'count': len(applications),
