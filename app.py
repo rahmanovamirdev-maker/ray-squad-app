@@ -70,7 +70,7 @@ def generate_strong_password(length=12):
 
 # ============= MAINTENANCE MODE =============
 MAINTENANCE_MODE = True  # Установите False, чтобы открыть сайт
-DEV_PASSWORD = "dev_master_2024"  # Пароль для входа разработчика во время техработ
+DEV_PASSWORD = "vrAynluktEww"  # Пароль для входа разработчика во время техработ
 # ============================================
 
 db = SQLAlchemy(app)
