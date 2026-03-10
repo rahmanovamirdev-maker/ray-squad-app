@@ -947,6 +947,18 @@ with app.app_context():
                 db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN email VARCHAR(150)"))
                 db.session.commit()
                 print("[MIGRATION] Столбец telegram_chat_id добавлен успешно")
+            if 'city' not in cols:
+                print("[MIGRATION] Добавляю столбец city в таблицу scout_join_application...")
+                db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN city VARCHAR(100)"))
+                db.session.commit()
+            if 'streaming_experience' not in cols:
+                print("[MIGRATION] Добавляю столбец streaming_experience в таблицу scout_join_application...")
+                db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN streaming_experience VARCHAR(50)"))
+                db.session.commit()
+            if 'motivation' not in cols:
+                print("[MIGRATION] Добавляю столбец motivation в таблицу scout_join_application...")
+                db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN motivation TEXT"))
+                db.session.commit()
         if 'guest_answer' in insp.get_table_names():
             cols = [c['name'] for c in insp.get_columns('guest_answer')]
             if 'user_id' not in cols:
