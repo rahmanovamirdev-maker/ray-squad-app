@@ -1857,10 +1857,14 @@ def add_public_scout_application():
         age = (request.form.get('age') or '').strip()
         city = (request.form.get('city') or '').strip()
         streaming_experience = (request.form.get('streaming_experience') or '').strip()
+        motivation = (request.form.get('motivation') or '').strip()
         telegram_username = normalize_telegram_username((request.form.get('telegram_username') or '').strip())
         can_stream_change = (request.form.get('can_stream_change') or '').strip()
         device_model = (request.form.get('device_model') or '').strip()
         work_hours_per_week = (request.form.get('work_hours_per_week') or '').strip()
+
+        # Для совместимости со старой схемой БД, где persuasion_text может быть NOT NULL.
+        legacy_persuasion_text = motivation or f"Город: {city}. Опыт: {streaming_experience}."
 
         if not full_name:
             return jsonify({'success': False, 'message': 'Укажите имя'}), 400
@@ -1923,8 +1927,10 @@ def add_public_scout_application():
         application = ScoutJoinApplication(
             full_name=full_name,
             age=age,
+            persuasion_text=legacy_persuasion_text,
             city=city,
             streaming_experience=streaming_experience,
+            motivation=motivation or None,
             telegram_username=telegram_username,
             can_stream_change=can_stream_change,
             device_model=device_model,
