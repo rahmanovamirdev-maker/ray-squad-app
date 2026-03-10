@@ -1820,8 +1820,10 @@
             <button class="tab-btn {% if current_tab == 'models' %}active{% endif %}" onclick="switchTab('models')">👩‍🎬 Модели</button>
             <button class="tab-btn {% if current_tab == 'chatters' %}active{% endif %}" onclick="switchTab('chatters')">💬 Чаттеры</button>
             <button class="tab-btn {% if current_tab == 'scouters' %}active{% endif %}" onclick="switchTab('scouters')">🎥 Стримерши</button>
+            {% if not ((current_user.prefix or '')|lower == 'moderator') %}
             <button class="tab-btn {% if current_tab == 'interviews' %}active{% endif %}" onclick="switchTab('interviews')">🗓️ Открытые собеседования</button>
             <button class="tab-btn {% if current_tab == 'archive' %}active{% endif %}" onclick="switchTab('archive')">📚 Полный архив</button>
+            {% endif %}
             {% if current_user and (current_user.prefix or '')|lower == 'developer' %}
             <button class="tab-btn {% if current_tab == 'logs' %}active{% endif %}" onclick="switchTab('logs')">📜 Логи</button>
             {% endif %}
@@ -1867,6 +1869,7 @@
                             </div>
                             <div class="form-group">
                                 <div class="create-user-account-box">
+                                    {% if not ((current_user.prefix or '')|lower == 'moderator') %}
                                     <input type="checkbox" id="is_admin" name="is_admin" class="create-user-checkbox">
                                     <label for="is_admin" class="create-user-checkbox-label">
                                         <span class="create-user-checkbox-text">
@@ -1874,13 +1877,21 @@
                                             <span class="create-user-checkbox-hint">(полный доступ к панели)</span>
                                         </span>
                                     </label>
-                                    <input type="checkbox" id="is_moderator" name="is_moderator" class="create-user-checkbox" disabled>
-                                    <label for="is_moderator" class="create-user-checkbox-label" style="opacity: 0.6; cursor: not-allowed;">
+                                    <input type="checkbox" id="is_moderator" name="is_moderator" class="create-user-checkbox">
+                                    <label for="is_moderator" class="create-user-checkbox-label">
                                         <span class="create-user-checkbox-text">
                                             🛡️ Модератор
-                                            <span class="create-user-checkbox-hint">(скоро появится)</span>
+                                            <span class="create-user-checkbox-hint">(доступ к анкетам всего сквада)</span>
                                         </span>
                                     </label>
+                                    {% else %}
+                                    <div class="create-user-checkbox-label" style="cursor: default;">
+                                        <span class="create-user-checkbox-text">
+                                            💼 Доступно создание только рабочих аккаунтов
+                                            <span class="create-user-checkbox-hint">(права модератора ограничены)</span>
+                                        </span>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="form-group">
@@ -1906,6 +1917,7 @@
                     </section>
                 </div>
 
+                {% if not ((current_user.prefix or '')|lower == 'moderator') %}
                 <div class="right-column">
                     <div class="actions-bar">
                         <h2>Пользователи</h2>
@@ -1929,6 +1941,7 @@
                         <p class="loading">Загрузка пользователей...</p>
                     </div>
                 </div>
+                {% endif %}
             </div>
         </div>
 
@@ -2248,6 +2261,7 @@
 
     <script>
         // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+        const IS_MODERATOR = {{ 'true' if ((current_user.prefix or '')|lower == 'moderator') else 'false' }};
         let currentTeamUserId = null;
         let latestParsedAuditLogs = [];
         let latestLogType = 'audit';
@@ -4211,8 +4225,8 @@
                         badge = `<span class="user-badge worker">💼 Рабочий${u.team ? ` #${u.team}` : ''}</span>`;
                     }
 
-                    // Показываем кнопки управления если пользователь не владелец
-                    const showActions = !u.is_owner;
+                    // Модератору доступен только просмотр карточек пользователей.
+                    const showActions = !IS_MODERATOR && !u.is_owner;
                     
                     return `
                         <div class="applicant-card">
@@ -4649,11 +4663,31 @@
                 alert('✗ Не удалось скопировать пароль');
             });
         }
+
+        const adminRoleCheckbox = document.getElementById('is_admin');
+        const moderatorRoleCheckbox = document.getElementById('is_moderator');
+
+        if (adminRoleCheckbox && moderatorRoleCheckbox) {
+            adminRoleCheckbox.addEventListener('change', () => {
+                if (adminRoleCheckbox.checked) {
+                    moderatorRoleCheckbox.checked = false;
+                }
+            });
+
+            moderatorRoleCheckbox.addEventListener('change', () => {
+                if (moderatorRoleCheckbox.checked) {
+                    adminRoleCheckbox.checked = false;
+                }
+            });
+        }
         // =========================================================
 
         // Просто загружаем пользователей при инициализации
         (function() {
             console.log('🎯 [USERS] Прямой вызов загрузки пользователей');
+            if (IS_MODERATOR) {
+                return;
+            }
             if (typeof filterAndLoadUsers === 'function') {
                 setTimeout(() => {
                     console.log('⏳ [USERS] Вызов filterAndLoadUsers()');

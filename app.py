@@ -1291,6 +1291,18 @@ def is_developer_user(user):
     return bool(user and (user.prefix or '').strip().lower() == 'developer')
 
 
+def is_moderator_user(user):
+    return bool(user and (user.prefix or '').strip().lower() == 'moderator')
+
+
+def can_access_admin_panel(user):
+    return bool(user and (user.is_admin or is_moderator_user(user)))
+
+
+def has_full_admin_access(user):
+    return bool(user and user.is_admin and not is_moderator_user(user))
+
+
 def get_user_applications(owner_username):
     """Возвращает полный список анкет пользователя по всем типам."""
     username = (owner_username or '').strip()
@@ -1803,8 +1815,11 @@ def get_applicants():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
     
+    # Модератор видит общие анкеты всего сквада
+    if is_moderator_user(user):
+        applicants = Applicant.query.filter_by(is_deleted=False).order_by(Applicant.date_added.desc()).all()
     # Owner и Developer видят все НЕ УДАЛЕННЫЕ анкеты
-    if user.is_owner or (user.prefix and user.prefix == 'Developer'):
+    elif user.is_owner or (user.prefix and user.prefix == 'Developer'):
         applicants = Applicant.query.filter_by(is_deleted=False).order_by(Applicant.date_added.desc()).all()
     # Обычные админы видят только НЕ УДАЛЕННЫЕ анкеты своей команды
     elif user.is_admin and user.team:
@@ -1828,8 +1843,11 @@ def get_model_operators():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
     
+    # Модератор видит общие анкеты всего сквада
+    if is_moderator_user(user):
+        models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted != True).order_by(ModelOperatorApplication.date_added.desc()).all()
     # Owner и Developer видят все анкеты (кроме удаленных)
-    if user.is_owner or (user.prefix and user.prefix == 'Developer'):
+    elif user.is_owner or (user.prefix and user.prefix == 'Developer'):
         models = ModelOperatorApplication.query.filter(ModelOperatorApplication.is_deleted != True).order_by(ModelOperatorApplication.date_added.desc()).all()
     # Обычные админы видят только анкеты своей команды (кроме удаленных)
     elif user.is_admin and user.team:
@@ -1977,8 +1995,11 @@ def get_chatters():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
     
+    # Модератор видит общие анкеты всего сквада
+    if is_moderator_user(user):
+        chatters = ChatApplication.query.filter(ChatApplication.is_deleted != True).order_by(ChatApplication.date_added.desc()).all()
     # Owner и Developer видят все анкеты (кроме удаленных)
-    if user.is_owner or (user.prefix and user.prefix == 'Developer'):
+    elif user.is_owner or (user.prefix and user.prefix == 'Developer'):
         chatters = ChatApplication.query.filter(ChatApplication.is_deleted != True).order_by(ChatApplication.date_added.desc()).all()
     # Обычные админы видят только анкеты своей команды (кроме удаленных)
     elif user.is_admin and user.team:
@@ -2189,7 +2210,7 @@ def delete_interview_slot(slot_id):
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
-    if not user or not user.is_admin:
+    if not has_full_admin_access(user):
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
     try:
@@ -2207,7 +2228,7 @@ def admin_save_hours():
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
-    if not user or not user.is_admin:
+    if not has_full_admin_access(user):
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
     try:
@@ -2276,7 +2297,7 @@ def admin_get_all_applicants():
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
-    if not user or not user.is_admin:
+    if not has_full_admin_access(user):
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
     try:
@@ -2296,7 +2317,7 @@ def admin_get_full_archive():
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
-    if not user or not user.is_admin:
+    if not has_full_admin_access(user):
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
     try:
@@ -2364,7 +2385,7 @@ def admin_get_scouters():
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
-    if not user or not user.is_admin:
+    if not can_access_admin_panel(user):
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
     try:
@@ -2384,7 +2405,7 @@ def admin_clear_scouters():
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
-    if not user or not user.is_admin:
+    if not has_full_admin_access(user):
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
     try:
@@ -2423,7 +2444,7 @@ def admin_approve_scout(scout_id):
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
-    if not user or not user.is_admin:
+    if not has_full_admin_access(user):
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
     try:
@@ -2467,7 +2488,7 @@ def admin_reject_scout(scout_id):
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
-    if not user or not user.is_admin:
+    if not has_full_admin_access(user):
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
     try:
@@ -2511,7 +2532,7 @@ def admin_get_users():
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
-    if not user or not user.is_admin:
+    if not has_full_admin_access(user):
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
     try:
@@ -2596,7 +2617,7 @@ def login():
                 _truncate_value(request.user_agent.string, limit=180)
             )
             flash('Успешный вход', 'success')
-            if user.is_admin:
+            if can_access_admin_panel(user):
                 return redirect(url_for('admin_panel'))
             else:
                 return redirect(url_for('dashboard'))
@@ -2771,10 +2792,11 @@ def admin_panel():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     user = User.query.get(session['user_id'])
-    if not user or not user.is_admin:
+    if not can_access_admin_panel(user):
         return redirect(url_for('dashboard'))
-    users = User.query.order_by(User.created_at.desc()).all()
-    return render_template('admin.html', users=users, current_user=user, current_tab='users')
+    users = User.query.order_by(User.created_at.desc()).all() if has_full_admin_access(user) else []
+    default_tab = 'users' if has_full_admin_access(user) else 'operators'
+    return render_template('admin.html', users=users, current_user=user, current_tab=default_tab)
 
 
 @app.route('/admin/create-user', methods=['POST'])
@@ -2782,12 +2804,12 @@ def admin_create_user():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     admin = User.query.get(session['user_id'])
-    if not admin or not admin.is_admin:
+    if not can_access_admin_panel(admin):
         return redirect(url_for('dashboard'))
     username = request.form.get('username')
     password = request.form.get('password')
-    is_worker = request.form.get('is_worker') == 'on'
     is_admin_role = request.form.get('is_admin') == 'on'
+    is_moderator_role = request.form.get('is_moderator') == 'on'
     team = request.form.get('team')  # Получаем команду из формы
     
     if not username:
@@ -2801,12 +2823,30 @@ def admin_create_user():
     if User.query.filter_by(username=username).first():
         flash('Пользователь с таким именем уже существует', 'error')
         return redirect(url_for('admin_panel'))
+
+    # Модератор может создавать только рабочие аккаунты.
+    if is_moderator_user(admin) and (is_admin_role or is_moderator_role):
+        flash('Модератор может создавать только рабочие аккаунты', 'error')
+        return redirect(url_for('admin_panel'))
+
+    new_prefix = None
+    if is_moderator_role:
+        is_admin_role = False
+        new_prefix = 'Moderator'
     
-    new_user = User(username=username, password_hash=generate_password_hash(password), is_admin=is_admin_role, team=team)
+    new_user = User(
+        username=username,
+        password_hash=generate_password_hash(password),
+        is_admin=is_admin_role,
+        prefix=new_prefix,
+        team=team
+    )
     db.session.add(new_user)
     db.session.commit()
     
-    if is_admin_role:
+    if is_moderator_role:
+        user_type = 'модератор'
+    elif is_admin_role:
         user_type = 'администратор'
     else:
         user_type = 'рабочий'
@@ -2820,7 +2860,7 @@ def admin_delete_user(user_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
     admin = User.query.get(session['user_id'])
-    if not admin or not admin.is_admin:
+    if not has_full_admin_access(admin):
         return redirect(url_for('dashboard'))
     
     user = User.query.get_or_404(user_id)
@@ -2841,7 +2881,7 @@ def reset_user_password(user_id):
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     admin = User.query.get(session['user_id'])
-    if not admin or not admin.is_admin:
+    if not has_full_admin_access(admin):
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
     
     try:
@@ -2875,7 +2915,7 @@ def update_user_team(user_id):
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     admin = User.query.get(session['user_id'])
-    if not admin or not admin.is_admin:
+    if not has_full_admin_access(admin):
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
     
     try:
