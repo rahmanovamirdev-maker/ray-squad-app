@@ -31,6 +31,8 @@ with app.app_context():
         
         print("\n📦 ОТВЕТ ENDPOINT:")
         print(f"  success: {data.get('success')}")
+        if not data.get('success'):
+            print(f"  ❌ ERROR MESSAGE: {data.get('message')}")
         print(f"  total_count: {data.get('total_count')}")
         print(f"  operators_count: {data.get('operators_count')}")
         print(f"  models_count: {data.get('models_count')}")

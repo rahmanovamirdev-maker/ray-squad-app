@@ -849,6 +849,7 @@ class ScoutJoinApplication(db.Model):
     rejected_by = db.Column(db.String(120), nullable=True)
     reviewed_at = db.Column(db.DateTime, nullable=True)
     team = db.Column(db.String(50), nullable=True)  # Команда (Team 1 - Team 8)
+    is_deleted = db.Column(db.Boolean, default=False)  # Мягкое удаление
 
     def to_dict(self):
         return {
@@ -871,7 +872,9 @@ class ScoutJoinApplication(db.Model):
             'status': self.status or 'pending',
             'approved_by': self.approved_by,
             'rejected_by': self.rejected_by,
-            'reviewed_at': self.reviewed_at.strftime('%d.%m.%Y %H:%M') if self.reviewed_at else None
+            'reviewed_at': self.reviewed_at.strftime('%d.%m.%Y %H:%M') if self.reviewed_at else None,
+            'team': self.team,
+            'is_deleted': self.is_deleted if hasattr(self, 'is_deleted') else False
         }
 
 # Модель для истории синхронизации статусов с внешним API
