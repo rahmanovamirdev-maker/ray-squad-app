@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, session, flash
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, session, flash, g
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone, timedelta
 import os
@@ -6,11 +6,15 @@ import io
 import string
 import random
 import logging
+from logging.handlers import RotatingFileHandler
+import smtplib
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from email.message import EmailMessage
 from pyngrok import ngrok
 import asyncio
 import re
+from collections import deque
 
 try:
     from telegram import Bot
@@ -25,12 +29,409 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.environ.get('SECRET_KEY', 'dev_secret_key')
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+
+INSTANCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance')
+APP_LOG_PATH = os.path.join(INSTANCE_DIR, 'app.log')
+AUDIT_LOG_PATH = os.path.join(INSTANCE_DIR, 'audit.log')
+
+ALLOWED_SCOUT_PHOTO_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp'}
+
+
+def is_allowed_scout_photo(filename):
+    if not filename or '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower()
+    return ext in ALLOWED_SCOUT_PHOTO_EXTENSIONS
+
+def generate_strong_password(length=12):
+    """Генерирует сложный пароль со спецсимволами, цифрами и буквами"""
+    uppercase = string.ascii_uppercase
+    lowercase = string.ascii_lowercase
+    digits = string.digits
+    special_chars = "!@#$%^&*"
+    
+    # Гарантируем, что пароль содержит все типы символов
+    password = [
+        random.choice(uppercase),
+        random.choice(lowercase),
+        random.choice(digits),
+        random.choice(special_chars)
+    ]
+    
+    # Добавляем остальные символы случайным образом
+    all_chars = uppercase + lowercase + digits + special_chars
+    for _ in range(length - 4):
+        password.append(random.choice(all_chars))
+    
+    # Перемешиваем пароль
+    random.shuffle(password)
+    return ''.join(password)
+
+# ============= MAINTENANCE MODE =============
+MAINTENANCE_MODE = True  # Установите False, чтобы открыть сайт
+DEV_PASSWORD = "dev_master_2024"  # Пароль для входа разработчика во время техработ
+# ============================================
 
 db = SQLAlchemy(app)
+
+# Блокировка всех запросов в режиме обслуживания
+@app.before_request
+def check_maintenance():
+    # Проверяем, есть ли у пользователя сессия разработчика
+    if MAINTENANCE_MODE and 'dev_session' not in session:
+        return '''
+        <!DOCTYPE html>
+        <html lang="ru">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Сайт временно закрыт</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+            <style>
+                :root {
+                    --primary-blue: #0066ff;
+                    --dark-blue: #0047b3;
+                    --accent-blue: #00bfff;
+                    --black: #000000;
+                    --dark-gray: #0a0e1a;
+                    --light-gray: #8a92a6;
+                    --white: #ffffff;
+                }
+
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+
+                body {
+                    font-family: 'Inter', sans-serif;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    margin: 0;
+                    background: var(--black);
+                    color: var(--white);
+                    overflow: hidden;
+                    position: relative;
+                }
+
+                body::before {
+                    content: '';
+                    position: fixed;
+                    inset: 0;
+                    background:
+                        radial-gradient(circle at 20% 50%, rgba(0, 102, 255, 0.14) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(0, 191, 255, 0.09) 0%, transparent 50%);
+                    pointer-events: none;
+                    z-index: 0;
+                }
+
+                body::after {
+                    content: '';
+                    position: fixed;
+                    inset: 0;
+                    background-image:
+                        linear-gradient(rgba(0, 102, 255, 0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(0, 102, 255, 0.03) 1px, transparent 1px);
+                    background-size: 50px 50px;
+                    opacity: 0.3;
+                    pointer-events: none;
+                    z-index: 0;
+                }
+
+                .container {
+                    text-align: center;
+                    width: min(94vw, 720px);
+                    padding: 40px 36px;
+                    background: rgba(10, 14, 26, 0.95);
+                    border: 1px solid rgba(0, 102, 255, 0.2);
+                    border-radius: 24px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+                    backdrop-filter: blur(30px);
+                    position: relative;
+                    z-index: 1;
+                    animation: riseIn 0.55s ease-out;
+                }
+
+                @keyframes riseIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(22px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                .logo {
+                    font-family: 'Abhaya Libre', serif;
+                    font-size: 34px;
+                    font-weight: 800;
+                    letter-spacing: -1px;
+                    margin-bottom: 18px;
+                }
+
+                .logo-accent {
+                    background: linear-gradient(135deg, var(--primary-blue), var(--accent-blue));
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+
+                h1 {
+                    font-size: clamp(1.9rem, 4vw, 3rem);
+                    margin-bottom: 14px;
+                    letter-spacing: -0.02em;
+                    line-height: 1.1;
+                }
+
+                p {
+                    font-size: clamp(1rem, 2.1vw, 1.22rem);
+                    color: var(--light-gray);
+                    line-height: 1.55;
+                    margin-bottom: 8px;
+                }
+
+                .status {
+                    margin: 20px auto 0;
+                    width: fit-content;
+                    padding: 10px 18px;
+                    border-radius: 50px;
+                    border: 1px solid rgba(0, 102, 255, 0.32);
+                    background: rgba(0, 102, 255, 0.15);
+                    color: #8fd1ff;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                }
+
+                .dev-login-btn {
+                    margin-top: 30px;
+                    padding: 12px 24px;
+                    border: none;
+                    border-radius: 10px;
+                    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+                    color: white;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+                }
+
+                .dev-login-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+                }
+
+                .dev-login-modal {
+                    display: none;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    z-index: 1000;
+                    justify-content: center;
+                    align-items: center;
+                }
+
+                .dev-login-modal.active {
+                    display: flex;
+                }
+
+                .dev-login-form {
+                    background: rgba(10, 14, 26, 0.98);
+                    border: 1px solid rgba(0, 102, 255, 0.2);
+                    border-radius: 18px;
+                    padding: 32px;
+                    max-width: 400px;
+                    width: 90%;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+                }
+
+                .dev-login-form h2 {
+                    margin-bottom: 20px;
+                    font-size: 1.5rem;
+                }
+
+                .dev-login-form input {
+                    width: 100%;
+                    padding: 12px 16px;
+                    margin-bottom: 16px;
+                    border: 1px solid rgba(0, 102, 255, 0.3);
+                    border-radius: 8px;
+                    background: rgba(0, 102, 255, 0.05);
+                    color: white;
+                    font-size: 1rem;
+                    transition: all 0.3s;
+                }
+
+                .dev-login-form input:focus {
+                    outline: none;
+                    border-color: #0066ff;
+                    background: rgba(0, 102, 255, 0.1);
+                }
+
+                .dev-login-form button {
+                    width: 100%;
+                    padding: 12px;
+                    margin-bottom: 10px;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                }
+
+                .dev-login-form .btn-submit {
+                    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+                    color: white;
+                }
+
+                .dev-login-form .btn-submit:hover {
+                    transform: translateY(-2px);
+                }
+
+                .dev-login-form .btn-cancel {
+                    background: #2d2d3d;
+                    color: #e0e0e0;
+                }
+
+                .dev-login-form .btn-cancel:hover {
+                    background: #3d3d4d;
+                }
+
+                .dev-login-form .error {
+                    color: #ff4444;
+                    margin-bottom: 12px;
+                    font-size: 0.9rem;
+                    display: none;
+                }
+
+                @media (max-width: 640px) {
+                    .container {
+                        padding: 28px 22px;
+                        border-radius: 18px;
+                    }
+
+                    .logo {
+                        font-size: 28px;
+                        margin-bottom: 12px;
+                    }
+
+                    .status {
+                        margin-top: 16px;
+                        font-size: 0.88rem;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="logo">LiamKing <span class="logo-accent">Agency</span></div>
+                <h1>Сайт временно закрыт</h1>
+                <p>Проводятся технические работы</p>
+                <p>Приносим извинения за неудобства</p>
+                <div class="status">Скоро снова онлайн</div>
+                <button class="dev-login-btn" onclick="showDevLogin()">🔧 Вход разработчика</button>
+            </div>
+
+            <div class="dev-login-modal" id="devLoginModal">
+                <div class="dev-login-form">
+                    <h2>🔐 Вход разработчика</h2>
+                    <div class="error" id="devLoginError"></div>
+                    <form onsubmit="submitDevLogin(event)">
+                        <input type="password" id="devPassword" placeholder="Введите пароль" required>
+                        <button type="submit" class="btn-submit">Войти</button>
+                        <button type="button" class="btn-cancel" onclick="hideDevLogin()">Закрыть</button>
+                    </form>
+                </div>
+            </div>
+
+            <script>
+                function showDevLogin() {
+                    document.getElementById('devLoginModal').classList.add('active');
+                    document.getElementById('devPassword').focus();
+                }
+
+                function hideDevLogin() {
+                    document.getElementById('devLoginModal').classList.remove('active');
+                    document.getElementById('devPassword').value = '';
+                    document.getElementById('devLoginError').style.display = 'none';
+                }
+
+                async function submitDevLogin(event) {
+                    event.preventDefault();
+                    const password = document.getElementById('devPassword').value;
+
+                    try {
+                        const response = await fetch('/dev-login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ password: password })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            window.location.href = '/';
+                        } else {
+                            const errorDiv = document.getElementById('devLoginError');
+                            errorDiv.textContent = data.message || 'Неверный пароль';
+                            errorDiv.style.display = 'block';
+                            document.getElementById('devPassword').value = '';
+                        }
+                    } catch (error) {
+                        console.error('Ошибка:', error);
+                    }
+                }
+
+                // Закрыть модал при клике вне его
+                document.getElementById('devLoginModal').addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        hideDevLogin();
+                    }
+                });
+            </script>
+        </body>
+        </html>
+        ''', 503
 
 # ============= TELEGRAM BOT CONFIGURATION =============
 TELEGRAM_BOT_TOKEN = (os.environ.get('TELEGRAM_BOT_TOKEN') or '').strip()
 telegram_bot = Bot(token=TELEGRAM_BOT_TOKEN) if (Bot and TELEGRAM_BOT_TOKEN) else None
+
+# ============= GMAIL SMTP CONFIGURATION =============
+SMTP_HOST = (os.environ.get('SMTP_HOST') or 'smtp.gmail.com').strip()
+SMTP_PORT = int((os.environ.get('SMTP_PORT') or '587').strip())
+SMTP_USER = (os.environ.get('SMTP_USER') or '').strip()
+SMTP_PASSWORD = (os.environ.get('SMTP_PASSWORD') or '').strip()  # Gmail App Password
+SMTP_FROM = (os.environ.get('SMTP_FROM') or SMTP_USER).strip()
+
+# ============= DEV LOGIN ROUTE =============
+@app.route('/dev-login', methods=['POST'])
+def dev_login():
+    data = request.get_json()
+    password = data.get('password', '')
+    
+    if password == DEV_PASSWORD:
+        session['dev_session'] = True
+        return jsonify({'success': True, 'message': 'Добро пожаловать!'})
+    else:
+        return jsonify({'success': False, 'message': 'Неверный пароль'})
+
+@app.route('/dev-logout', methods=['GET', 'POST'])
+def dev_logout():
+    session.pop('dev_session', None)
+    return redirect(url_for('index'))
+# ===========================================
 
 async def send_telegram_notification(telegram_username, status):
     """
@@ -148,6 +549,62 @@ def send_telegram_notification_sync(telegram_username, status, telegram_chat_id=
     except Exception as e:
         logging.error(f"Ошибка при отправке уведомления: {e}")
         return False, None, str(e)
+
+
+def is_valid_email(email_value):
+    email_value = (email_value or '').strip()
+    if not email_value:
+        return False
+    return bool(re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', email_value))
+
+
+def send_email_notification(email_to, status, full_name=''):
+    """Отправляет email-уведомление о статусе заявки. Возвращает (sent: bool, error: str|None)."""
+    if not (SMTP_USER and SMTP_PASSWORD and SMTP_FROM):
+        return False, 'SMTP не настроен (SMTP_USER/SMTP_PASSWORD/SMTP_FROM)'
+
+    recipient = (email_to or '').strip()
+    if not is_valid_email(recipient):
+        return False, 'Некорректный email получателя'
+
+    person_name = (full_name or 'кандидат').strip()
+    if status == 'approved':
+        subject = 'Ваша заявка одобрена - LiamKing Agency'
+        body = (
+            f"Здравствуйте, {person_name}!\n\n"
+            "Ваша заявка одобрена. С вами свяжутся в ближайшее время.\n\n"
+            "С уважением,\n"
+            "LiamKing Agency"
+        )
+    elif status == 'rejected':
+        subject = 'Результат по заявке - LiamKing Agency'
+        body = (
+            f"Здравствуйте, {person_name}!\n\n"
+            "К сожалению, ваша заявка на текущий момент отклонена.\n"
+            "Вы можете попробовать подать заявку позже.\n\n"
+            "С уважением,\n"
+            "LiamKing Agency"
+        )
+    else:
+        return False, 'Неизвестный статус email-уведомления'
+
+    try:
+        msg = EmailMessage()
+        msg['Subject'] = subject
+        msg['From'] = SMTP_FROM
+        msg['To'] = recipient
+        msg.set_content(body)
+
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.send_message(msg)
+
+        logging.info(f"✅ Email уведомление отправлено на {recipient} (status={status})")
+        return True, None
+    except Exception as e:
+        logging.error(f"❌ Ошибка email-уведомления для {recipient}: {e}")
+        return False, str(e)
 
 # ===================================================
 
@@ -342,10 +799,18 @@ class ScoutJoinApplication(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String(120), nullable=False)
     age = db.Column(db.String(30), nullable=False)
-    persuasion_text = db.Column(db.Text, nullable=False)
+    persuasion_text = db.Column(db.Text, nullable=True)  # Оставляем для старых записей
+    city = db.Column(db.String(100), nullable=True)  # Новое поле для стримерш
+    streaming_experience = db.Column(db.String(50), nullable=True)  # Новое поле для стримерш
+    motivation = db.Column(db.Text, nullable=True)  # Новое поле для стримерш
+    email = db.Column(db.String(150), nullable=True)
     telegram_username = db.Column(db.String(120), nullable=False)
     telegram_chat_id = db.Column(db.String(50), nullable=True)
     work_time = db.Column(db.String(200), nullable=False)
+    can_stream_change = db.Column(db.String(10), nullable=True)  # Может ли кто-то поменять стриму: yes/no
+    device_model = db.Column(db.String(200), nullable=True)  # Модель устройства
+    work_hours_per_week = db.Column(db.String(200), nullable=True)  # Часы и дни в неделю
+    photo_url = db.Column(db.String(500), nullable=True)  # Путь на фото
     date_added = db.Column(db.DateTime, default=moscow_now)
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
     approved_by = db.Column(db.String(120), nullable=True)
@@ -358,9 +823,17 @@ class ScoutJoinApplication(db.Model):
             'full_name': self.full_name,
             'age': self.age,
             'persuasion_text': self.persuasion_text,
+            'city': self.city,
+            'streaming_experience': self.streaming_experience,
+            'motivation': self.motivation,
+            'email': self.email,
             'telegram_username': self.telegram_username,
             'telegram_chat_id': self.telegram_chat_id,
             'work_time': self.work_time,
+            'can_stream_change': self.can_stream_change,
+            'device_model': self.device_model,
+            'work_hours_per_week': self.work_hours_per_week,
+            'photo_url': self.photo_url,
             'date_added': self.date_added.strftime('%d.%m.%Y %H:%M') if self.date_added else None,
             'status': self.status or 'pending',
             'approved_by': self.approved_by,
@@ -451,6 +924,26 @@ with app.app_context():
             if 'telegram_chat_id' not in cols:
                 print("[MIGRATION] Добавляю столбец telegram_chat_id в таблицу scout_join_application...")
                 db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN telegram_chat_id VARCHAR(50)"))
+                db.session.commit()
+            if 'can_stream_change' not in cols:
+                print("[MIGRATION] Добавляю столбец can_stream_change в таблицу scout_join_application...")
+                db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN can_stream_change VARCHAR(10)"))
+                db.session.commit()
+            if 'device_model' not in cols:
+                print("[MIGRATION] Добавляю столбец device_model в таблицу scout_join_application...")
+                db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN device_model VARCHAR(200)"))
+                db.session.commit()
+            if 'work_hours_per_week' not in cols:
+                print("[MIGRATION] Добавляю столбец work_hours_per_week в таблицу scout_join_application...")
+                db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN work_hours_per_week VARCHAR(200)"))
+                db.session.commit()
+            if 'photo_url' not in cols:
+                print("[MIGRATION] Добавляю столбец photo_url в таблицу scout_join_application...")
+                db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN photo_url VARCHAR(500)"))
+                db.session.commit()
+            if 'email' not in cols:
+                print("[MIGRATION] Добавляю столбец email в таблицу scout_join_application...")
+                db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN email VARCHAR(150)"))
                 db.session.commit()
                 print("[MIGRATION] Столбец telegram_chat_id добавлен успешно")
         if 'guest_answer' in insp.get_table_names():
@@ -565,23 +1058,359 @@ with app.app_context():
         # users table is created by db.create_all()
         admin = User.query.filter_by(username='FLOWXZ').first()
         if not admin:
-            admin = User(username='FLOWXZ', password_hash=generate_password_hash('qwertyuiopasd'), is_admin=True, is_owner=True)
+            admin = User(
+                username='FLOWXZ',
+                password_hash=generate_password_hash('qwertyuiopasd'),
+                is_admin=True,
+                is_owner=True,
+                prefix='Developer'
+            )
             db.session.add(admin)
             db.session.commit()
             print("[INFO] Владелец FLOWXZ создан")
-        elif not admin.is_owner:
-            # Устанавливаем существующему админу статус владельца
-            admin.is_owner = True
-            admin.is_admin = True
-            db.session.commit()
-            print("[INFO] FLOWXZ установлен как Владелец")
+        else:
+            updated = False
+            if not admin.is_owner:
+                # Устанавливаем существующему админу статус владельца
+                admin.is_owner = True
+                admin.is_admin = True
+                updated = True
+                print("[INFO] FLOWXZ установлен как Владелец")
+            if (admin.prefix or '').strip().lower() != 'developer':
+                admin.prefix = 'Developer'
+                updated = True
+                print("[INFO] FLOWXZ установлен префикс Developer")
+            if updated:
+                db.session.commit()
     except Exception as e:
         print(f"[ADMIN USER ERROR] {str(e)}")
         pass
 
 # Логирование
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+audit_logger = logging.getLogger('audit')
+
+
+def configure_logging():
+    os.makedirs(INSTANCE_DIR, exist_ok=True)
+
+    formatter = logging.Formatter(
+        '%(asctime)s | %(levelname)s | %(name)s | %(message)s'
+    )
+
+    app_handler = RotatingFileHandler(
+        APP_LOG_PATH,
+        maxBytes=5 * 1024 * 1024,
+        backupCount=5,
+        encoding='utf-8'
+    )
+    app_handler.setFormatter(formatter)
+
+    audit_handler = RotatingFileHandler(
+        AUDIT_LOG_PATH,
+        maxBytes=10 * 1024 * 1024,
+        backupCount=10,
+        encoding='utf-8'
+    )
+    audit_handler.setFormatter(formatter)
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+
+    existing_handler_types = {type(h) for h in root_logger.handlers}
+    if RotatingFileHandler not in existing_handler_types:
+        root_logger.addHandler(app_handler)
+    if logging.StreamHandler not in existing_handler_types:
+        root_logger.addHandler(stream_handler)
+
+    logger.setLevel(logging.INFO)
+    audit_logger.setLevel(logging.INFO)
+    audit_logger.propagate = False
+    if not audit_logger.handlers:
+        audit_logger.addHandler(audit_handler)
+
+
+def _truncate_value(value, limit=200):
+    value_str = str(value)
+    if len(value_str) <= limit:
+        return value_str
+    return f"{value_str[:limit]}..."
+
+
+def _safe_request_payload_preview():
+    sensitive_keys = {
+        'password',
+        'password_hash',
+        'new_password',
+        'secret',
+        'token',
+        'smtp_password'
+    }
+
+    payload = {}
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+        if isinstance(data, dict):
+            for key, value in data.items():
+                key_str = str(key)
+                if key_str.lower() in sensitive_keys:
+                    payload[key_str] = '***'
+                else:
+                    payload[key_str] = _truncate_value(value)
+    elif request.form:
+        for key, value in request.form.items():
+            key_str = str(key)
+            if key_str.lower() in sensitive_keys:
+                payload[key_str] = '***'
+            else:
+                payload[key_str] = _truncate_value(value)
+
+    if request.files:
+        payload['files'] = list(request.files.keys())
+
+    return payload
+
+
+def _resolve_action_name():
+    endpoint = (request.endpoint or '').strip()
+    if endpoint:
+        return endpoint
+    return f"{request.method.lower()}_{request.path.strip('/').replace('/', '_') or 'root'}"
+
+
+def _safe_log_text(value):
+    return _truncate_value(str(value or '').replace('"', "'"), limit=180)
+
+
+def _resolve_interaction_target(payload_preview):
+    view_args = request.view_args or {}
+    for key, value in view_args.items():
+        if key.endswith('_id'):
+            entity = key.replace('_id', '')
+            return f"{entity}:{value}"
+
+    interesting_payload_keys = [
+        'user_id',
+        'owner_username',
+        'username',
+        'telegram',
+        'telegram_username',
+        'full_name',
+        'team',
+        'status',
+        'offer_number'
+    ]
+    if isinstance(payload_preview, dict):
+        for key in interesting_payload_keys:
+            if key in payload_preview:
+                return f"{key}:{payload_preview.get(key)}"
+
+    return '-'
+
+
+def _resolve_related_user(payload_preview):
+    if not isinstance(payload_preview, dict):
+        return '-'
+
+    for key in ('username', 'owner_username', 'telegram_username', 'telegram'):
+        if key in payload_preview and payload_preview.get(key):
+            return str(payload_preview.get(key))
+    return '-'
+
+
+def _resolve_event_description(action_name, method, path, target, related_user, status_code):
+    action_raw = (action_name or '').lower()
+    path_raw = (path or '').lower()
+    method_raw = (method or '').upper()
+
+    if 'login' in action_raw or '/login' in path_raw:
+        return 'Вход в систему'
+    if 'logout' in action_raw or '/logout' in path_raw:
+        return 'Выход из системы'
+    if 'reset_user_password' in action_raw or '/api/reset-password/' in path_raw:
+        return f'Сброс пароля пользователя {related_user if related_user != "-" else target}'
+    if 'admin_create_user' in action_raw or '/admin/create-user' in path_raw:
+        return f'Создание пользователя {related_user if related_user != "-" else ""}'.strip()
+    if 'admin_delete_user' in action_raw or '/admin/delete-user/' in path_raw:
+        return f'Удаление пользователя {target}'
+    if 'update_user_team' in action_raw or '/api/update-team/' in path_raw:
+        return f'Изменение команды пользователя {target}'
+    if 'update_applicant_status' in action_raw:
+        return f'Изменение статуса анкеты {target}'
+    if 'update_model_operator_status' in action_raw:
+        return f'Изменение статуса анкеты модели {target}'
+    if 'update_chatter_status' in action_raw:
+        return f'Изменение статуса анкеты чаттера {target}'
+    if 'delete_applicant' in action_raw:
+        return f'Удаление анкеты {target}'
+    if 'delete_model' in action_raw:
+        return f'Удаление анкеты модели {target}'
+    if 'delete_chatter' in action_raw:
+        return f'Удаление анкеты чаттера {target}'
+    if 'admin_approve_scout' in action_raw:
+        return f'Одобрение заявки стримерши {target}'
+    if 'admin_reject_scout' in action_raw:
+        return f'Отклонение заявки стримерши {target}'
+    if 'add_applicant' in action_raw:
+        return 'Создание анкеты оператора'
+    if 'add_model_operator' in action_raw:
+        return 'Создание анкеты модели/оператора'
+    if 'add_chatter' in action_raw:
+        return 'Создание анкеты чаттера'
+    if 'public_scout_application' in action_raw:
+        return 'Подача публичной заявки стримерши'
+    if method_raw == 'GET':
+        return f'Просмотр данных ({status_code})'
+    if method_raw == 'POST':
+        return f'Создание/действие ({status_code})'
+    if method_raw in {'PUT', 'PATCH'}:
+        return f'Обновление данных ({status_code})'
+    if method_raw == 'DELETE':
+        return f'Удаление данных ({status_code})'
+
+    return f'Системное действие ({status_code})'
+
+
+def is_developer_user(user):
+    return bool(user and (user.prefix or '').strip().lower() == 'developer')
+
+
+def get_user_applications(owner_username):
+    """Возвращает полный список анкет пользователя по всем типам."""
+    username = (owner_username or '').strip()
+    if not username:
+        return []
+
+    items = []
+
+    operators = Applicant.query.filter_by(owner_username=username).all()
+    for row in operators:
+        items.append({
+            'kind': 'operator',
+            'kind_label': 'Оператор',
+            'id': row.id,
+            'full_name': row.full_name,
+            'status': row.status or 'pending',
+            'team': row.team,
+            'contact': row.telegram or row.phone or '-',
+            'date_added': row.date_added,
+            'is_deleted': bool(row.is_deleted)
+        })
+
+    models = ModelOperatorApplication.query.filter_by(owner_username=username).all()
+    for row in models:
+        items.append({
+            'kind': 'model',
+            'kind_label': 'Модель/Оператор',
+            'id': row.id,
+            'full_name': row.full_name,
+            'status': row.status or 'pending',
+            'team': row.team,
+            'contact': row.telegram or row.phone or '-',
+            'date_added': row.date_added,
+            'is_deleted': bool(row.is_deleted)
+        })
+
+    chatters = ChatApplication.query.filter_by(owner_username=username).all()
+    for row in chatters:
+        items.append({
+            'kind': 'chatter',
+            'kind_label': 'Чаттер',
+            'id': row.id,
+            'full_name': row.full_name,
+            'status': row.status or 'pending',
+            'team': row.team,
+            'contact': row.telegram or row.phone or '-',
+            'date_added': row.date_added,
+            'is_deleted': bool(row.is_deleted)
+        })
+
+    items.sort(key=lambda x: x.get('date_added') or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+    return items
+
+
+@app.before_request
+def start_audit_context():
+    g.request_started_at = datetime.now(timezone.utc)
+    g.skip_audit_logging = request.path.startswith('/static/')
+    g.actor_id = session.get('user_id')
+    g.actor_username = 'anonymous'
+
+    if g.actor_id:
+        user = User.query.get(g.actor_id)
+        if user:
+            g.actor_username = user.username
+
+
+@app.after_request
+def audit_request(response):
+    if getattr(g, 'skip_audit_logging', False):
+        return response
+
+    started_at = getattr(g, 'request_started_at', None)
+    duration_ms = 0
+    if started_at:
+        duration_ms = int((datetime.now(timezone.utc) - started_at).total_seconds() * 1000)
+
+    payload_preview = {}
+    if request.method in {'POST', 'PUT', 'PATCH', 'DELETE'}:
+        payload_preview = _safe_request_payload_preview()
+
+    action_name = _resolve_action_name()
+    target = _resolve_interaction_target(payload_preview)
+    related_user = _resolve_related_user(payload_preview)
+    event_description = _resolve_event_description(
+        action_name,
+        request.method,
+        request.path,
+        target,
+        related_user,
+        response.status_code
+    )
+
+    audit_logger.info(
+        (
+            'REQUEST actor=%s user_id=%s action=%s method=%s path=%s endpoint=%s status=%s '
+            'target=%s related_user=%s event="%s" ip=%s duration_ms=%s ua="%s" payload=%s'
+        ),
+        getattr(g, 'actor_username', 'anonymous'),
+        getattr(g, 'actor_id', None),
+        action_name,
+        request.method,
+        request.path,
+        request.endpoint,
+        response.status_code,
+        target,
+        related_user,
+        _safe_log_text(event_description),
+        request.headers.get('X-Forwarded-For', request.remote_addr),
+        duration_ms,
+        _truncate_value(request.user_agent.string, limit=180),
+        payload_preview
+    )
+
+    return response
+
+
+@app.teardown_request
+def log_unhandled_request_error(error):
+    if not error:
+        return
+
+    logger.exception(
+        'UNHANDLED_ERROR actor=%s user_id=%s method=%s path=%s ip=%s',
+        getattr(g, 'actor_username', 'anonymous'),
+        getattr(g, 'actor_id', None),
+        request.method,
+        request.path,
+        request.headers.get('X-Forwarded-For', request.remote_addr)
+    )
+
+
+configure_logging()
 
 # ==================== ФУНКЦИИ ДЛЯ СИНХРОНИЗАЦИИ СТАТУСОВ ====================
 
@@ -1008,33 +1837,87 @@ def get_model_operators():
 
 @app.route('/api/public-scout-application', methods=['POST'])
 def add_public_scout_application():
-    """Публичная анкета для кнопки 'Присоединиться к команде' на landing."""
+    """Публичная анкета для стримерш."""
     try:
-        data = request.get_json(silent=True) or {}
-
-        full_name = (data.get('full_name') or '').strip()
-        age = (data.get('age') or '').strip()
-        persuasion_text = (data.get('persuasion_text') or '').strip()
-        telegram_username = normalize_telegram_username((data.get('telegram_username') or '').strip())
-        work_time = (data.get('work_time') or '').strip()
+        # Получаем данные из FormData (так как отправляется файл)
+        full_name = (request.form.get('full_name') or '').strip()
+        age = (request.form.get('age') or '').strip()
+        city = (request.form.get('city') or '').strip()
+        streaming_experience = (request.form.get('streaming_experience') or '').strip()
+        telegram_username = normalize_telegram_username((request.form.get('telegram_username') or '').strip())
+        can_stream_change = (request.form.get('can_stream_change') or '').strip()
+        device_model = (request.form.get('device_model') or '').strip()
+        work_hours_per_week = (request.form.get('work_hours_per_week') or '').strip()
 
         if not full_name:
             return jsonify({'success': False, 'message': 'Укажите имя'}), 400
         if not age:
-            return jsonify({'success': False, 'message': 'Укажите возраст'}), 400
-        if not persuasion_text:
-            return jsonify({'success': False, 'message': 'Заполните задание'}), 400
+            return jsonify({'success': False, 'message': 'Укажите дату рождения'}), 400
+        try:
+            birth_date = datetime.strptime(age, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'success': False, 'message': 'Некорректная дата рождения'}), 400
+
+        today = datetime.now().date()
+        if birth_date > today:
+            return jsonify({'success': False, 'message': 'Дата рождения не может быть в будущем'}), 400
+
+        full_years = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+        if full_years < 18:
+            return jsonify({'success': False, 'message': 'Анкета доступна только с 18 лет'}), 400
+        if not city:
+            return jsonify({'success': False, 'message': 'Укажите город'}), 400
+        if not streaming_experience:
+            return jsonify({'success': False, 'message': 'Укажите опыт в стриминге'}), 400
         if not telegram_username:
-            return jsonify({'success': False, 'message': 'Укажите Telegram юзер'}), 400
-        if not work_time:
-            return jsonify({'success': False, 'message': 'Укажите, сколько времени готовы уделять работе'}), 400
+            return jsonify({'success': False, 'message': 'Укажите Telegram'}), 400
+        if not can_stream_change:
+            return jsonify({'success': False, 'message': 'Ответьте: может ли кто-то поменять стриму'}), 400
+        if not device_model:
+            return jsonify({'success': False, 'message': 'Укажите модель устройства'}), 400
+        if not work_hours_per_week:
+            return jsonify({'success': False, 'message': 'Укажите часы и дни работы в неделю'}), 400
+
+        # Обработка загрузки фото
+        photo_file = request.files.get('photo')
+        if not photo_file or not photo_file.filename:
+            return jsonify({'success': False, 'message': 'Загрузите фото'}), 400
+
+        if not is_allowed_scout_photo(photo_file.filename):
+            return jsonify({'success': False, 'message': 'Допустимы только JPG, PNG или WEBP'}), 400
+
+        content_type = (photo_file.content_type or '').lower()
+        if not content_type.startswith('image/'):
+            return jsonify({'success': False, 'message': 'Файл должен быть изображением'}), 400
+
+        photo_url = None
+        try:
+            filename = secure_filename(photo_file.filename)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
+            filename = timestamp + filename
+
+            # Создаем директорию для фото, если её нет
+            upload_dir = os.path.join('static', 'scout_photos')
+            os.makedirs(upload_dir, exist_ok=True)
+
+            filepath = os.path.join(upload_dir, filename)
+            photo_file.save(filepath)
+            photo_url = f'/static/scout_photos/{filename}'
+        except Exception as e:
+            print(f'[WARNING] Ошибка при сохранении фото: {str(e)}')
+            return jsonify({'success': False, 'message': 'Ошибка при загрузке фото'}), 400
 
         application = ScoutJoinApplication(
             full_name=full_name,
             age=age,
-            persuasion_text=persuasion_text,
+            city=city,
+            streaming_experience=streaming_experience,
             telegram_username=telegram_username,
-            work_time=work_time
+            can_stream_change=can_stream_change,
+            device_model=device_model,
+            work_hours_per_week=work_hours_per_week,
+            photo_url=photo_url,
+            work_time=f'{work_hours_per_week}'  # Сохраняем для совместимости
         )
 
         db.session.add(application)
@@ -1431,6 +2314,16 @@ def admin_get_full_archive():
             record['type_color'] = '#8b5cf6'
             all_records.append(record)
         
+        # 4. СТРИМЕРШИ (ScoutJoinApplication)
+        scouters = db.session.query(ScoutJoinApplication).all()
+        for scouter in scouters:
+            record = scouter.to_dict()
+            record['type'] = 'scouter'
+            record['type_emoji'] = '🎥'
+            record['type_name'] = 'Стримерша'
+            record['type_color'] = '#10b981'
+            all_records.append(record)
+        
         # Сортируем по дате добавления (новые в начале)
         all_records.sort(key=lambda x: x['date_added'], reverse=True)
         
@@ -1438,7 +2331,7 @@ def admin_get_full_archive():
             'success': True,
             'total_count': len(all_records),
             'operators_count': len(operators),
-            'models_count': len(models),
+            'models_count': len(models) + len(scouters),
             'chatters_count': len(chatters),
             'applicants': all_records
         }), 200
@@ -1476,7 +2369,23 @@ def admin_clear_scouters():
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
     try:
-        count = ScoutJoinApplication.query.count()
+        applications = ScoutJoinApplication.query.all()
+        count = len(applications)
+
+        # Удаляем загруженные фото с диска перед очисткой таблицы.
+        for application in applications:
+            if not application.photo_url:
+                continue
+            filename = os.path.basename(application.photo_url)
+            if not filename:
+                continue
+            file_path = os.path.join('static', 'scout_photos', filename)
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except Exception as file_err:
+                    print(f'[WARNING] Не удалось удалить фото {file_path}: {file_err}')
+
         ScoutJoinApplication.query.delete()
         db.session.commit()
         return jsonify({
@@ -1597,28 +2506,110 @@ def admin_get_users():
         return jsonify({'success': False, 'message': str(e)}), 400
 
 
+@app.route('/api/admin/audit-logs')
+def admin_get_audit_logs():
+    """Чтение логов для вкладки аудита. Доступно только пользователям с префиксом Developer."""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    user = User.query.get(session['user_id'])
+    if not user or not user.is_admin:
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+    if not is_developer_user(user):
+        return jsonify({'success': False, 'message': 'Access denied: Developer only'}), 403
+
+    log_type = (request.args.get('type') or 'audit').strip().lower()
+    if log_type not in {'audit', 'app'}:
+        return jsonify({'success': False, 'message': 'Неверный тип лога'}), 400
+
+    lines_limit = request.args.get('limit', default=200, type=int)
+    lines_limit = max(10, min(lines_limit, 1000))
+    search_query = (request.args.get('q') or '').strip().lower()
+
+    log_path = AUDIT_LOG_PATH if log_type == 'audit' else APP_LOG_PATH
+
+    try:
+        if not os.path.exists(log_path):
+            return jsonify({
+                'success': True,
+                'type': log_type,
+                'count': 0,
+                'lines': []
+            }), 200
+
+        with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
+            if search_query:
+                matched = [ln.rstrip('\n') for ln in f if search_query in ln.lower()]
+                lines = matched[-lines_limit:]
+            else:
+                lines = [ln.rstrip('\n') for ln in deque(f, maxlen=lines_limit)]
+
+        return jsonify({
+            'success': True,
+            'type': log_type,
+            'count': len(lines),
+            'lines': lines
+        }), 200
+    except Exception as e:
+        logger.exception('Не удалось прочитать лог-файл: %s', log_path)
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        remember_me = request.form.get('remember_me') == 'on'
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
+            session.permanent = remember_me
             session['user_id'] = user.id
             user.last_login_at = moscow_now()
             db.session.commit()
+            audit_logger.info(
+                'LOGIN_SUCCESS actor=%s user_id=%s action=login remember_me=%s event="%s" ip=%s ua="%s"',
+                user.username,
+                user.id,
+                remember_me,
+                _safe_log_text('Успешный вход в систему'),
+                request.headers.get('X-Forwarded-For', request.remote_addr),
+                _truncate_value(request.user_agent.string, limit=180)
+            )
             flash('Успешный вход', 'success')
             if user.is_admin:
                 return redirect(url_for('admin_panel'))
             else:
                 return redirect(url_for('dashboard'))
         else:
+            audit_logger.warning(
+                'LOGIN_FAILED actor=%s action=login_failed event="%s" ip=%s ua="%s"',
+                username,
+                _safe_log_text('Неудачная попытка входа'),
+                request.headers.get('X-Forwarded-For', request.remote_addr),
+                _truncate_value(request.user_agent.string, limit=180)
+            )
             flash('Неверные учётные данные', 'error')
     return render_template('login.html')
 
 
 @app.route('/logout')
 def logout():
+    user_id = session.get('user_id')
+    username = 'anonymous'
+    if user_id:
+        user = User.query.get(user_id)
+        if user:
+            username = user.username
+
+    audit_logger.info(
+        'LOGOUT actor=%s user_id=%s action=logout event="%s" ip=%s ua="%s"',
+        username,
+        user_id,
+        _safe_log_text('Выход из системы'),
+        request.headers.get('X-Forwarded-For', request.remote_addr),
+        _truncate_value(request.user_agent.string, limit=180)
+    )
     session.pop('user_id', None)
     return redirect(url_for('login'))
 
@@ -1684,7 +2675,14 @@ def profile():
         'chatters_rejected': chatter_rejected
     }
 
-    return render_template('profile.html', current_user=user, stats=stats, is_admin_view=False)
+    my_applications = get_user_applications(user.username)
+    return render_template(
+        'profile.html',
+        current_user=user,
+        stats=stats,
+        is_admin_view=False,
+        my_applications=my_applications
+    )
 
 
 @app.route('/admin/user/<int:user_id>', methods=['GET', 'POST'])
@@ -1738,7 +2736,15 @@ def admin_view_user_profile(user_id):
         'chatters_rejected': chatter_rejected
     }
 
-    return render_template('profile.html', current_user=user, stats=stats, is_admin_view=True, admin_user=admin)
+    my_applications = get_user_applications(user.username)
+    return render_template(
+        'profile.html',
+        current_user=user,
+        stats=stats,
+        is_admin_view=True,
+        admin_user=admin,
+        my_applications=my_applications
+    )
 
 
 @app.route('/admin')
@@ -1765,9 +2771,14 @@ def admin_create_user():
     is_admin_role = request.form.get('is_admin') == 'on'
     team = request.form.get('team')  # Получаем команду из формы
     
-    if not username or not password:
-        flash('Введите логин и пароль', 'error')
+    if not username:
+        flash('Введите логин', 'error')
         return redirect(url_for('admin_panel'))
+    
+    # Генерируем пароль, если его не предоставили
+    if not password or password.strip() == '':
+        password = generate_strong_password()
+    
     if User.query.filter_by(username=username).first():
         flash('Пользователь с таким именем уже существует', 'error')
         return redirect(url_for('admin_panel'))

@@ -4,70 +4,287 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вход — LiamKing Agency</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .auth-tabs {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #0066FF;
+            --dark-blue: #0047B3;
+            --light-blue: #3399FF;
+            --accent-blue: #00BFFF;
+            --black: #000000;
+            --dark-gray: #0A0E1A;
+            --medium-gray: #1A1F35;
+            --light-gray: #8A92A6;
+            --white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--black);
+            color: var(--white);
+            min-height: 100vh;
             display: flex;
-            gap: 0;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #2d2d3d;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
         }
 
-        .auth-tabs button {
-            padding: 15px 30px;
-            background: transparent;
-            border: none;
-            border-bottom: 3px solid transparent;
-            color: #b0b0b0;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            flex: 1;
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 102, 255, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 191, 255, 0.08) 0%, transparent 50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(0, 102, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 102, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.3;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .login-container {
+            max-width: 480px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-card {
+            background: rgba(10, 14, 26, 0.95);
+            backdrop-filter: blur(30px);
+            padding: 50px 45px;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 102, 255, 0.2);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
             text-align: center;
+            margin-bottom: 40px;
         }
 
-        .auth-tabs button.active {
-            color: #6366f1;
-            border-bottom-color: #6366f1;
+        .logo {
+            font-size: 2.2em;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
         }
 
-        .auth-tabs button:hover {
-            color: #e0e0e0;
+        .logo-accent {
+            background: linear-gradient(135deg, var(--primary-blue), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .auth-content {
-            display: none;
+        .login-subtitle {
+            color: var(--light-gray);
+            font-size: 1.05em;
         }
 
-        .auth-content.active {
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
             display: block;
+            margin-bottom: 10px;
+            color: var(--white);
+            font-weight: 600;
+            font-size: 1em;
         }
 
         .form-group input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #2d2d3d;
-            border-radius: 5px;
-            background: #2a2a3a;
-            color: #e0e0e0;
+            padding: 16px 18px;
+            border: 2px solid rgba(0, 102, 255, 0.2);
+            border-radius: 14px;
             font-family: inherit;
-            font-size: 0.95em;
-            transition: border-color 0.3s;
+            font-size: 1em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(26, 31, 53, 0.6);
+            color: var(--white);
+        }
+
+        .form-group input::placeholder {
+            color: var(--light-gray);
         }
 
         .form-group input:focus {
             outline: none;
-            border-color: #6366f1;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.15);
+            background: rgba(26, 31, 53, 0.8);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px 32px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .remember-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: -6px 0 10px;
+            color: var(--light-gray);
+            font-size: 0.95em;
+            user-select: none;
+        }
+
+        .remember-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-blue);
+            cursor: pointer;
+        }
+
+        .remember-row label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--light-gray);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+            color: var(--white);
+            box-shadow: 0 10px 30px rgba(0, 102, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(0, 102, 255, 0.4);
+        }
+
+        .message {
+            margin-bottom: 25px;
+            padding: 16px 20px;
+            border-radius: 14px;
+            text-align: center;
+            font-weight: 600;
+            border-width: 2px;
+            border-style: solid;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #86efac;
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 25px;
+            color: var(--light-gray);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            justify-content: center;
+        }
+
+        .back-link:hover {
+            color: var(--accent-blue);
+        }
+
+        @media (max-width: 576px) {
+            .login-card {
+                padding: 35px 30px;
+            }
+
+            .logo {
+                font-size: 1.8em;
+            }
         }
     </style>
 </head>
-<body class="login-page">
-    <div class="container">
-        <section class="form-section" style="background: rgba(30, 30, 46, 0.95); padding: 40px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8); border: 1px solid rgba(45, 45, 61, 0.8); width: 100%; backdrop-filter: blur(10px);">
-            <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #6366f1; font-size: 2em; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);">🔐 LiamKing Agency</h1>
-                <p style="color: #b0b0b0;">Управление кандидатами и отбором</p>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">LIAM<span class="logo-accent">KING</span></div>
+                <p class="login-subtitle">Вход в систему</p>
             </div>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -78,32 +295,26 @@
               {% endif %}
             {% endwith %}
 
-            <!-- Вкладки -->
-            <div class="auth-tabs">
-                <button class="auth-tab-btn active" onclick="switchAuthTab('login')">🔒 Вход</button>
-            </div>
+            <form method="post" action="{{ url_for('login') }}">
+                <div class="form-group">
+                    <label for="username">Логин</label>
+                    <input type="text" id="username" name="username" placeholder="Введите ваш логин" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input type="password" id="password" name="password" placeholder="Введите пароль" required>
+                </div>
+                <div class="remember-row">
+                    <input type="checkbox" id="remember_me" name="remember_me">
+                    <label for="remember_me">Запомнить меня на 30 дней</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Войти</button>
+            </form>
 
-            <!-- Табло входа -->
-            <div id="login-tab" class="auth-content active">
-                <form method="post" action="{{ url_for('login') }}">
-                    <div class="form-group">
-                        <label for="username" style="color: #d0d0d0; font-weight: 600;">Логин</label>
-                        <input type="text" id="username" name="username" placeholder="Введите логин" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="password" style="color: #d0d0d0; font-weight: 600;">Пароль</label>
-                        <input type="password" id="password" name="password" placeholder="Введите пароль" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="margin-top: 20px; width: 100%;">Войти</button>
-                </form>
-            </div>
-        </section>
+            <a href="/" class="back-link">
+                ← Вернуться на главную
+            </a>
+        </div>
     </div>
-
-    <script>
-        function switchAuthTab(tabName) {
-            // На данный момент оставляем одну вкладку входа
-        }
-    </script>
 </body>
 </html>

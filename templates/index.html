@@ -579,6 +579,90 @@
             background: rgba(99, 102, 241, 0.12);
             transform: translateY(-1px);
         }
+
+        /* Landing-style overrides */
+        .form-section,
+        .right-column,
+        .calendar-container,
+        .slot-group {
+            background: rgba(10, 14, 26, 0.95) !important;
+            border: 1px solid rgba(0, 102, 255, 0.2) !important;
+            border-radius: 18px !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28) !important;
+            backdrop-filter: blur(22px);
+        }
+
+        .calendar-header h3,
+        .actions-bar h2,
+        .slots-section h3 {
+            color: #ffffff !important;
+        }
+
+        .calendar-nav,
+        .time-slot,
+        .form-type-btn,
+        select,
+        input[type="file"] {
+            background: rgba(26, 31, 53, 0.7) !important;
+            border-color: rgba(0, 102, 255, 0.28) !important;
+            color: #dce8ff !important;
+            border-radius: 10px !important;
+        }
+
+        .calendar-nav:hover,
+        .time-slot:hover,
+        .form-type-btn:hover {
+            border-color: #0066ff !important;
+            background: rgba(0, 102, 255, 0.18) !important;
+            color: #ffffff !important;
+        }
+
+        .time-slot.selected,
+        .form-type-btn.active {
+            background: linear-gradient(135deg, #0066ff, #0047b3) !important;
+            border-color: #0066ff !important;
+            color: #ffffff !important;
+            box-shadow: 0 8px 20px rgba(0, 102, 255, 0.28) !important;
+        }
+
+        .panel-tab.active {
+            background: linear-gradient(135deg, #0066ff, #0047b3) !important;
+            border-color: #0066ff !important;
+            box-shadow: 0 8px 24px rgba(0, 102, 255, 0.32) !important;
+        }
+
+        .applicant-card,
+        .slot-item {
+            background: rgba(26, 31, 53, 0.72) !important;
+            border-color: rgba(0, 102, 255, 0.2) !important;
+            border-radius: 14px !important;
+        }
+
+        .applicant-card:hover,
+        .slot-item:hover {
+            border-color: #0066ff !important;
+            box-shadow: 0 8px 22px rgba(0, 102, 255, 0.25) !important;
+        }
+
+        .message.success,
+        .message.error,
+        .message.warning {
+            border-radius: 12px;
+            border: 1px solid rgba(0, 102, 255, 0.2);
+        }
+
+        .modal-content {
+            background: linear-gradient(180deg, #10182f 0%, #0a0e1a 100%) !important;
+            border: 1px solid rgba(0, 102, 255, 0.24) !important;
+            border-radius: 20px !important;
+        }
+
+        @media (max-width: 768px) {
+            .form-section,
+            .right-column {
+                border-radius: 14px !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -617,7 +701,6 @@
                     <!-- Выбор типа анкеты -->
                     <div class="form-group" style="margin-bottom: 20px; display: flex; gap: 10px;">
                         <button type="button" class="btn btn-secondary form-type-btn active" data-type="worker" onclick="switchFormType('worker')" style="flex: 1;">👨‍💼 Оператор</button>
-                        <button type="button" class="btn btn-secondary form-type-btn" data-type="model" onclick="switchFormType('model')" style="flex: 1;">👩‍🎬 Модель</button>
                         <button type="button" class="btn btn-secondary form-type-btn" data-type="chatter" onclick="switchFormType('chatter')" style="flex: 1;">💬 Чаттер</button>
                     </div>
                     
@@ -678,86 +761,6 @@
                         <div id="formMessage" class="message"></div>
                     </form>
                     
-                    <!-- Форма для модели/оператора -->
-                    <form id="modelForm" class="form-model" style="display: none;" enctype="multipart/form-data">
-                        <div class="form-group">
-                            <label for="model_full_name">Имя *</label>
-                            <input type="text" id="model_full_name" name="full_name" placeholder="Ваше имя" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="model_city">Город *</label>
-                            <input type="text" id="model_city" name="city" placeholder="Москва, Санкт-Петербург" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="model_phone">Номер телефона *</label>
-                            <input type="tel" id="model_phone" name="phone" placeholder="+7 (XXX) XXX-XX-XX" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="model_age">Возраст</label>
-                            <input type="text" id="model_age" name="age" placeholder="25 лет">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="model_residence">Проживание</label>
-                            <select id="model_residence" name="residence">
-                                <option value="">-- Выберите --</option>
-                                <option value="одна">Одна</option>
-                                <option value="не одна">Не одна</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="model_dual_devices">Есть 2 мобильных телефона или комп + телефон?</label>
-                            <select id="model_dual_devices" name="has_dual_devices">
-                                <option value="">-- Выберите --</option>
-                                <option value="да">Да</option>
-                                <option value="нет">Нет</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="model_device_model">Модель устройства</label>
-                            <input type="text" id="model_device_model" name="device_model" placeholder="iPhone 14 Pro, Samsung Galaxy S23">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="model_work_hours">Сколько часов и дней в неделю готова уделять работе?</label>
-                            <textarea id="model_work_hours" name="work_hours" placeholder="Например: 4-6 часов в день, 5-6 дней в неделю" rows="2"></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="model_headphones">Есть наушники?</label>
-                            <select id="model_headphones" name="has_headphones">
-                                <option value="">-- Выберите --</option>
-                                <option value="да">Да</option>
-                                <option value="нет">Нет</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="model_telegram">Телеграм для связи</label>
-                            <input type="text" id="model_telegram" name="telegram" placeholder="@username">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="model_interview_time">Время собеседования</label>
-                            <input type="text" id="model_interview_time" name="interview_time" placeholder="Например, 15:30 25.02.2026">
-                            <small class="form-hint">Формат: ДД.ММ.ГГГГ ЧЧ:ММ</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="model_photos">Фото (в полный рост приветствуется)</label>
-                            <input type="file" id="model_photos" name="photos" multiple accept="image/*">
-                            <small class="form-hint">Загрузите несколько фото, предпочтительно в полный рост</small>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">✅ Добавить анкету</button>
-                        <div id="modelFormMessage" class="message"></div>
-                    </form>
-
                     <!-- Форма для Чаттера -->
                     <form id="chatterForm" class="form-chatter" style="display: none;">
                         <div class="form-group">
@@ -1998,10 +2001,9 @@
             }
         }
 
-        // Переключение типа формы (кандидат на работу / модель-оператор / чаттер)
+        // Переключение типа формы (кандидат на работу / чаттер)
         function switchFormType(type) {
             const workerForm = document.getElementById('applicantForm');
-            const modelForm = document.getElementById('modelForm');
             const chatterForm = document.getElementById('chatterForm');
             const buttons = document.querySelectorAll('.form-type-btn');
             
@@ -2010,56 +2012,18 @@
             
             if (type === 'worker') {
                 workerForm.style.display = 'block';
-                modelForm.style.display = 'none';
-                chatterForm.style.display = 'none';
-            } else if (type === 'model') {
-                workerForm.style.display = 'none';
-                modelForm.style.display = 'block';
                 chatterForm.style.display = 'none';
             } else if (type === 'chatter') {
                 workerForm.style.display = 'none';
-                modelForm.style.display = 'none';
                 chatterForm.style.display = 'block';
             }
         }
 
-        // Обработка формы модели/оператора
+        // Обработка форм при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
             // Загрузить список операторов при загрузке страницы
             loadOperators();
             
-            const modelForm = document.getElementById('modelForm');
-            if (modelForm) {
-                modelForm.addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    
-                    const formData = new FormData(this);
-                    const messageDiv = document.getElementById('modelFormMessage');
-                    
-                    try {
-                        const response = await fetch('/api/add-model-operator', {
-                            method: 'POST',
-                            body: formData
-                        });
-                        
-                        const result = await response.json();
-                        
-                        if (result.success) {
-                            messageDiv.innerHTML = `<div class="success-message">✅ ${result.message}</div>`;
-                            modelForm.reset();
-                            
-                            // Перезагрузить список
-                            setTimeout(() => location.reload(), 1000);
-                        } else {
-                            messageDiv.innerHTML = `<div class="error-message">❌ ${result.message}</div>`;
-                        }
-                    } catch (error) {
-                        console.error('Ошибка:', error);
-                        messageDiv.innerHTML = `<div class="error-message">❌ Ошибка при отправке: ${error.message}</div>`;
-                    }
-                });
-            }
-
             // Обработка формы Чаттера
             const chatterForm = document.getElementById('chatterForm');
             if (chatterForm) {

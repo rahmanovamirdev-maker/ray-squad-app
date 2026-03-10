@@ -101,6 +101,230 @@
             display: block;
         }
 
+        .logs-panel {
+            background: #151521;
+            border: 1px solid #2d2d3d;
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .logs-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+            align-items: center;
+        }
+
+        .logs-controls label {
+            color: #c7d2fe;
+            font-size: 0.9em;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(55, 65, 81, 0.55);
+            border: 1px solid #3d466e;
+            border-radius: 8px;
+            padding: 9px 12px;
+            min-height: 40px;
+        }
+
+        .logs-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .logs-summary-card {
+            background: #1a1f33;
+            border: 1px solid #303a5f;
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .logs-summary-card .label {
+            color: #9aa3b2;
+            font-size: 0.8em;
+            margin-bottom: 4px;
+        }
+
+        .logs-summary-card .value {
+            color: #ecf0ff;
+            font-size: 1.2em;
+            font-weight: 700;
+        }
+
+        .logs-controls input,
+        .logs-controls select {
+            background: #2a2a3a;
+            border: 1px solid #3d3d4d;
+            color: #e0e0e0;
+            border-radius: 8px;
+            padding: 10px 12px;
+            min-height: 40px;
+        }
+
+        .logs-controls input {
+            min-width: 260px;
+            flex: 1;
+        }
+
+        .logs-output {
+            background: #0f0f17;
+            border: 1px solid #222230;
+            border-radius: 8px;
+            padding: 12px;
+            min-height: 380px;
+            max-height: 70vh;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: #d8def8;
+            font-size: 0.86em;
+            line-height: 1.55;
+        }
+
+        .log-line {
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            padding-bottom: 6px;
+        }
+
+        .audit-log-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(17, 24, 39, 0.92));
+            border: 1px solid #2f3658;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .audit-log-card.tone-delete { border-left: 3px solid #ef4444; }
+        .audit-log-card.tone-create { border-left: 3px solid #22c55e; }
+        .audit-log-card.tone-update { border-left: 3px solid #f59e0b; }
+        .audit-log-card.tone-auth { border-left: 3px solid #8b5cf6; }
+        .audit-log-card.tone-admin { border-left: 3px solid #06b6d4; }
+        .audit-log-card.tone-read { border-left: 3px solid #3b82f6; }
+
+        .audit-log-card.error {
+            border-color: rgba(239, 68, 68, 0.8);
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(17, 24, 39, 0.92));
+        }
+
+        .audit-log-card.warn {
+            border-color: rgba(245, 158, 11, 0.8);
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(17, 24, 39, 0.92));
+        }
+
+        .audit-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .audit-title {
+            font-size: 0.95em;
+            font-weight: 700;
+            color: #eef2ff;
+            margin-bottom: 8px;
+        }
+
+        .audit-title .actor {
+            color: #b7c4ff;
+        }
+
+        .audit-title .arrow {
+            color: #7d8bc9;
+            margin: 0 6px;
+        }
+
+        .audit-title .action {
+            color: #ffffff;
+        }
+
+        .audit-action-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.86em;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 4px 10px;
+            border: 1px solid #3d466e;
+            background: rgba(99, 102, 241, 0.2);
+            color: #edf2ff;
+        }
+
+        .audit-action-chip.tone-delete { background: rgba(239, 68, 68, 0.18); border-color: rgba(239, 68, 68, 0.55); }
+        .audit-action-chip.tone-create { background: rgba(34, 197, 94, 0.18); border-color: rgba(34, 197, 94, 0.55); }
+        .audit-action-chip.tone-update { background: rgba(245, 158, 11, 0.18); border-color: rgba(245, 158, 11, 0.55); }
+        .audit-action-chip.tone-auth { background: rgba(139, 92, 246, 0.18); border-color: rgba(139, 92, 246, 0.55); }
+        .audit-action-chip.tone-admin { background: rgba(6, 182, 212, 0.18); border-color: rgba(6, 182, 212, 0.55); }
+        .audit-action-chip.tone-read { background: rgba(59, 130, 246, 0.18); border-color: rgba(59, 130, 246, 0.55); }
+
+        .audit-group-title {
+            margin: 14px 0 8px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 0.86em;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            color: #c7d2fe;
+            background: rgba(55, 65, 81, 0.42);
+            border: 1px solid #374151;
+        }
+
+        .audit-badges {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .audit-badge {
+            font-size: 0.75em;
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid #3d466e;
+            background: rgba(99, 102, 241, 0.18);
+            color: #d7dcff;
+            font-weight: 600;
+        }
+
+        .audit-time {
+            color: #9aa3b2;
+            font-size: 0.82em;
+        }
+
+        .audit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 8px 12px;
+            font-size: 0.9em;
+        }
+
+        .audit-label {
+            color: #8fa1c8;
+            margin-right: 6px;
+        }
+
+        .audit-value {
+            color: #e5e9ff;
+            word-break: break-word;
+        }
+
+        .audit-raw {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.12);
+            color: #9aa3b2;
+            font-size: 0.78em;
+            font-family: Consolas, 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
         .actions-bar {
             display: flex;
             justify-content: space-between;
@@ -1313,6 +1537,257 @@
         .admin-all-slots .accordion-content {
             padding: 8px;
         }
+
+        /* Форма создания пользователя */
+        .create-user-card {
+            background: rgba(10, 14, 26, 0.95) !important;
+            border: 1px solid rgba(0, 102, 255, 0.22) !important;
+            border-radius: 18px !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28) !important;
+        }
+
+        .create-user-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(0, 102, 255, 0.24);
+        }
+
+        .create-user-title {
+            color: #ffffff;
+            font-size: 1.8em;
+            margin: 0 0 8px;
+            text-shadow: 0 0 20px rgba(0, 102, 255, 0.25);
+        }
+
+        .create-user-subtitle {
+            color: #9eb0d3;
+            margin: 0;
+            font-size: 0.95em;
+        }
+
+        .create-user-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #e6eeff;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .create-user-label-wide {
+            margin-bottom: 12px;
+        }
+
+        .create-user-icon {
+            font-size: 1.2em;
+        }
+
+        .create-user-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(26, 31, 53, 0.74);
+            border: 2px solid rgba(0, 102, 255, 0.32);
+            border-radius: 10px;
+            color: #e0e0e0;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 102, 255, 0.1);
+        }
+
+        .create-user-input:focus {
+            outline: none;
+            box-shadow: 0 6px 20px rgba(0, 102, 255, 0.24);
+            border-color: #00bfff;
+        }
+
+        .create-user-select {
+            cursor: pointer;
+        }
+
+        .create-user-account-box {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 0;
+            background: transparent;
+            border-radius: 0;
+            border: none;
+            flex-wrap: wrap;
+        }
+
+        .form-group input.create-user-checkbox {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            margin: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .create-user-checkbox-label {
+            position: relative;
+            margin: 0;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            width: auto;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: rgba(99, 102, 241, 0.08);
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .create-user-checkbox:hover + .create-user-checkbox-label {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.6);
+        }
+
+        .create-user-checkbox-label::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 2px solid rgba(99, 102, 241, 0.5);
+            background: rgba(12, 20, 40, 0.8);
+            transition: all 0.22s ease;
+            flex-shrink: 0;
+        }
+
+        .create-user-checkbox:checked + .create-user-checkbox-label {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: #6366f1;
+        }
+
+        .create-user-checkbox:checked + .create-user-checkbox-label::before {
+            border-color: #6366f1;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' d='M2.5 8l3.5 3.5L13.5 3'/%3E%3C/svg%3E") center/12px no-repeat, linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+
+        .create-user-checkbox-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-weight: 600;
+            color: #e0e0e0;
+            font-size: 1em;
+            line-height: 1.2;
+        }
+
+        .create-user-checkbox-hint {
+            font-size: 0.85em;
+            color: #9eb0d3;
+            font-weight: 400;
+        }
+
+        .create-user-checkbox:checked + .create-user-checkbox-label .create-user-checkbox-text {
+            color: #ffffff;
+        }
+
+        .create-user-submit {
+            width: 100%;
+            margin-top: 30px;
+            padding: 16px 24px;
+            border-radius: 10px;
+            font-size: 1.05em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 6px 20px rgba(0, 102, 255, 0.3);
+        }
+
+        .create-user-submit:hover {
+            box-shadow: 0 10px 30px rgba(0, 102, 255, 0.45);
+            transform: translateY(-2px);
+        }
+
+        /* Landing-style overrides */
+        .admin-tabs {
+            border-bottom-color: rgba(0, 102, 255, 0.2) !important;
+        }
+
+        .admin-tabs button {
+            color: #9eb0d3 !important;
+            border-bottom-color: transparent !important;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .admin-tabs button.active {
+            color: #ffffff !important;
+            background: linear-gradient(135deg, #0066ff, #0047b3) !important;
+            border-bottom-color: #0066ff !important;
+            box-shadow: 0 8px 22px rgba(0, 102, 255, 0.28);
+        }
+
+        .answer-card,
+        .slot-card,
+        .slot-group,
+        .calendar-container,
+        .modal-content,
+        .chat-sidebar {
+            background: rgba(10, 14, 26, 0.95) !important;
+            border-color: rgba(0, 102, 255, 0.22) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28) !important;
+            backdrop-filter: blur(20px);
+        }
+
+        .answer-card .question,
+        .answer-card .answer,
+        .slot-details,
+        .chat-input-area {
+            background: rgba(26, 31, 53, 0.62) !important;
+            border-color: rgba(0, 102, 255, 0.2) !important;
+            border-radius: 12px !important;
+        }
+
+        .team-filter-select,
+        .menu-trigger,
+        .calendar-nav,
+        .time-slot,
+        .chat-input-area textarea,
+        .slot-form input {
+            background: rgba(26, 31, 53, 0.74) !important;
+            border-color: rgba(0, 102, 255, 0.26) !important;
+            color: #dce8ff !important;
+        }
+
+        .team-filter-select:focus,
+        .chat-input-area textarea:focus,
+        .slot-form input:focus {
+            border-color: #0066ff !important;
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.16) !important;
+        }
+
+        .btn-reset-pwd,
+        .btn-copy,
+        .btn-approve,
+        .chat-input-area button {
+            background: linear-gradient(135deg, #0066ff, #0047b3) !important;
+            box-shadow: 0 8px 20px rgba(0, 102, 255, 0.26) !important;
+        }
+
+        .btn-delete-answer,
+        .btn-close-slot,
+        .btn-slot-action {
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.24) !important;
+        }
+
+        .chat-header h3,
+        .answer-card h4,
+        .modal-content h2,
+        .calendar-header h3 {
+            color: #ffffff !important;
+        }
+
+        .answer-card.approved {
+            border-color: rgba(34, 197, 94, 0.7) !important;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.14), rgba(10, 14, 26, 0.9)) !important;
+        }
     </style>
 </head>
 <body>
@@ -1344,19 +1819,22 @@
             <button class="tab-btn {% if current_tab == 'operators' %}active{% endif %}" onclick="switchTab('operators')">👨‍💼 Операторы</button>
             <button class="tab-btn {% if current_tab == 'models' %}active{% endif %}" onclick="switchTab('models')">👩‍🎬 Модели</button>
             <button class="tab-btn {% if current_tab == 'chatters' %}active{% endif %}" onclick="switchTab('chatters')">💬 Чаттеры</button>
-            <button class="tab-btn {% if current_tab == 'scouters' %}active{% endif %}" onclick="switchTab('scouters')">🕵️ Скаутеры</button>
+            <button class="tab-btn {% if current_tab == 'scouters' %}active{% endif %}" onclick="switchTab('scouters')">🎥 Стримерши</button>
             <button class="tab-btn {% if current_tab == 'interviews' %}active{% endif %}" onclick="switchTab('interviews')">🗓️ Открытые собеседования</button>
             <button class="tab-btn {% if current_tab == 'archive' %}active{% endif %}" onclick="switchTab('archive')">📚 Полный архив</button>
+            {% if current_user and (current_user.prefix or '')|lower == 'developer' %}
+            <button class="tab-btn {% if current_tab == 'logs' %}active{% endif %}" onclick="switchTab('logs')">📜 Логи</button>
+            {% endif %}
         </div>
 
         <!-- Вкладка: Управление пользователями -->
         <div id="users-tab" class="tab-content {% if current_tab == 'users' %}active{% endif %}">
             <div class="main-content">
                 <div class="left-column">
-                    <section class="form-section" style="background: linear-gradient(135deg, rgba(45, 45, 61, 0.8) 0%, rgba(30, 30, 46, 0.9) 100%); border: 2px solid rgba(99, 102, 241, 0.3); box-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);">
-                        <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid rgba(99, 102, 241, 0.2);">
-                            <h2 style="color: #6366f1; font-size: 1.8em; margin: 0 0 8px 0; text-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);">👤 Создать пользователя</h2>
-                            <p style="color: #b0b0b0; margin: 0; font-size: 0.95em;">Добавление нового администратора или рабочего</p>
+                    <section class="form-section create-user-card">
+                        <div class="create-user-header">
+                            <h2 class="create-user-title">👤 Создать пользователя</h2>
+                            <p class="create-user-subtitle">Добавление нового администратора или рабочего</p>
                         </div>
                         {% with messages = get_flashed_messages(with_categories=true) %}
                           {% if messages %}
@@ -1365,47 +1843,51 @@
                             {% endfor %}
                           {% endif %}
                         {% endwith %}
-                        <form method="post" action="{{ url_for('admin_create_user') }}">
+                        <form method="post" action="{{ url_for('admin_create_user') }}" class="create-user-form" id="createUserForm">
                             <div class="form-group">
-                                <label for="username" style="display: flex; align-items: center; gap: 8px; color: #e0e0e0; font-weight: 600; margin-bottom: 8px;">
-                                    <span style="font-size: 1.2em;">🔐</span> Логин
+                                <label for="username" class="create-user-label">
+                                    <span class="create-user-icon">🔐</span> Логин
                                 </label>
-                                <input type="text" id="username" name="username" placeholder="Введите уникальный логин" required 
-                                    style="width: 100%; padding: 14px 16px; background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3a 100%); border: 2px solid #6366f1; border-radius: 10px; color: #e0e0e0; font-size: 1em; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);"
-                                    onfocus="this.style.boxShadow='0 6px 20px rgba(99, 102, 241, 0.3)'; this.style.borderColor='#818cf8';"
-                                    onblur="this.style.boxShadow='0 4px 12px rgba(99, 102, 241, 0.1)'; this.style.borderColor='#6366f1';">
+                                <input type="text" id="username" name="username" placeholder="Введите уникальный логин" required class="create-user-input">
                             </div>
                             <div class="form-group">
-                                <label for="password" style="display: flex; align-items: center; gap: 8px; color: #e0e0e0; font-weight: 600; margin-bottom: 8px;">
-                                    <span style="font-size: 1.2em;">🔑</span> Пароль
+                                <label for="password" class="create-user-label">
+                                    <span class="create-user-icon">🔑</span> Пароль
                                 </label>
-                                <input type="text" id="password" name="password" placeholder="Автогенерируемый или введите свой" required
-                                    style="width: 100%; padding: 14px 16px; background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3a 100%); border: 2px solid #6366f1; border-radius: 10px; color: #e0e0e0; font-size: 1em; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);"
-                                    onfocus="this.style.boxShadow='0 6px 20px rgba(99, 102, 241, 0.3)'; this.style.borderColor='#818cf8';"
-                                    onblur="this.style.boxShadow='0 4px 12px rgba(99, 102, 241, 0.1)'; this.style.borderColor='#6366f1';">
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="text" id="password" name="password" placeholder="Нажмите кнопку для генерации" readonly class="create-user-input" style="flex: 1;">
+                                    <button type="button" onclick="generatePassword()" style="padding: 14px 16px; background: rgba(26, 31, 53, 0.74); color: #00ff00; border: 2px solid rgba(0, 102, 255, 0.32); border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; white-space: nowrap; font-size: 1em;">
+                                        🎲 Сгенерировать
+                                    </button>
+                                    <button type="button" onclick="copyPassword()" style="padding: 14px 16px; background: rgba(26, 31, 53, 0.74); color: #6366f1; border: 2px solid rgba(0, 102, 255, 0.32); border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; white-space: nowrap; font-size: 1em; min-width: 50px;" title="Копировать в буфер обмена">
+                                        📋
+                                    </button>
+                                </div>
+                                <small style="color: #8a92a6; display: block; margin-top: 6px; font-size: 0.9em;">Пароль содержит буквы, цифры и спецсимволы</small>
                             </div>
                             <div class="form-group">
-                                <label style="display: flex; align-items: center; gap: 8px; color: #e0e0e0; font-weight: 600; margin-bottom: 12px;">
-                                    <span style="font-size: 1.2em;">👥</span> Тип аккаунта
-                                </label>
-                                <div style="padding: 16px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(79, 70, 229, 0.05) 100%); border-radius: 10px; border: 2px solid rgba(99, 102, 241, 0.2); transition: all 0.3s ease;">
-                                    <input type="checkbox" id="is_admin" name="is_admin" style="width: 20px; height: 20px; cursor: pointer; accent-color: #6366f1;">
-                                    <label for="is_admin" style="margin: 0; cursor: pointer; margin-left: 12px; display: inline-block;">
-                                        <span style="display: inline-flex; align-items: center; gap: 10px; font-weight: 600; color: #e0e0e0; font-size: 1em;">
+                                <div class="create-user-account-box">
+                                    <input type="checkbox" id="is_admin" name="is_admin" class="create-user-checkbox">
+                                    <label for="is_admin" class="create-user-checkbox-label">
+                                        <span class="create-user-checkbox-text">
                                             👤 Администратор
-                                            <span style="font-size: 0.85em; color: #b0b0b0; font-weight: 400;">(полный доступ к панели)</span>
+                                            <span class="create-user-checkbox-hint">(полный доступ к панели)</span>
+                                        </span>
+                                    </label>
+                                    <input type="checkbox" id="is_moderator" name="is_moderator" class="create-user-checkbox" disabled>
+                                    <label for="is_moderator" class="create-user-checkbox-label" style="opacity: 0.6; cursor: not-allowed;">
+                                        <span class="create-user-checkbox-text">
+                                            🛡️ Модератор
+                                            <span class="create-user-checkbox-hint">(скоро появится)</span>
                                         </span>
                                     </label>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="team" style="display: flex; align-items: center; gap: 8px; color: #e0e0e0; font-weight: 600; margin-bottom: 8px;">
-                                    <span style="font-size: 1.2em;">🎯</span> Команда
+                                <label for="team" class="create-user-label">
+                                    <span class="create-user-icon">🎯</span> Команда
                                 </label>
-                                <select id="team" name="team" 
-                                    style="width: 100%; padding: 14px 16px; background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3a 100%); border: 2px solid #6366f1; border-radius: 10px; color: #e0e0e0; font-size: 1em; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1); cursor: pointer;"
-                                    onfocus="this.style.boxShadow='0 6px 20px rgba(99, 102, 241, 0.3)'; this.style.borderColor='#818cf8';"
-                                    onblur="this.style.boxShadow='0 4px 12px rgba(99, 102, 241, 0.1)'; this.style.borderColor='#6366f1';">
+                                <select id="team" name="team" class="create-user-input create-user-select">
                                     <option value="" style="background: #1e1e2e; color: #b0b0b0;">Без команды</option>
                                     <option value="Delta" style="background: #1e1e2e; color: #e0e0e0;">🔴 Delta</option>
                                     <option value="Den" style="background: #1e1e2e; color: #e0e0e0;">🔵 Den</option>
@@ -1417,10 +1899,7 @@
                                     <option value="Rey" style="background: #1e1e2e; color: #e0e0e0;">💎 Rey</option>
                                 </select>
                             </div>
-                            <button type="submit" class="btn btn-primary" 
-                                style="width: 100%; margin-top: 30px; padding: 16px 24px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border: none; border-radius: 10px; color: white; font-size: 1.05em; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3); text-transform: uppercase; letter-spacing: 0.5px;"
-                                onmouseover="this.style.boxShadow='0 10px 30px rgba(99, 102, 241, 0.5)'; this.style.transform='translateY(-2px)';"
-                                onmouseout="this.style.boxShadow='0 6px 20px rgba(99, 102, 241, 0.3)'; this.style.transform='translateY(0)';">
+                            <button type="submit" class="btn btn-primary create-user-submit">
                                 ✨ Создать аккаунт
                             </button>
                         </form>
@@ -1430,18 +1909,21 @@
                 <div class="right-column">
                     <div class="actions-bar">
                         <h2>Пользователи</h2>
-                        <select id="usersTeamFilter" class="team-filter-select" onchange="filterAndLoadUsers()" style="margin-left: auto;">
-                            <option value="">📄 Все команды</option>
-                            <option value="Delta">🔴 Delta</option>
-                            <option value="Den">🔵 Den</option>
-                            <option value="ХАЦКЕР">🟢 ХАЦКЕР</option>
-                            <option value="404">🟡 404</option>
-                            <option value="Bobik">🟣 Bobik</option>
-                            <option value="Oir">🟠 Oir</option>
-                            <option value="Gordon">⚫ Gordon</option>
-                            <option value="Rey">💎 Rey</option>
-                            <option value="no_team">⚪ Без команды</option>
-                        </select>
+                        <div style="display: flex; gap: 10px; margin-left: auto;">
+                            <select id="usersTeamFilter" class="team-filter-select" onchange="filterAndLoadUsers()">
+                                <option value="">📄 Все команды</option>
+                                <option value="Delta">🔴 Delta</option>
+                                <option value="Den">🔵 Den</option>
+                                <option value="ХАЦКЕР">🟢 ХАЦКЕР</option>
+                                <option value="404">🟡 404</option>
+                                <option value="Bobik">🟣 Bobik</option>
+                                <option value="Oir">🟠 Oir</option>
+                                <option value="Gordon">⚫ Gordon</option>
+                                <option value="Rey">💎 Rey</option>
+                                <option value="no_team">⚪ Без команды</option>
+                            </select>
+                            <button onclick="filterAndLoadUsers()" style="padding: 10px 18px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); white-space: nowrap;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(99, 102, 241, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(99, 102, 241, 0.3)'">🔄 Обновить</button>
+                        </div>
                     </div>
                     <div class="applicants-list" id="usersContainer">
                         <p class="loading">Загрузка пользователей...</p>
@@ -1513,17 +1995,17 @@
             </div>
         </div>
 
-        <!-- Вкладка: Скаутеры -->
+        <!-- Вкладка: Стримерши -->
         <div id="scouters-tab" class="tab-content {% if current_tab == 'scouters' %}active{% endif %}">
             <div class="actions-bar">
-                <h2>🕵️ Анкеты Скаутеров</h2>
+                <h2>🎥 Анкеты стримерш</h2>
                 <div class="action-buttons">
                     <button class="btn btn-secondary" onclick="loadScouters()">🔄 Обновить</button>
                     <button class="btn btn-danger" onclick="clearAllScouters()" style="background: #dc3545; border-color: #dc3545;">🗑️ Очистить всё</button>
                 </div>
             </div>
             <div id="scoutersContainer" class="applicants-list">
-                <p class="loading">Загрузка анкет Скаутеров...</p>
+                <p class="loading">Загрузка анкет стримерш...</p>
             </div>
         </div>
 
@@ -1656,6 +2138,59 @@
                 <p class="loading">Загрузка архива...</p>
             </div>
         </div>
+
+        {% if current_user and (current_user.prefix or '')|lower == 'developer' %}
+        <div id="logs-tab" class="tab-content {% if current_tab == 'logs' %}active{% endif %}">
+            <div class="actions-bar">
+                <h2>📜 Системные логи</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="loadAdminLogs()">🔄 Обновить</button>
+                </div>
+            </div>
+            <div class="logs-panel">
+                <div class="logs-controls">
+                    <select id="logTypeSelect" onchange="loadAdminLogs()">
+                        <option value="audit">audit.log (действия)</option>
+                        <option value="app">app.log (общий)</option>
+                    </select>
+                    <select id="logLimitSelect" onchange="loadAdminLogs()">
+                        <option value="100">100 строк</option>
+                        <option value="200" selected>200 строк</option>
+                        <option value="500">500 строк</option>
+                        <option value="1000">1000 строк</option>
+                    </select>
+                    <input id="logSearchInput" type="text" placeholder="Поиск по логам (user, path, LOGIN, 403 и т.д.)" onkeydown="if(event.key==='Enter'){loadAdminLogs();}">
+                    <button class="btn btn-secondary" onclick="loadAdminLogs()">Поиск</button>
+                </div>
+                <div class="logs-controls" id="auditQuickFilters">
+                    <input id="auditActorFilter" type="text" placeholder="Фильтр по пользователю" onkeydown="if(event.key==='Enter'){applyAuditFiltersAndRender();}">
+                    <select id="auditStatusFilter" onchange="applyAuditFiltersAndRender()">
+                        <option value="">Все статусы</option>
+                        <option value="2xx">Успешные (2xx)</option>
+                        <option value="3xx">Редиректы (3xx)</option>
+                        <option value="4xx">Клиентские ошибки (4xx)</option>
+                        <option value="5xx">Серверные ошибки (5xx)</option>
+                    </select>
+                    <select id="auditActionFilter" onchange="applyAuditFiltersAndRender()">
+                        <option value="">Все действия</option>
+                        <option value="auth">Авторизация</option>
+                        <option value="create">Создание</option>
+                        <option value="update">Изменение</option>
+                        <option value="delete">Удаление</option>
+                        <option value="read">Просмотр</option>
+                        <option value="admin">Админ-действия</option>
+                    </select>
+                    <label><input id="auditShowTech" type="checkbox" onchange="applyAuditFiltersAndRender()"> Показать тех. детали</label>
+                    <button class="btn btn-secondary" onclick="resetAuditFilters()">Сбросить</button>
+                </div>
+                <div id="logsSummary" class="logs-summary"></div>
+                <div id="logsMeta" style="color:#9aa3b2; margin-bottom:10px; font-size:0.9em;">Логи не загружены</div>
+                <div id="logsOutput" class="logs-output">
+                    <p class="loading">Загрузка логов...</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Модальное окно для отображения нового пароля -->
@@ -1714,6 +2249,257 @@
     <script>
         // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
         let currentTeamUserId = null;
+        let latestParsedAuditLogs = [];
+        let latestLogType = 'audit';
+
+        function escapeHtml(rawText) {
+            const div = document.createElement('div');
+            div.textContent = rawText ?? '';
+            return div.innerHTML;
+        }
+
+        function parseKeyValueLogLine(rawLine) {
+            const result = { raw: rawLine, level: 'INFO', timestamp: '', message: '' };
+            if (!rawLine || typeof rawLine !== 'string') {
+                return result;
+            }
+
+            const parts = rawLine.split(' | ');
+            if (parts.length >= 4) {
+                result.timestamp = parts[0].trim();
+                result.level = parts[1].trim();
+                result.message = parts.slice(3).join(' | ').trim();
+            } else {
+                result.message = rawLine;
+            }
+
+            const kvPattern = /(\w+)=(("[^"]*")|[^\s]+)/g;
+            const fields = {};
+            let match;
+            while ((match = kvPattern.exec(result.message)) !== null) {
+                const key = match[1];
+                const rawValue = match[2];
+                fields[key] = rawValue.startsWith('"') && rawValue.endsWith('"')
+                    ? rawValue.slice(1, -1)
+                    : rawValue;
+            }
+            result.fields = fields;
+            return result;
+        }
+
+        function getActionMeta(action, method, path) {
+            const actionRaw = (action || '').toLowerCase();
+            const methodRaw = (method || '').toUpperCase();
+            const pathRaw = (path || '').toLowerCase();
+
+            if (actionRaw.includes('login') || actionRaw.includes('logout') || pathRaw.includes('/login') || pathRaw.includes('/logout')) {
+                return { label: 'Авторизация', icon: '🔐', tone: 'auth' };
+            }
+            if (actionRaw.includes('delete') || methodRaw === 'DELETE') {
+                return { label: 'Удаление', icon: '🗑', tone: 'delete' };
+            }
+            if (actionRaw.includes('create') || actionRaw.includes('add') || methodRaw === 'POST') {
+                return { label: 'Создание', icon: '➕', tone: 'create' };
+            }
+            if (actionRaw.includes('update') || actionRaw.includes('edit') || actionRaw.includes('status') || methodRaw === 'PUT' || methodRaw === 'PATCH') {
+                return { label: 'Изменение', icon: '✏️', tone: 'update' };
+            }
+            if (actionRaw.includes('admin') || pathRaw.includes('/admin')) {
+                return { label: 'Админ-действие', icon: '🛡', tone: 'admin' };
+            }
+            if (methodRaw === 'GET') {
+                return { label: 'Просмотр', icon: '👁', tone: 'read' };
+            }
+            return { label: 'Системное действие', icon: '⚙️', tone: 'read' };
+        }
+
+        function getActionLabel(action, method, path) {
+            return getActionMeta(action, method, path).label;
+        }
+
+        function getStatusGroup(status) {
+            const statusNum = Number(status || 0);
+            if (statusNum >= 200 && statusNum < 300) return '2xx';
+            if (statusNum >= 300 && statusNum < 400) return '3xx';
+            if (statusNum >= 400 && statusNum < 500) return '4xx';
+            if (statusNum >= 500) return '5xx';
+            return '';
+        }
+
+        function buildSummary(logs) {
+            const summary = { total: logs.length, ok: 0, warn: 0, err: 0 };
+            logs.forEach((entry) => {
+                const statusGroup = getStatusGroup(entry.fields?.status);
+                if (statusGroup === '2xx' || statusGroup === '3xx') summary.ok += 1;
+                if (statusGroup === '4xx') summary.warn += 1;
+                if (statusGroup === '5xx') summary.err += 1;
+            });
+            return summary;
+        }
+
+        function renderSummary(logs) {
+            const summaryNode = document.getElementById('logsSummary');
+            if (!summaryNode) return;
+
+            if (latestLogType !== 'audit') {
+                summaryNode.innerHTML = '';
+                return;
+            }
+
+            const summary = buildSummary(logs);
+            summaryNode.innerHTML = `
+                <div class="logs-summary-card"><div class="label">Всего записей</div><div class="value">${summary.total}</div></div>
+                <div class="logs-summary-card"><div class="label">Успешные</div><div class="value">${summary.ok}</div></div>
+                <div class="logs-summary-card"><div class="label">Предупреждения</div><div class="value">${summary.warn}</div></div>
+                <div class="logs-summary-card"><div class="label">Ошибки</div><div class="value">${summary.err}</div></div>
+            `;
+        }
+
+        function applyAuditFilters(parsedLogs) {
+            const actorQuery = (document.getElementById('auditActorFilter')?.value || '').trim().toLowerCase();
+            const statusFilter = (document.getElementById('auditStatusFilter')?.value || '').trim();
+            const actionFilter = (document.getElementById('auditActionFilter')?.value || '').trim();
+
+            return parsedLogs.filter((entry) => {
+                const fields = entry.fields || {};
+                const actor = String(fields.actor || fields.username || '').toLowerCase();
+                const actionLabel = getActionLabel(fields.action, fields.method, fields.path).toLowerCase();
+                const statusGroup = getStatusGroup(fields.status);
+
+                if (actorQuery && !actor.includes(actorQuery)) return false;
+                if (statusFilter && statusGroup !== statusFilter) return false;
+                if (actionFilter) {
+                    if (actionFilter === 'auth' && !actionLabel.includes('авториза')) return false;
+                    if (actionFilter === 'create' && !actionLabel.includes('создани')) return false;
+                    if (actionFilter === 'update' && !actionLabel.includes('изменени')) return false;
+                    if (actionFilter === 'delete' && !actionLabel.includes('удалени')) return false;
+                    if (actionFilter === 'read' && !actionLabel.includes('просмотр')) return false;
+                    if (actionFilter === 'admin' && !actionLabel.includes('админ')) return false;
+                }
+                return true;
+            });
+        }
+
+        function resetAuditFilters() {
+            const actorInput = document.getElementById('auditActorFilter');
+            const statusSelect = document.getElementById('auditStatusFilter');
+            const actionSelect = document.getElementById('auditActionFilter');
+            const techToggle = document.getElementById('auditShowTech');
+            if (actorInput) actorInput.value = '';
+            if (statusSelect) statusSelect.value = '';
+            if (actionSelect) actionSelect.value = '';
+            if (techToggle) techToggle.checked = false;
+            applyAuditFiltersAndRender();
+        }
+
+        function shouldShowAuditTechnicalDetails() {
+            return Boolean(document.getElementById('auditShowTech')?.checked);
+        }
+
+        function getDateGroupTitle(timestampRaw) {
+            if (!timestampRaw) return 'Без даты';
+            const normalized = String(timestampRaw).replace(' ', 'T').replace(',', '.');
+            const entryDate = new Date(normalized);
+            if (Number.isNaN(entryDate.getTime())) return 'Без даты';
+
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const itemDay = new Date(entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate());
+
+            if (itemDay.getTime() === today.getTime()) return 'Сегодня';
+            if (itemDay.getTime() === yesterday.getTime()) return 'Вчера';
+            return entryDate.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' });
+        }
+
+        function applyAuditFiltersAndRender() {
+            const output = document.getElementById('logsOutput');
+            if (!output || latestLogType !== 'audit') {
+                return;
+            }
+
+            const filtered = applyAuditFilters(latestParsedAuditLogs);
+            output.innerHTML = renderLogs(filtered, 'audit', true);
+            renderSummary(filtered);
+        }
+
+        function renderAuditCard(parsed) {
+            const fields = parsed.fields || {};
+            const actor = fields.actor || fields.username || 'unknown';
+            const action = fields.action || parsed.message?.split(' ')[0] || 'action';
+            const actionMeta = getActionMeta(action, fields.method, fields.path);
+            const eventText = fields.event || actionMeta.label;
+            const target = fields.target || '-';
+            const related = fields.related_user || '-';
+            const status = fields.status || '-';
+            const method = fields.method || '-';
+            const path = fields.path || '-';
+            const ip = fields.ip || '-';
+            const duration = fields.duration_ms ? `${fields.duration_ms} ms` : '-';
+            const showTech = shouldShowAuditTechnicalDetails();
+
+            let levelClass = '';
+            if ((parsed.level || '').toUpperCase() === 'ERROR') {
+                levelClass = 'error';
+            } else if ((parsed.level || '').toUpperCase() === 'WARNING') {
+                levelClass = 'warn';
+            }
+
+            return `
+                <div class="audit-log-card ${levelClass} tone-${escapeHtml(actionMeta.tone)}">
+                    <div class="audit-head">
+                        <div class="audit-badges">
+                            <span class="audit-badge">${escapeHtml(parsed.level || 'INFO')}</span>
+                            <span class="audit-badge">${escapeHtml(method)}</span>
+                            <span class="audit-badge">${escapeHtml(status)}</span>
+                        </div>
+                        <div class="audit-time">${escapeHtml(parsed.timestamp || '-')}</div>
+                    </div>
+                    <div class="audit-title"><span class="actor">${escapeHtml(actor)}</span><span class="arrow">-></span><span class="action">${escapeHtml(eventText)}</span></div>
+                    <div style="margin-bottom: 8px;"><span class="audit-action-chip tone-${escapeHtml(actionMeta.tone)}">${escapeHtml(actionMeta.icon)} ${escapeHtml(actionMeta.label)}</span></div>
+                    <div class="audit-grid">
+                        <div><span class="audit-label">Пользователь:</span><span class="audit-value">${escapeHtml(actor)}</span></div>
+                        <div><span class="audit-label">С кем/чем:</span><span class="audit-value">${escapeHtml(target)}</span></div>
+                        <div><span class="audit-label">Связанный юзер:</span><span class="audit-value">${escapeHtml(related)}</span></div>
+                        <div><span class="audit-label">Путь:</span><span class="audit-value">${escapeHtml(path)}</span></div>
+                        <div><span class="audit-label">IP:</span><span class="audit-value">${escapeHtml(ip)}</span></div>
+                        <div><span class="audit-label">Длительность:</span><span class="audit-value">${escapeHtml(duration)}</span></div>
+                        ${showTech ? `<div><span class="audit-label">Код действия:</span><span class="audit-value">${escapeHtml(action)}</span></div>` : ''}
+                    </div>
+                    ${showTech ? `<div class="audit-raw">${escapeHtml(parsed.message || parsed.raw || '')}</div>` : ''}
+                </div>
+            `;
+        }
+
+        function renderLogs(lines, logType, linesAreParsed = false) {
+            if (!Array.isArray(lines) || lines.length === 0) {
+                return '<p class="empty">Логи не найдены по текущему фильтру</p>';
+            }
+
+            if (logType !== 'audit') {
+                return lines
+                    .map(line => `<div class="log-line" style="font-family:Consolas,'Courier New',monospace;">${escapeHtml(line)}</div>`)
+                    .join('');
+            }
+
+            const parsed = linesAreParsed ? lines : lines.map(line => parseKeyValueLogLine(line));
+            const groups = new Map();
+            parsed.forEach((entry) => {
+                const groupTitle = getDateGroupTitle(entry.timestamp);
+                if (!groups.has(groupTitle)) {
+                    groups.set(groupTitle, []);
+                }
+                groups.get(groupTitle).push(entry);
+            });
+
+            let html = '';
+            for (const [title, entries] of groups.entries()) {
+                html += `<div class="audit-group-title">${escapeHtml(title)}</div>`;
+                html += entries.map(entry => renderAuditCard(entry)).join('');
+            }
+            return html;
+        }
         
         function toggleHeaderNav() {
             const nav = document.getElementById('topNav');
@@ -1794,6 +2580,69 @@
             }
             if (tabName === 'archive') {
                 loadFullArchive();
+            }
+            if (tabName === 'logs') {
+                loadAdminLogs();
+            }
+        }
+
+        async function loadAdminLogs() {
+            const output = document.getElementById('logsOutput');
+            const meta = document.getElementById('logsMeta');
+            const typeSelect = document.getElementById('logTypeSelect');
+            const limitSelect = document.getElementById('logLimitSelect');
+            const searchInput = document.getElementById('logSearchInput');
+
+            if (!output || !meta || !typeSelect || !limitSelect || !searchInput) {
+                return;
+            }
+
+            const logType = typeSelect.value;
+            const limit = limitSelect.value;
+            const q = searchInput.value.trim();
+            latestLogType = logType;
+
+            const quickFilters = document.getElementById('auditQuickFilters');
+            if (quickFilters) {
+                quickFilters.style.display = logType === 'audit' ? 'flex' : 'none';
+            }
+
+            output.innerHTML = '<p class="loading">Загрузка логов...</p>';
+            meta.textContent = 'Загрузка...';
+
+            try {
+                const params = new URLSearchParams({ type: logType, limit: String(limit) });
+                if (q) {
+                    params.set('q', q);
+                }
+
+                const response = await fetch(`/api/admin/audit-logs?${params.toString()}`);
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    output.innerHTML = `<p class="empty">Ошибка загрузки: ${escapeHtml(data.message || 'unknown')}</p>`;
+                    meta.textContent = 'Ошибка доступа к логам';
+                    return;
+                }
+
+                const lines = data.lines || [];
+                if (logType === 'audit') {
+                    latestParsedAuditLogs = lines.map(line => parseKeyValueLogLine(line));
+                    const filtered = applyAuditFilters(latestParsedAuditLogs);
+                    output.innerHTML = renderLogs(filtered, 'audit', true);
+                    renderSummary(filtered);
+                } else {
+                    latestParsedAuditLogs = [];
+                    output.innerHTML = renderLogs(lines, logType);
+                    renderSummary([]);
+                }
+                output.scrollTop = output.scrollHeight;
+
+                const now = new Date();
+                meta.textContent = `Тип: ${data.type}. Строк: ${data.count}. Обновлено: ${now.toLocaleTimeString()}`;
+            } catch (error) {
+                output.innerHTML = `<p class="empty">Ошибка: ${escapeHtml(error.message)}</p>`;
+                meta.textContent = 'Ошибка загрузки логов';
             }
         }
 
@@ -3152,18 +4001,24 @@
                 const container = document.getElementById('scoutersContainer');
 
                 if (!response.ok || !data.success) {
-                    container.innerHTML = '<p class="empty">Ошибка загрузки анкет скаутеров</p>';
+                    container.innerHTML = '<p class="empty">Ошибка загрузки анкет стримерш</p>';
                     return;
                 }
 
                 if (!data.applications || data.applications.length === 0) {
-                    container.innerHTML = '<p class="empty">Анкет скаутеров пока нет</p>';
+                    container.innerHTML = '<p class="empty">Анкет стримерш пока нет</p>';
                     return;
                 }
 
                 container.innerHTML = data.applications.map((application, index) => {
                     let statusBadge = '';
                     let actionButtons = '';
+                    let birthDateLabel = application.age || '-';
+
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(birthDateLabel)) {
+                        const parts = birthDateLabel.split('-');
+                        birthDateLabel = `${parts[2]}.${parts[1]}.${parts[0]}`;
+                    }
                     
                     if (application.status === 'approved') {
                         statusBadge = `<span class="user-badge" style="background: #10b981; color: white;">✓ Одобрено</span>`;
@@ -3190,22 +4045,38 @@
                             <div class="applicant-header" style="align-items: flex-start; justify-content: space-between;">
                                 <div>
                                     <h3 style="margin-bottom: 8px;">
-                                        🕵️ #${index + 1} — ${application.full_name}
-                                        <span class="user-badge admin" style="margin-left: 8px;">${application.age} лет</span>
+                                        🎥 #${index + 1} — ${application.full_name}
+                                        <span class="user-badge admin" style="margin-left: 8px;">${birthDateLabel}</span>
                                     </h3>
                                     <div style="margin-top: 6px;">${statusBadge}</div>
                                 </div>
                             </div>
 
+                            <p><strong>Город:</strong> ${application.city || '-'}</p>
+                            <p><strong>Опыт:</strong> ${application.streaming_experience || '-'}</p>
+                            <p><strong>Email:</strong> ${application.email || '-'}</p>
                             <p><strong>Telegram:</strong> ${application.telegram_username}</p>
-                            <p><strong>Готовность по времени:</strong> ${application.work_time}</p>
+                            <p><strong>Может ли кто-то заменить:</strong> ${application.can_stream_change === 'yes' ? 'Да' : application.can_stream_change === 'no' ? 'Нет' : '-'}</p>
+                            <p><strong>Модель устройства:</strong> ${application.device_model || '-'}</p>
+                            <p><strong>Часы/дни в неделю:</strong> ${application.work_hours_per_week || application.work_time || '-'}</p>
                             <p><strong>Дата отправки:</strong> ${application.date_added}</p>
                             ${application.reviewed_at ? `<p><strong>Рассмотрено:</strong> ${application.reviewed_at}</p>` : ''}
 
-                            <div style="margin-top: 12px; padding: 12px; background: #232335; border: 1px solid #34344a; border-radius: 8px;">
-                                <p style="margin: 0 0 6px 0;"><strong>Ответ на задание:</strong></p>
-                                <p style="margin: 0; white-space: pre-wrap; line-height: 1.5;">${application.persuasion_text}</p>
+                            ${application.photo_url ? `
+                            <div style="margin-top: 12px;">
+                                <p style="margin-bottom: 8px;"><strong>Фото:</strong></p>
+                                <a href="${application.photo_url}" target="_blank" rel="noopener noreferrer" style="display: inline-block; text-decoration: none;">
+                                    <img src="${application.photo_url}" alt="Фото стримерши" style="width: 160px; height: 220px; object-fit: cover; border-radius: 10px; border: 1px solid #34344a;">
+                                </a>
                             </div>
+                            ` : ''}
+
+                            ${(application.motivation || application.persuasion_text) ? `
+                            <div style="margin-top: 12px; padding: 12px; background: #232335; border: 1px solid #34344a; border-radius: 8px;">
+                                <p style="margin: 0 0 6px 0;"><strong>Комментарий:</strong></p>
+                                <p style="margin: 0; white-space: pre-wrap; line-height: 1.5;">${application.motivation || application.persuasion_text}</p>
+                            </div>
+                            ` : ''}
                             
                             ${actionButtons}
                         </div>
@@ -3227,18 +4098,14 @@
                 if (response.ok && data.success) {
                     loadScouters();
                 } else {
-                    alert('✗ Ошибка: ' + (data.message || 'Не удалось одобрить заявку'));
+                    console.error('Не удалось одобрить заявку:', data.message || 'unknown error');
                 }
             } catch (error) {
-                alert('✗ Ошибка: ' + error.message);
+                console.error('Ошибка при одобрении заявки:', error);
             }
         }
 
         async function rejectScout(scoutId) {
-            if (!confirm('Вы уверены что хотите отклонить эту заявку?')) {
-                return;
-            }
-
             try {
                 const response = await fetch(`/api/admin/scout/${scoutId}/reject`, {
                     method: 'POST',
@@ -3249,15 +4116,15 @@
                 if (response.ok && data.success) {
                     loadScouters();
                 } else {
-                    alert('✗ Ошибка: ' + (data.message || 'Не удалось отклонить заявку'));
+                    console.error('Не удалось отклонить заявку:', data.message || 'unknown error');
                 }
             } catch (error) {
-                alert('✗ Ошибка: ' + error.message);
+                console.error('Ошибка при отклонении заявки:', error);
             }
         }
 
         async function clearAllScouters() {
-            if (!confirm('Вы уверены? Это удалит все анкеты скаутеров!!!')) {
+            if (!confirm('Вы уверены? Это удалит все анкеты стримерш!')) {
                 return;
             }
 
@@ -3269,7 +4136,7 @@
 
                 const data = await response.json();
                 if (response.ok && data.success) {
-                    alert('✓ Все анкеты скаутеров удалены');
+                    alert('✓ Все анкеты стримерш удалены');
                     loadScouters();
                 } else {
                     alert('✗ Ошибка: ' + (data.message || 'Не удалось удалить анкеты'));
@@ -3447,7 +4314,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                             <div>
                                 <h2 style="margin: 0; color: #e0e0e0; font-size: 1.8em;">📚 Полный архив анкет</h2>
-                                <p style="margin: 5px 0 0 0; color: #b0b0b0; font-size: 0.95em;">Полная история ВСЕХ анкет (операторов, моделей, чаттеров)</p>
+                                <p style="margin: 5px 0 0 0; color: #b0b0b0; font-size: 0.95em;">Полная история ВСЕХ анкет (операторов, моделей/стримерш, чаттеров)</p>
                             </div>
                             <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                                 <div style="background: #3b82f6; color: white; padding: 12px 20px; border-radius: 10px; font-weight: 600; text-align: center;">
@@ -3455,7 +4322,7 @@
                                     <div style="font-size: 1.5em;">${operatorsCount}</div>
                                 </div>
                                 <div style="background: #ec4899; color: white; padding: 12px 20px; border-radius: 10px; font-weight: 600; text-align: center;">
-                                    <div style="font-size: 0.75em; color: rgba(255,255,255,0.8); margin-bottom: 3px;">👩‍🎬 Модели</div>
+                                    <div style="font-size: 0.75em; color: rgba(255,255,255,0.8); margin-bottom: 3px;">👩‍🎬 Модели/Стримерши</div>
                                     <div style="font-size: 1.5em;">${modelsCount}</div>
                                 </div>
                                 <div style="background: #8b5cf6; color: white; padding: 12px 20px; border-radius: 10px; font-weight: 600; text-align: center;">
@@ -3579,6 +4446,41 @@
                                             </p>
                                         </div>
                                     </div>
+                                ` : app.type === 'scouter' ? `
+                                    <!-- СТРИМЕРША -->
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                                        <div>
+                                            <p style="margin: 0 0 12px 0;"><strong style="color: #10b981;">📱 Контакты</strong></p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Telegram:</span> ${app.telegram_username ? `<code style="background: #2d2d3d; padding: 2px 6px; border-radius: 4px; color: #10b981;">${app.telegram_username}</code>` : '<span style="color: #888; font-style: italic;">Не указан</span>'}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Город:</span> ${app.city || '-'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p style="margin: 0 0 12px 0;"><strong style="color: #10b981;">💻 Информация</strong></p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Возраст:</span> ${app.age || '-'}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Опыт:</span> ${app.streaming_experience || '-'}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Девайс:</span> ${app.device_model || '-'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p style="margin: 0 0 12px 0;"><strong style="color: #10b981;">🕒 Работа</strong></p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Часы/неделя:</span> ${app.work_hours_per_week || '-'}
+                                            </p>
+                                            <p style="margin: 6px 0; color: #e0e0e0;">
+                                                <span style="color: #b0b0b0;">Смена стрима:</span> ${app.can_stream_change || '-'}
+                                            </p>
+                                            ${app.photo_url ? `<p style="margin: 6px 0; color: #e0e0e0;"><span style="color: #b0b0b0;">🖼️ Фото:</span> <a href="${app.photo_url}" target="_blank" style="color: #10b981;">Посмотреть</a></p>` : ''}
+                                        </div>
+                                    </div>
                                 ` : `
                                     <!-- ЧАТТЕР -->
                                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
@@ -3650,6 +4552,8 @@
                 loadScouters();
             } else if (tabName === 'archive') {
                 loadFullArchive();
+            } else if (tabName === 'logs') {
+                loadAdminLogs();
             }
         };
 
@@ -3661,7 +4565,8 @@
             
             if (currentTab && currentTab.id === 'users-tab') {
                 console.log('👥 Загружаю пользователей...');
-                filterAndLoadUsers();
+                // Небольшая задержка чтобы DOM полностью готов
+                setTimeout(() => filterAndLoadUsers(), 100);
             } else if (currentTab && currentTab.id === 'operators-tab') {
                 console.log('👨‍💼 Загружаю операторов...');
                 filterAndLoadOperators();
@@ -3677,10 +4582,87 @@
             } else if (currentTab && currentTab.id === 'archive-tab') {
                 console.log('📦 Загружаю архив...');
                 loadFullArchive();
+            } else if (currentTab && currentTab.id === 'logs-tab') {
+                console.log('📜 Загружаю логи...');
+                loadAdminLogs();
             } else {
                 console.log('⚠️ Неизвестная или нет активной вкладки');
             }
         });
+
+        // ============= ФУНКЦИИ ДЛЯ ГЕНЕРАЦИИ ПАРОЛЯ =============
+        function generatePassword() {
+            const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+            const digits = '0123456789';
+            const special = '!@#$%^&*';
+            
+            let password = '';
+            
+            // Гарантируем, что в пароле есть все типы символов
+            password += uppercase[Math.floor(Math.random() * uppercase.length)];
+            password += lowercase[Math.floor(Math.random() * lowercase.length)];
+            password += digits[Math.floor(Math.random() * digits.length)];
+            password += special[Math.floor(Math.random() * special.length)];
+            
+            // Добавляем остальные символы
+            const allChars = uppercase + lowercase + digits + special;
+            for (let i = 0; i < 8; i++) {
+                password += allChars[Math.floor(Math.random() * allChars.length)];
+            }
+            
+            // Перемешиваем пароль
+            password = password.split('').sort(() => Math.random() - 0.5).join('');
+            
+            // Устанавливаем значение в поле
+            document.getElementById('password').value = password;
+            
+            // Добавляем визуальное подтверждение
+            const passField = document.getElementById('password');
+            passField.style.borderColor = '#00ff00';
+            setTimeout(() => {
+                passField.style.borderColor = '#6366f1';
+            }, 500);
+        }
+        
+        function copyPassword() {
+            const passField = document.getElementById('password');
+            const password = passField.value;
+            
+            if (!password) {
+                alert('⚠️ Сначала сгенерируйте пароль');
+                return;
+            }
+            
+            navigator.clipboard.writeText(password).then(() => {
+                // Визуальное подтверждение копирования
+                const copyBtn = event.target;
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✓';
+                copyBtn.style.background = '#10b981';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = '#4f46e5';
+                }, 1500);
+            }).catch(() => {
+                alert('✗ Не удалось скопировать пароль');
+            });
+        }
+        // =========================================================
+
+        // Просто загружаем пользователей при инициализации
+        (function() {
+            console.log('🎯 [USERS] Прямой вызов загрузки пользователей');
+            if (typeof filterAndLoadUsers === 'function') {
+                setTimeout(() => {
+                    console.log('⏳ [USERS] Вызов filterAndLoadUsers()');
+                    filterAndLoadUsers();
+                }, 300);
+            } else {
+                console.error('❌ [USERS] Функция filterAndLoadUsers не определена!');
+            }
+        })();
     </script>
 </body>
 </html>

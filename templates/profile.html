@@ -4,7 +4,175 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Профиль — LiamKing Agency</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .profile-shell {
+            animation: profileFadeIn 0.45s ease-out;
+        }
+
+        @keyframes profileFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .profile-title h1,
+        .profile-card h2,
+        .profile-bio h3 {
+            letter-spacing: -0.4px;
+        }
+
+        .profile-bio p,
+        .profile-title p,
+        .subtitle {
+            color: #9cb0d3 !important;
+        }
+
+        .profile-avatar {
+            border: 2px solid rgba(0, 102, 255, 0.25);
+            box-shadow: 0 8px 22px rgba(0, 102, 255, 0.3);
+        }
+
+        .stat-card {
+            background: rgba(26, 31, 53, 0.68) !important;
+            border-color: rgba(0, 102, 255, 0.24) !important;
+        }
+
+        .stat-label {
+            color: #8fb6ff !important;
+            letter-spacing: 0.7px;
+        }
+
+        .stat-value {
+            color: #ffffff;
+            text-shadow: 0 0 14px rgba(0, 102, 255, 0.18);
+        }
+
+        .stat-value[style*="#22c55e"] {
+            color: #4ade80 !important;
+            text-shadow: 0 0 14px rgba(74, 222, 128, 0.25);
+        }
+
+        .stat-value[style*="#ef4444"] {
+            color: #fb7185 !important;
+            text-shadow: 0 0 14px rgba(251, 113, 133, 0.25);
+        }
+
+        .stat-value[style*="#f59e0b"] {
+            color: #fbbf24 !important;
+            text-shadow: 0 0 14px rgba(251, 191, 36, 0.25);
+        }
+
+        .profile-form .btn-primary {
+            min-width: 180px;
+        }
+
+        .message {
+            border-radius: 12px;
+        }
+
+        .profile-tabs {
+            display: flex;
+            gap: 10px;
+            margin: 0 0 16px;
+            flex-wrap: wrap;
+        }
+
+        .profile-tab-btn {
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            background: rgba(26, 31, 53, 0.6);
+            color: #c9d4f5;
+            border-radius: 999px;
+            padding: 9px 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .profile-tab-btn.active {
+            background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
+            border-color: rgba(99, 102, 241, 0.95);
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.28);
+        }
+
+        .profile-tab-content {
+            display: none;
+        }
+
+        .profile-tab-content.active {
+            display: block;
+        }
+
+        .my-apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+            margin-top: 10px;
+        }
+
+        .my-app-card {
+            background: rgba(16, 23, 41, 0.9);
+            border: 1px solid rgba(99, 102, 241, 0.24);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .my-app-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .my-app-kind {
+            font-size: 0.8em;
+            color: #b9ccff;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            border-radius: 999px;
+            padding: 3px 9px;
+            font-weight: 700;
+        }
+
+        .my-app-status {
+            font-size: 0.8em;
+            border-radius: 999px;
+            padding: 3px 9px;
+            font-weight: 700;
+        }
+
+        .my-app-status.pending { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .my-app-status.approved { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .my-app-status.rejected { background: rgba(239, 68, 68, 0.2); color: #fb7185; }
+
+        .my-app-meta {
+            display: grid;
+            gap: 5px;
+            color: #dbe6ff;
+            font-size: 0.9em;
+        }
+
+        .my-app-meta span small {
+            color: #94a3b8;
+            margin-right: 6px;
+        }
+
+        .my-app-deleted {
+            margin-top: 9px;
+            color: #fb7185;
+            font-size: 0.84em;
+            font-weight: 700;
+        }
+    </style>
 </head>
 <body class="profile-page">
     <div class="profile-shell">
@@ -66,6 +234,12 @@
             </div>
         </section>
 
+        <div class="profile-tabs">
+            <button class="profile-tab-btn active" type="button" data-tab="overview" onclick="switchProfileTab('overview')">Обзор</button>
+            <button class="profile-tab-btn" type="button" data-tab="applications" onclick="switchProfileTab('applications')">Мои анкеты</button>
+        </div>
+
+        <div id="profile-tab-overview" class="profile-tab-content active">
         <section class="profile-grid">
             <div class="profile-card">
                 <h2>Статистика</h2>
@@ -217,6 +391,38 @@
                 {% endif %}
             </div>
         </section>
+        </div>
+
+        <div id="profile-tab-applications" class="profile-tab-content">
+            <section class="profile-card">
+                <h2>Мои анкеты</h2>
+                {% if my_applications and my_applications|length > 0 %}
+                    <p class="subtitle" style="margin-bottom: 8px;">Полный список анкет пользователя {{ current_user.username }}: {{ my_applications|length }}</p>
+                    <div class="my-apps-grid">
+                        {% for app in my_applications %}
+                            <article class="my-app-card">
+                                <div class="my-app-head">
+                                    <span class="my-app-kind">{{ app.kind_label }}</span>
+                                    <span class="my-app-status {{ app.status }}">{{ app.status }}</span>
+                                </div>
+                                <div class="my-app-meta">
+                                    <span><small>ID:</small>#{{ app.id }}</span>
+                                    <span><small>Имя:</small>{{ app.full_name if app.full_name else '—' }}</span>
+                                    <span><small>Контакт:</small>{{ app.contact if app.contact else '—' }}</span>
+                                    <span><small>Команда:</small>{{ app.team if app.team else 'Без команды' }}</span>
+                                    <span><small>Дата:</small>{{ app.date_added.strftime('%d.%m.%Y %H:%M') if app.date_added else '—' }}</span>
+                                </div>
+                                {% if app.is_deleted %}
+                                    <div class="my-app-deleted">В архиве (мягко удалена)</div>
+                                {% endif %}
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="subtitle">Анкеты этого пользователя пока отсутствуют.</p>
+                {% endif %}
+            </section>
+        </div>
     </div>
 
     <script>
@@ -224,6 +430,21 @@
             const nav = document.getElementById('topNav');
             if (nav) {
                 nav.classList.toggle('open');
+            }
+        }
+
+        function switchProfileTab(tabName) {
+            document.querySelectorAll('.profile-tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.profile-tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            const targetTab = document.getElementById(`profile-tab-${tabName}`);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+
+            const targetBtn = document.querySelector(`.profile-tab-btn[data-tab="${tabName}"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('active');
             }
         }
     </script>
