@@ -681,7 +681,7 @@
                         <a href="{{ url_for('dashboard') }}" class="nav-link active">Анкеты</a>
                         <a href="{{ url_for('manual') }}" class="nav-link">Мануал</a>
                         <a href="{{ url_for('profile') }}" class="nav-link">Профиль</a>
-                        {% if current_user.is_admin %}
+                        {% if current_user.is_admin or (current_user.prefix and current_user.prefix|lower == 'moderator') %}
                             <a href="{{ url_for('admin_panel') }}" class="nav-link">Админка</a>
                         {% endif %}
                         <a href="{{ url_for('logout') }}" class="nav-link danger">Выйти</a>

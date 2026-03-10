@@ -69,7 +69,7 @@ def generate_strong_password(length=12):
     return ''.join(password)
 
 # ============= MAINTENANCE MODE =============
-MAINTENANCE_MODE = True  # Установите False, чтобы открыть сайт
+MAINTENANCE_MODE = False  # Установите False, чтобы открыть сайт
 DEV_PASSWORD = "vrAynluktEww"  # Пароль для входа разработчика во время техработ
 # ============================================
 
@@ -1996,11 +1996,8 @@ def get_chatters():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
     
-    # Модератор видит только анкеты своей команды
-    if is_moderator_user(user):
-        chatters = ChatApplication.query.filter(ChatApplication.is_deleted != True, ChatApplication.team == user.team).order_by(ChatApplication.date_added.desc()).all()
     # Owner и Developer видят все анкеты (кроме удаленных)
-    elif user.is_owner or (user.prefix and user.prefix == 'Developer'):
+    if user.is_owner or (user.prefix and user.prefix == 'Developer'):
         chatters = ChatApplication.query.filter(ChatApplication.is_deleted != True).order_by(ChatApplication.date_added.desc()).all()
     # Обычные админы видят только анкеты своей команды (кроме удаленных)
     elif user.is_admin and user.team:
@@ -2386,16 +2383,17 @@ def admin_get_scouters():
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
+    
+    # Модератор НЕ может видеть стримерш
+    if is_moderator_user(user):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+    
     if not can_access_admin_panel(user):
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
     try:
-        # Модератор видит только анкеты своей команды
-        if is_moderator_user(user):
-            applications = ScoutJoinApplication.query.filter_by(team=user.team).order_by(ScoutJoinApplication.date_added.desc()).all()
         # Администраторы видят все анкеты
-        else:
-            applications = ScoutJoinApplication.query.order_by(ScoutJoinApplication.date_added.desc()).all()
+        applications = ScoutJoinApplication.query.order_by(ScoutJoinApplication.date_added.desc()).all()
         return jsonify({
             'success': True,
             'count': len(applications),
@@ -2734,11 +2732,11 @@ def profile():
 @app.route('/admin/user/<int:user_id>', methods=['GET', 'POST'])
 @app.route('/admin/user/<int:user_id>/profile', methods=['GET', 'POST'])
 def admin_view_user_profile(user_id):
-    """Просмотр профиля пользователя админом"""
+    """Просмотр профиля пользователя админом или модератором"""
     if 'user_id' not in session:
         return redirect(url_for('login'))
     admin = User.query.get(session['user_id'])
-    if not admin or not admin.is_admin:
+    if not can_access_admin_panel(admin):
         return redirect(url_for('dashboard'))
     
     user = User.query.get_or_404(user_id)

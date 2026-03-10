@@ -1819,7 +1819,9 @@
             <button class="tab-btn {% if current_tab == 'operators' %}active{% endif %}" onclick="switchTab('operators')">👨‍💼 Операторы</button>
             <button class="tab-btn {% if current_tab == 'models' %}active{% endif %}" onclick="switchTab('models')">👩‍🎬 Модели</button>
             <button class="tab-btn {% if current_tab == 'chatters' %}active{% endif %}" onclick="switchTab('chatters')">💬 Чаттеры</button>
+            {% if not ((current_user.prefix or '')|lower == 'moderator') %}
             <button class="tab-btn {% if current_tab == 'scouters' %}active{% endif %}" onclick="switchTab('scouters')">🎥 Стримерши</button>
+            {% endif %}
             {% if not ((current_user.prefix or '')|lower == 'moderator') %}
             <button class="tab-btn {% if current_tab == 'interviews' %}active{% endif %}" onclick="switchTab('interviews')">🗓️ Открытые собеседования</button>
             <button class="tab-btn {% if current_tab == 'archive' %}active{% endif %}" onclick="switchTab('archive')">📚 Полный архив</button>
@@ -3481,11 +3483,35 @@
 
         function copyPassword() {
             const passwordText = document.getElementById('passwordDisplay').textContent;
-            navigator.clipboard.writeText(passwordText).then(() => {
+            
+            // Пробуем использовать современный API
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(passwordText).then(() => {
+                    alert('✅ Пароль скопирован в буфер обмена!');
+                }).catch(() => {
+                    // Fallback на старый метод
+                    copyPasswordFallback(passwordText);
+                });
+            } else {
+                // Fallback для локального сервера
+                copyPasswordFallback(passwordText);
+            }
+        }
+        
+        function copyPasswordFallback(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
                 alert('✅ Пароль скопирован в буфер обмена!');
-            }).catch(() => {
-                alert('Ошибка при копировании');
-            });
+            } catch (err) {
+                alert('✗ Не удалось скопировать пароль. Пожалуйста, скопируйте вручную.');
+            }
+            document.body.removeChild(textarea);
         }
 
         // Закрыть модал при клике вне его
@@ -4216,14 +4242,13 @@
                 container.innerHTML = filtered.map((u, idx) => {
                     let badge = '';
                     if (u.prefix) {
-                        // Разные цвета для разных ролей
+                        let prefixContent = `✨ ${u.prefix}`;
                         let prefixStyle = '';
                         if ((u.prefix || '').toLowerCase() === 'moderator') {
-                            prefixStyle = 'background: linear-gradient(135deg, #00bfff 0%, #0080ff 100%);';
-                        } else if ((u.prefix || '').toLowerCase() === 'developer') {
-                            prefixStyle = 'background: linear-gradient(135deg, #10b981 0%, #059669 100%);';
+                            prefixContent = `🛡️ ${u.prefix}`;
+                            prefixStyle = 'background: rgba(0, 191, 255, 0.2); color: #00bfff; border: 1px solid #00bfff;';
                         }
-                        badge = `<span class="user-badge admin" style="${prefixStyle}">✨ ${u.prefix}</span>`;
+                        badge = `<span class="user-badge admin" style="${prefixStyle}">${prefixContent}</span>`;
                     } else if (u.is_owner) {
                         badge = `<span class="user-badge admin" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">💎 Владелец</span>`;
                     } else if (u.is_admin) {
@@ -4656,20 +4681,50 @@
                 return;
             }
             
-            navigator.clipboard.writeText(password).then(() => {
-                // Визуальное подтверждение копирования
-                const copyBtn = event.target;
-                const originalText = copyBtn.textContent;
-                copyBtn.textContent = '✓';
-                copyBtn.style.background = '#10b981';
+            // Пробуем использовать современный API
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(password).then(() => {
+                    // Визуальное подтверждение копирования
+                    const copyBtn = event.target;
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = '✓';
+                    copyBtn.style.background = '#10b981';
+                    
+                    setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                        copyBtn.style.background = '#4f46e5';
+                    }, 1500);
+                }).catch(() => {
+                    // Fallback на старый метод
+                    copyPasswordFallbackBtn(password, event.target);
+                });
+            } else {
+                // Fallback для локального сервера
+                copyPasswordFallbackBtn(password, event.target);
+            }
+        }
+        
+        function copyPasswordFallbackBtn(password, btn) {
+            const textarea = document.createElement('textarea');
+            textarea.value = password;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                const originalText = btn.textContent;
+                btn.textContent = '✓';
+                btn.style.background = '#10b981';
                 
                 setTimeout(() => {
-                    copyBtn.textContent = originalText;
-                    copyBtn.style.background = '#4f46e5';
+                    btn.textContent = originalText;
+                    btn.style.background = '#4f46e5';
                 }, 1500);
-            }).catch(() => {
-                alert('✗ Не удалось скопировать пароль');
-            });
+            } catch (err) {
+                alert('✗ Не удалось скопировать пароль. Пожалуйста, скопируйте вручную.');
+            }
+            document.body.removeChild(textarea);
         }
 
         const adminRoleCheckbox = document.getElementById('is_admin');
