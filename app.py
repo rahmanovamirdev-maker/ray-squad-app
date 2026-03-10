@@ -2800,8 +2800,19 @@ def admin_panel():
     user = User.query.get(session['user_id'])
     if not can_access_admin_panel(user):
         return redirect(url_for('dashboard'))
-    users = User.query.order_by(User.created_at.desc()).all() if has_full_admin_access(user) else []
-    default_tab = 'users' if has_full_admin_access(user) else 'operators'
+    
+    # Модератор видит только пользователей своей команды
+    if is_moderator_user(user):
+        users = User.query.filter_by(team=user.team).order_by(User.created_at.desc()).all()
+        default_tab = 'operators'
+    # Полный админ видит всех пользователей
+    elif has_full_admin_access(user):
+        users = User.query.order_by(User.created_at.desc()).all()
+        default_tab = 'users'
+    else:
+        users = []
+        default_tab = 'operators'
+    
     return render_template('admin.html', users=users, current_user=user, current_tab=default_tab)
 
 
