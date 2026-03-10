@@ -4216,7 +4216,14 @@
                 container.innerHTML = filtered.map((u, idx) => {
                     let badge = '';
                     if (u.prefix) {
-                        badge = `<span class="user-badge admin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">✨ ${u.prefix}</span>`;
+                        // Разные цвета для разных ролей
+                        let prefixStyle = '';
+                        if ((u.prefix || '').toLowerCase() === 'moderator') {
+                            prefixStyle = 'background: linear-gradient(135deg, #00bfff 0%, #0080ff 100%);';
+                        } else if ((u.prefix || '').toLowerCase() === 'developer') {
+                            prefixStyle = 'background: linear-gradient(135deg, #10b981 0%, #059669 100%);';
+                        }
+                        badge = `<span class="user-badge admin" style="${prefixStyle}">✨ ${u.prefix}</span>`;
                     } else if (u.is_owner) {
                         badge = `<span class="user-badge admin" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">💎 Владелец</span>`;
                     } else if (u.is_admin) {
@@ -4245,6 +4252,7 @@
                                 </div>
                             </div>
                             <p>Создан: ${u.created_at || '-'}</p>
+                            ${u.team ? `<p>🎯 Команда: ${u.team}</p>` : '<p style="color: #8a92a6;">🎯 Команда: без команды</p>'}
                             ${u.last_login_at ? `<p>Последний вход: ${u.last_login_at}</p>` : ''}
                         </div>
                     `;
