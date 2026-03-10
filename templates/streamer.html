@@ -923,6 +923,8 @@
             border: 1px dashed rgba(102, 126, 234, 0.45);
             background: linear-gradient(135deg, rgba(42, 42, 58, 0.96), rgba(36, 36, 52, 0.96));
             cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.25s ease;
         }
 
         .scout-field input[type="file"]:hover {
@@ -931,21 +933,24 @@
         }
 
         .scout-field input[type="file"]::file-selector-button {
-            border: 1px solid rgba(0, 102, 255, 0.45);
-            background: linear-gradient(135deg, rgba(0, 102, 255, 0.28), rgba(0, 71, 179, 0.28));
-            color: #eaf2ff;
-            padding: 10px 16px;
-            margin-right: 12px;
-            border-radius: 10px;
-            font-weight: 700;
+            border: 1px solid rgba(0, 191, 255, 0.45);
+            background: linear-gradient(135deg, rgba(0, 102, 255, 0.45), rgba(0, 71, 179, 0.52));
+            color: #f3f7ff;
+            padding: 10px 18px;
+            margin-right: 14px;
+            border-radius: 12px;
+            font-weight: 800;
+            letter-spacing: 0.2px;
             cursor: pointer;
             transition: all 0.25s ease;
+            box-shadow: 0 6px 18px rgba(0, 102, 255, 0.22);
         }
 
         .scout-field input[type="file"]::file-selector-button:hover {
             border-color: rgba(0, 191, 255, 0.9);
-            background: linear-gradient(135deg, rgba(0, 102, 255, 0.42), rgba(0, 71, 179, 0.42));
-            transform: translateY(-1px);
+            background: linear-gradient(135deg, rgba(0, 102, 255, 0.62), rgba(0, 71, 179, 0.66));
+            transform: translateY(-1px) scale(1.01);
+            box-shadow: 0 10px 24px rgba(0, 102, 255, 0.32);
         }
 
         /* Стилизованные радио-кнопки */
@@ -1033,12 +1038,54 @@
         .scout-actions .btn-primary,
         .scout-actions .btn-secondary {
             width: 100%;
-            height: 44px;
-            padding: 0 20px !important;
-            border-radius: 14px;
+            height: 52px;
+            padding: 0 22px !important;
+            border-radius: 16px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            transition: all 0.28s ease;
+        }
+
+        .scout-actions .btn-secondary {
+            border: 1px solid rgba(0, 140, 255, 0.45);
+            background: linear-gradient(135deg, rgba(12, 22, 46, 0.9), rgba(17, 28, 56, 0.9));
+            color: #e6eeff;
+            box-shadow: inset 0 0 0 1px rgba(0, 191, 255, 0.12);
+        }
+
+        .scout-actions .btn-secondary:hover {
+            border-color: rgba(0, 191, 255, 0.8);
+            background: linear-gradient(135deg, rgba(20, 34, 68, 0.95), rgba(25, 40, 78, 0.95));
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(0, 102, 255, 0.2);
+        }
+
+        .scout-actions .btn-primary {
+            border: 1px solid rgba(0, 191, 255, 0.45);
+            background: linear-gradient(135deg, #2f64ff 0%, #1f49cf 60%, #153ba8 100%);
+            box-shadow: 0 12px 28px rgba(0, 102, 255, 0.34);
+        }
+
+        .scout-actions .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(0, 102, 255, 0.42);
+        }
+
+        .scout-actions .btn-primary:active,
+        .scout-actions .btn-secondary:active {
+            transform: translateY(0);
+        }
+
+        #scoutSubmitBtn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+            background: linear-gradient(135deg, #3e4d7c 0%, #32416b 100%);
+            border-color: rgba(138, 146, 166, 0.35);
+            box-shadow: none;
         }
 
         .scout-status {
