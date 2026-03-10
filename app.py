@@ -69,8 +69,17 @@ def generate_strong_password(length=12):
     return ''.join(password)
 
 # ============= MAINTENANCE MODE =============
-MAINTENANCE_MODE = True  # Установите False, чтобы открыть сайт
 DEV_PASSWORD = "vrAynluktEww"  # Пароль для входа разработчика во время техработ
+MAINT_API_KEY = os.environ.get('MAINT_API_KEY', 'maintenance_secret_key_change_me')
+
+def is_maintenance():
+    """Проверяет флаг техработы из файла"""
+    try:
+        with open('maintenance.flag', 'r') as f:
+            return f.read().strip().lower() == 'on'
+    except FileNotFoundError:
+        return False
+
 # ============================================
 
 db = SQLAlchemy(app)
@@ -79,8 +88,8 @@ db = SQLAlchemy(app)
 @app.before_request
 def check_maintenance():
     # Проверяем, есть ли у пользователя сессия разработчика
-    allowed_endpoints = {'dev_login', 'dev_logout', 'static'}
-    if MAINTENANCE_MODE and 'dev_session' not in session and request.endpoint not in allowed_endpoints:
+    allowed_endpoints = {'dev_login', 'dev_logout', 'static', 'toggle_maintenance'}
+    if is_maintenance() and 'dev_session' not in session and request.endpoint not in allowed_endpoints:
         return '''
         <!DOCTYPE html>
         <html lang="ru">
@@ -432,6 +441,28 @@ def dev_login():
 def dev_logout():
     session.pop('dev_session', None)
     return redirect(url_for('index'))
+
+@app.route('/api/maintenance/<action>', methods=['POST'])
+def toggle_maintenance(action):
+    """API для включения/выключения техработ"""
+    api_key = request.headers.get('X-Maintenance-Key')
+    if api_key != MAINT_API_KEY:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    
+    try:
+        if action == 'on':
+            with open('maintenance.flag', 'w') as f:
+                f.write('on')
+            return jsonify({'success': True, 'message': 'Техработы ВКЛЮЧЕНЫ ✅', 'status': 'maintenance_on'})
+        elif action == 'off':
+            with open('maintenance.flag', 'w') as f:
+                f.write('off')
+            return jsonify({'success': True, 'message': 'Техработы ВЫКЛЮЧЕНЫ ✅', 'status': 'maintenance_off'})
+        else:
+            return jsonify({'success': False, 'message': 'Invalid action'}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 # ===========================================
 
 async def send_telegram_notification(telegram_username, status):
