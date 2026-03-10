@@ -70,7 +70,7 @@ def generate_strong_password(length=12):
 
 # ============= MAINTENANCE MODE =============
 DEV_PASSWORD = "vrAynluktEww"  # Пароль для входа разработчика во время техработ
-MAINT_API_KEY = os.environ.get('MAINT_API_KEY', 'maintenance_secret_key_change_me')
+MAINT_API_KEY = os.environ.get('MAINT_API_KEY', '4H-o8Y52zdmUOhwxyysPwjlDJAHrwnjWqa-d27NsOCE')
 
 def is_maintenance():
     """Проверяет флаг техработы из файла"""
