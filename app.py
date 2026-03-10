@@ -79,7 +79,8 @@ db = SQLAlchemy(app)
 @app.before_request
 def check_maintenance():
     # Проверяем, есть ли у пользователя сессия разработчика
-    if MAINTENANCE_MODE and 'dev_session' not in session:
+    allowed_endpoints = {'dev_login', 'dev_logout', 'static'}
+    if MAINTENANCE_MODE and 'dev_session' not in session and request.endpoint not in allowed_endpoints:
         return '''
         <!DOCTYPE html>
         <html lang="ru">
