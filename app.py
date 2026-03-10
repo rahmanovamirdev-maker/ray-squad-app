@@ -69,7 +69,7 @@ def generate_strong_password(length=12):
     return ''.join(password)
 
 # ============= MAINTENANCE MODE =============
-MAINTENANCE_MODE = False  # Установите False, чтобы открыть сайт
+MAINTENANCE_MODE = True  # Установите False, чтобы открыть сайт
 DEV_PASSWORD = "vrAynluktEww"  # Пароль для входа разработчика во время техработ
 # ============================================
 
