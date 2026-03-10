@@ -1829,6 +1829,12 @@
             {% if current_user and (current_user.prefix or '')|lower == 'developer' %}
             <button class="tab-btn {% if current_tab == 'logs' %}active{% endif %}" onclick="switchTab('logs')">📜 Логи</button>
             {% endif %}
+            {% if current_user and (current_user.prefix or '')|lower == 'developer' %}
+            <div style="margin-left: auto; display: flex; gap: 10px;">
+                <button class="tab-btn" onclick="toggleMaintenanceBtn('on')" style="background: #dc3545; border-color: #dc3545; color: white;">🔴 Техработы ON</button>
+                <button class="tab-btn" onclick="toggleMaintenanceBtn('off')" style="background: #28a745; border-color: #28a745; color: white;">🟢 Техработы OFF</button>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Вкладка: Управление пользователями -->
@@ -4744,6 +4750,44 @@
             });
         }
         // =========================================================
+
+        // Управление техработами
+        function toggleMaintenanceBtn(action) {
+            const apiKey = prompt(`Введи API ключ для ${action === 'on' ? 'ВКЛЮЧЕНИЯ' : 'ВЫКЛЮЧЕНИЯ'} техработ:`);
+            if (!apiKey) {
+                alert('❌ Отменено');
+                return;
+            }
+
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '⏳ Загружаю...';
+
+            fetch(`/api/maintenance/${action}`, {
+                method: 'POST',
+                headers: {
+                    'X-Maintenance-Key': apiKey
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    console.log('✅ Результат:', data);
+                } else {
+                    alert('❌ Ошибка: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('❌ Ошибка сети: ' + error);
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
+        }
 
         // Просто загружаем пользователей при инициализации
         (function() {
