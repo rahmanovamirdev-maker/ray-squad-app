@@ -1247,6 +1247,11 @@
             box-shadow: 0 4px 15px rgba(107, 114, 128, 0.6);
         }
 
+        .calendar-day.selected-day {
+            box-shadow: 0 0 0 2px #6366f1, 0 0 12px rgba(99, 102, 241, 0.6);
+            transform: scale(1.08);
+        }
+
         .calendar-legend {
             display: flex;
             gap: 15px;
@@ -2982,24 +2987,28 @@
 
         // Выбрать день в админском календаре
         // Хранилище выбранных часов
-        let adminSelectedHours = {};
-        let adminCurrentSelectedDate = null;
+        let adminSelectedHours = {
+            operator: {},
+            model: {}
+        };
+        let adminCurrentSelectedDate = {
+            operator: null,
+            model: null
+        };
 
         async function adminSelectDay(day, year, month) {
             console.log(`🟡 Выбран день: ${day}.${month}.${year}`);
             const isoDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            adminCurrentSelectedDate = isoDate;
+            adminCurrentSelectedDate[adminCurrentSlotType] = isoDate;
             console.log(`📝 ISO Date: ${isoDate}`);
             
             // Подсвечиваем день в календаре
             const dayCells = document.querySelectorAll(`#${getAdminCalendarGridId()} .calendar-day`);
             dayCells.forEach(cell => {
                 if (cell.textContent === String(day)) {
-                    cell.style.boxShadow = '0 0 10px rgba(99, 102, 241, 0.6)';
-                    cell.style.transform = 'scale(1.1)';
+                    cell.classList.add('selected-day');
                 } else {
-                    cell.style.boxShadow = 'none';
-                    cell.style.transform = 'scale(1)';
+                    cell.classList.remove('selected-day');
                 }
             });
             
@@ -3032,20 +3041,20 @@
                 
                 // Инициализируем статусы часов для этого дня
                 // Status: 'free' (серый), 'selected' (зеленый - открыт для бронирования), 'booked' (красный - занят)
-                adminSelectedHours[isoDate] = {};
+                adminSelectedHours[adminCurrentSlotType][isoDate] = {};
                 
                 // Сначала все часы - свободные (серые)
                 for (let h = 12; h <= 18; h++) {
-                    adminSelectedHours[isoDate][h] = 'free';
+                    adminSelectedHours[adminCurrentSlotType][isoDate][h] = 'free';
                 }
                 
                 // Потом обновляем в зависимости от слотов
                 slotsForDay.forEach(slot => {
                     const hour = parseInt(slot.start_time.split(' ')[1].split(':')[0]);
                     if (slot.is_open) {
-                        adminSelectedHours[isoDate][hour] = 'selected'; // Зеленый - выбран админом
+                        adminSelectedHours[adminCurrentSlotType][isoDate][hour] = 'selected'; // Зеленый - выбран админом
                     } else {
-                        adminSelectedHours[isoDate][hour] = 'booked';   // Красный - забронирован
+                        adminSelectedHours[adminCurrentSlotType][isoDate][hour] = 'booked';   // Красный - забронирован
                     }
                 });
                 
@@ -3054,7 +3063,7 @@
                 let hoursHTML = '';
                 
                 for (let hour = 12; hour <= 18; hour++) {
-                    const status = adminSelectedHours[isoDate][hour];
+                    const status = adminSelectedHours[adminCurrentSlotType][isoDate][hour];
                     const timeStr = String(hour).padStart(2, '0') + ':00';
                     
                     let bgColor, opacity, cursor;
@@ -3108,11 +3117,17 @@
         }
 
         function adminToggleHour(hour, date) {
-            if (!adminSelectedHours[date]) {
-                adminSelectedHours[date] = {};
+            const slotType = adminCurrentSlotType;
+
+            if (!adminSelectedHours[slotType]) {
+                adminSelectedHours[slotType] = {};
+            }
+
+            if (!adminSelectedHours[slotType][date]) {
+                adminSelectedHours[slotType][date] = {};
             }
             
-            const currentStatus = adminSelectedHours[date][hour];
+            const currentStatus = adminSelectedHours[slotType][date][hour];
             
             // Не можем переключать занятые часы (booked)
             if (currentStatus === 'booked') {
@@ -3121,12 +3136,13 @@
             }
             
             // Переключаем между 'free' и 'selected'
-            adminSelectedHours[date][hour] = currentStatus === 'selected' ? 'free' : 'selected';
+            adminSelectedHours[slotType][date][hour] = currentStatus === 'selected' ? 'free' : 'selected';
             
-            // Обновляем визуально кнопку
-            const btn = document.querySelector(`.admin-hour-btn[data-hour="${hour}"]`);
+            // Обновляем визуально кнопку только в текущей панели времени
+            const timesPanel = document.getElementById(getAdminTimesPanelId());
+            const btn = timesPanel ? timesPanel.querySelector(`.admin-hour-btn[data-hour="${hour}"]`) : null;
             if (btn) {
-                const newStatus = adminSelectedHours[date][hour];
+                const newStatus = adminSelectedHours[slotType][date][hour];
                 let bgColor, opacity;
                 
                 if (newStatus === 'selected') {
@@ -3143,14 +3159,16 @@
         }
 
         async function adminSaveHours() {
-            const date = adminCurrentSelectedDate;
-            if (!date || !adminSelectedHours[date]) {
+            const slotType = adminCurrentSlotType;
+            const date = adminCurrentSelectedDate[slotType];
+
+            if (!date || !adminSelectedHours[slotType] || !adminSelectedHours[slotType][date]) {
                 alert('Выберите день');
                 return;
             }
             
-            const hours = Object.keys(adminSelectedHours[date])
-                .filter(hour => adminSelectedHours[date][hour] === 'selected')
+            const hours = Object.keys(adminSelectedHours[slotType][date])
+                .filter(hour => adminSelectedHours[slotType][date][hour] === 'selected')
                 .map(hour => parseInt(hour));
             
             if (hours.length === 0) {
@@ -3169,14 +3187,16 @@
                     body: JSON.stringify({
                         date: date,
                         hours: hours,
-                        slot_type: adminCurrentSlotType  // 🔹 КРИТИЧНО: передаём тип слота!
+                        slot_type: slotType
                     })
                 });
                 
                 const data = await response.json();
                 if (data.success) {
                     alert('✅ Часы сохранены!');
-                    loadAdminCalendar();
+                    await loadInterviewSlotsAdmin();
+                    const [year, month, day] = date.split('-').map(Number);
+                    await adminSelectDay(day, year, month);
                 } else {
                     alert('❌ Ошибка: ' + (data.message || 'Неизвестная ошибка'));
                 }
