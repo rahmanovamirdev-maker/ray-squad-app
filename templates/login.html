@@ -316,5 +316,82 @@
             </a>
         </div>
     </div>
+
+    <script>
+        (function () {
+            const ATTEMPTS_KEY = 'login_failed_attempts';
+            const errorMessages = document.querySelectorAll('.message.error');
+
+            function playFallbackBeep() {
+                try {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioCtx) {
+                        return;
+                    }
+
+                    const ctx = new AudioCtx();
+                    const now = ctx.currentTime;
+                    const gain = ctx.createGain();
+                    gain.connect(ctx.destination);
+                    gain.gain.setValueAtTime(0.0001, now);
+
+                    // Двойной короткий сигнал как предупреждение.
+                    const frequencies = [880, 660];
+                    frequencies.forEach((freq, index) => {
+                        const start = now + (index * 0.18);
+                        const osc = ctx.createOscillator();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, start);
+                        osc.connect(gain);
+
+                        gain.gain.setValueAtTime(0.0001, start);
+                        gain.gain.exponentialRampToValueAtTime(0.18, start + 0.01);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.12);
+
+                        osc.start(start);
+                        osc.stop(start + 0.13);
+                    });
+
+                    setTimeout(() => {
+                        try {
+                            ctx.close();
+                        } catch (e) {
+                            // Ignore close errors.
+                        }
+                    }, 500);
+                } catch (e) {
+                    // Ignore audio errors (browser policy/device limitations).
+                }
+            }
+
+            function playWarningSound() {
+                try {
+                    const customAudio = new Audio('/static/lizkizidi.mp3');
+                    customAudio.volume = 0.9;
+                    customAudio.play().catch(() => {
+                        playFallbackBeep();
+                    });
+                } catch (e) {
+                    playFallbackBeep();
+                }
+            }
+
+            let attempts = parseInt(sessionStorage.getItem(ATTEMPTS_KEY) || '0', 10);
+            if (Number.isNaN(attempts)) {
+                attempts = 0;
+            }
+
+            if (errorMessages.length > 0) {
+                attempts += 1;
+                sessionStorage.setItem(ATTEMPTS_KEY, String(attempts));
+
+                if (attempts >= 2) {
+                    playWarningSound();
+                }
+            } else {
+                sessionStorage.removeItem(ATTEMPTS_KEY);
+            }
+        })();
+    </script>
 </body>
 </html>
