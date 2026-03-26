@@ -101,6 +101,316 @@
             display: block;
         }
 
+        .team-stats-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .team-stats-nav {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .team-nav-btn {
+            border: 1px solid #3d3d4d;
+            background: #232335;
+            color: #d1d5db;
+            border-radius: 10px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .team-nav-btn:hover {
+            border-color: #6366f1;
+            color: #eef2ff;
+        }
+
+        .team-nav-btn.active {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            border-color: #6366f1;
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.32);
+        }
+
+        .team-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .team-charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .team-chart-card {
+            background: #151521;
+            border: 1px solid #2d2d3d;
+            border-radius: 12px;
+            padding: 14px;
+            overflow: hidden;
+        }
+
+        .team-chart-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .team-chart-card h3 {
+            margin: 0;
+            font-size: 1.02em;
+            color: #e2e8f0;
+        }
+
+        .team-chart-subtitle {
+            color: #94a3b8;
+            font-size: 0.82em;
+        }
+
+        .team-chart-legend {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            color: #aeb6c5;
+            font-size: 0.82em;
+        }
+
+        .team-chart-legend span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+                    .dot.total { background: #f8fafc; }
+                    .dot.models { background: #60a5fa; }
+                    .dot.operators { background: #f97316; }
+
+                    .team-chart-svg-wrap {
+                        position: relative;
+                        margin-top: 10px;
+                        border-radius: 12px;
+                        border: 1px solid #25253a;
+                        background: linear-gradient(180deg, rgba(26, 26, 42, 0.95) 0%, rgba(18, 18, 30, 0.95) 100%);
+                        padding: 10px 10px 12px;
+                    }
+
+                    .team-chart-svg {
+                        width: 100%;
+                        height: auto;
+                        display: block;
+                    }
+
+                    .team-chart-y-label {
+                        fill: #70809b;
+                        font-size: 11px;
+                    }
+
+                    .team-chart-grid-line {
+                        stroke: rgba(100, 116, 139, 0.22);
+                        stroke-width: 1;
+                    }
+
+                    .team-chart-selected-band {
+                        fill: rgba(99, 102, 241, 0.08);
+                    }
+
+                    .team-chart-line.total {
+                        stroke: #f8fafc;
+                    }
+
+                    .team-chart-line.approved {
+                        stroke: #10b981;
+                    }
+
+                    .team-chart-line.rejected {
+                        stroke: #ef4444;
+                    }
+
+                    .team-chart-line.pending {
+                        stroke: #f59e0b;
+                    }
+
+                    .team-chart-line.models {
+                        stroke: #60a5fa;
+                    }
+
+                    .team-chart-line.operators {
+                        stroke: #f97316;
+                    }
+
+                    .team-chart-line {
+                        fill: none;
+                        stroke-width: 3;
+                        stroke-linecap: round;
+                        stroke-linejoin: round;
+                    }
+
+                    .team-chart-point.total {
+                        fill: #f8fafc;
+                    }
+
+                    .team-chart-point.approved {
+                        fill: #10b981;
+                    }
+
+                    .team-chart-point.rejected {
+                        fill: #ef4444;
+                    }
+
+                    .team-chart-point.pending {
+                        fill: #f59e0b;
+                    }
+
+                    .team-chart-point.models {
+                        fill: #60a5fa;
+                    }
+
+                    .team-chart-point.operators {
+                        fill: #f97316;
+                    }
+
+                    .team-chart-point {
+                        stroke: #0f172a;
+                        stroke-width: 2;
+                    }
+
+                    .team-chart-point.is-selected {
+                        stroke: #ffffff;
+                        stroke-width: 3;
+                    }
+
+                    .team-chart-x-labels {
+                        display: grid;
+                        gap: 6px;
+                        margin-top: 10px;
+                        font-size: 0.8em;
+                    }
+
+                    .team-chart-x-label {
+                        color: #8fa0bf;
+                        text-align: center;
+                        line-height: 1.2;
+                        word-break: break-word;
+                    }
+
+                    .team-chart-x-label.selected {
+                        color: #ffffff;
+                        font-weight: 700;
+                    }
+
+                    .team-chart-focus {
+                        margin-top: 10px;
+                        color: #cad3e5;
+                        font-size: 0.83em;
+                    }
+
+                    .team-summary-strip {
+                        grid-column: 1 / -1;
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 10px;
+                        align-items: center;
+                        background: linear-gradient(135deg, rgba(23, 23, 37, 0.96) 0%, rgba(18, 26, 45, 0.96) 100%);
+                        border: 1px solid #2d3550;
+                        border-radius: 12px;
+                        padding: 14px;
+                    }
+
+                    .team-summary-title {
+                        color: #eef2ff;
+                        font-size: 1.08em;
+                        font-weight: 700;
+                        margin-right: auto;
+                    }
+
+                    .team-summary-badge {
+                        min-width: 110px;
+                        background: rgba(37, 44, 65, 0.9);
+                        border: 1px solid #334155;
+                        border-radius: 10px;
+                        padding: 10px 12px;
+                    }
+
+                    .team-summary-badge .label {
+                        color: #8ea0c0;
+                        font-size: 0.78em;
+                        margin-bottom: 4px;
+                    }
+
+                    .team-summary-badge .value {
+                        color: #f8fafc;
+                        font-size: 1.1em;
+                        font-weight: 700;
+                    }
+
+                    .team-stats-note {
+                        color: #8fa0bf;
+                        font-size: 0.82em;
+                        margin-top: 8px;
+                    }
+
+                    @media (max-width: 640px) {
+                        .team-chart-head {
+                            flex-direction: column;
+                        }
+
+                        .team-summary-badge {
+                            flex: 1 1 calc(50% - 10px);
+                            min-width: 0;
+                        }
+                    }
+
+        .team-stats-card {
+            background: #151521;
+            border: 1px solid #2d2d3d;
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .team-stats-card h3 {
+            margin: 0 0 12px 0;
+            font-size: 1.02em;
+            color: #e2e8f0;
+        }
+
+        .team-stats-items {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(90px, 1fr));
+            gap: 8px;
+        }
+
+        .team-stats-item {
+            background: #1d1d2d;
+            border: 1px solid #313147;
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .team-stats-item .label {
+            color: #9ca3af;
+            font-size: 0.83em;
+            margin-bottom: 4px;
+        }
+
+        .team-stats-item .value {
+            color: #f3f4f6;
+            font-size: 1.25em;
+            font-weight: 700;
+            line-height: 1;
+        }
+
         .logs-panel {
             background: #151521;
             border: 1px solid #2d2d3d;
@@ -1810,6 +2120,9 @@
                     <a href="{{ url_for('manual') }}" class="nav-link">Мануал</a>
                     <a href="{{ url_for('profile') }}" class="nav-link">Профиль</a>
                     <a href="{{ url_for('admin_panel') }}" class="nav-link active">Админка</a>
+                    {% if (current_user.is_admin or current_user.is_owner or (current_user.prefix or '')|lower == 'developer') and (current_user.prefix or '')|lower != 'moderator' and (current_user.prefix or '')|lower != 'модератор' %}
+                    <a href="{{ url_for('team_panel') }}" class="nav-link">Панель команды</a>
+                    {% endif %}
                     <a href="{{ url_for('logout') }}" class="nav-link danger">Выйти</a>
                 </nav>
             </div>
@@ -1833,6 +2146,9 @@
             {% endif %}
             {% if current_user and (current_user.prefix or '')|lower == 'developer' %}
             <button class="tab-btn {% if current_tab == 'logs' %}active{% endif %}" onclick="switchTab('logs')">📜 Логи</button>
+            {% endif %}
+            {% if current_user and (current_user.is_owner or (current_user.prefix or '')|lower == 'developer') %}
+            <button class="tab-btn {% if current_tab == 'team_stats' %}active{% endif %}" onclick="switchTab('team_stats')">📊 Статистика команд</button>
             {% endif %}
             {% if current_user and (current_user.prefix or '')|lower == 'developer' %}
             <div style="margin-left: auto; display: flex; gap: 10px;">
@@ -1874,7 +2190,7 @@
                                     <button type="button" onclick="generatePassword()" style="padding: 14px 16px; background: rgba(26, 31, 53, 0.74); color: #00ff00; border: 2px solid rgba(0, 102, 255, 0.32); border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; white-space: nowrap; font-size: 1em;">
                                         🎲 Сгенерировать
                                     </button>
-                                    <button type="button" onclick="copyPassword()" style="padding: 14px 16px; background: rgba(26, 31, 53, 0.74); color: #6366f1; border: 2px solid rgba(0, 102, 255, 0.32); border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; white-space: nowrap; font-size: 1em; min-width: 50px;" title="Копировать в буфер обмена">
+                                    <button type="button" onclick="copyPasswordBtn()" style="padding: 14px 16px; background: rgba(26, 31, 53, 0.74); color: #6366f1; border: 2px solid rgba(0, 102, 255, 0.32); border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; white-space: nowrap; font-size: 1em; min-width: 50px;" title="Копировать в буфер обмена">
                                         📋
                                     </button>
                                 </div>
@@ -2165,6 +2481,51 @@
             </div>
         </div>
 
+        {% if current_user and (current_user.is_owner or (current_user.prefix or '')|lower == 'developer') %}
+        <div id="team_stats-tab" class="tab-content {% if current_tab == 'team_stats' %}active{% endif %}">
+            <div class="actions-bar">
+                <h2>📊 Статистика по командам</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" id="seedTeamStatsBtn" onclick="seedDemoTeamStats()">🧪 Добавить демо-анкеты</button>
+                    <span id="teamStatsSeedHint" style="color: #8fa0bf; font-size: 0.88em;">Создаёт по несколько тестовых анкет на каждую команду без дублей</span>
+                </div>
+            </div>
+
+            <div class="team-stats-toolbar">
+                <div style="color: #b0b0b0; font-size: 0.92em;" id="teamStatsPeriodLabel">Период: за день</div>
+                <select id="teamStatsPeriod" class="team-filter-select" style="max-width: 180px;" onchange="loadTeamStats()">
+                    <option value="day">За день</option>
+                    <option value="week">За неделю</option>
+                    <option value="month">За месяц</option>
+                </select>
+                <select id="teamStatsScope" class="team-filter-select" style="max-width: 220px;" onchange="onTeamStatsScopeChange()">
+                    <option value="team">Вся команда</option>
+                    <option value="core">Основа</option>
+                    <option value="subcore">Под Основа</option>
+                </select>
+                <select id="teamStatsCore" class="team-filter-select" style="max-width: 200px;" onchange="onTeamStatsCoreChange()">
+                    <option value="">Основа...</option>
+                </select>
+                <select id="teamStatsSubcore" class="team-filter-select" style="max-width: 220px;" onchange="onTeamStatsSubcoreChange()">
+                    <option value="">Под Основа...</option>
+                </select>
+                <div style="color: #b0b0b0; font-size: 0.88em;" id="teamStatsScopeLabel">Срез: Вся команда</div>
+            </div>
+
+            <div id="teamStatsNav" class="team-stats-nav">
+                <p class="loading" style="margin: 0;">Загрузка команд...</p>
+            </div>
+
+            <div id="teamStatsCharts" class="team-charts-grid">
+                <p class="loading">Загрузка графиков...</p>
+            </div>
+
+            <div id="teamStatsContent" class="team-stats-grid">
+                <p class="loading">Загрузка статистики...</p>
+            </div>
+        </div>
+        {% endif %}
+
         {% if current_user and (current_user.prefix or '')|lower == 'developer' %}
         <div id="logs-tab" class="tab-content {% if current_tab == 'logs' %}active{% endif %}">
             <div class="actions-bar">
@@ -2275,9 +2636,14 @@
     <script>
         // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
         const IS_MODERATOR = {{ 'true' if ((current_user.prefix or '')|lower == 'moderator') else 'false' }};
+        const CAN_VIEW_TEAM_STATS = {{ 'true' if (current_user and (current_user.is_owner or (current_user.prefix or '')|lower == 'developer')) else 'false' }};
         let currentTeamUserId = null;
         let latestParsedAuditLogs = [];
         let latestLogType = 'audit';
+        let selectedStatsTeam = '';
+        let selectedStatsScope = 'team';
+        let selectedStatsCoreId = '';
+        let selectedStatsSubcoreId = '';
 
         function escapeHtml(rawText) {
             const div = document.createElement('div');
@@ -2611,6 +2977,406 @@
             if (tabName === 'logs') {
                 loadAdminLogs();
             }
+            if (tabName === 'team_stats') {
+                loadTeamStats();
+            }
+        }
+
+        async function loadTeamStats(forceTeam) {
+            if (!CAN_VIEW_TEAM_STATS) return;
+
+            const periodSelect = document.getElementById('teamStatsPeriod');
+            const scopeSelect = document.getElementById('teamStatsScope');
+            const coreSelect = document.getElementById('teamStatsCore');
+            const subcoreSelect = document.getElementById('teamStatsSubcore');
+            const scopeLabel = document.getElementById('teamStatsScopeLabel');
+            const nav = document.getElementById('teamStatsNav');
+            const charts = document.getElementById('teamStatsCharts');
+            const content = document.getElementById('teamStatsContent');
+            const periodLabel = document.getElementById('teamStatsPeriodLabel');
+            if (!periodSelect || !scopeSelect || !coreSelect || !subcoreSelect || !scopeLabel || !nav || !charts || !content || !periodLabel) return;
+
+            const period = periodSelect.value || 'day';
+            selectedStatsScope = scopeSelect.value || 'team';
+            if (forceTeam) {
+                selectedStatsTeam = forceTeam;
+                selectedStatsCoreId = '';
+                selectedStatsSubcoreId = '';
+            }
+
+            coreSelect.disabled = selectedStatsScope === 'team';
+            subcoreSelect.disabled = selectedStatsScope !== 'subcore';
+
+            nav.innerHTML = '<p class="loading" style="margin: 0;">Загрузка команд...</p>';
+            charts.innerHTML = '<p class="loading">Загрузка графиков...</p>';
+            content.innerHTML = '<p class="loading">Загрузка статистики...</p>';
+
+            try {
+                const params = new URLSearchParams({ period: period, scope: selectedStatsScope });
+                if (selectedStatsTeam) params.set('team', selectedStatsTeam);
+                if (selectedStatsCoreId) params.set('core_id', selectedStatsCoreId);
+                if (selectedStatsSubcoreId) params.set('subcore_id', selectedStatsSubcoreId);
+
+                const response = await fetch(`/api/admin/team-stats?${params.toString()}`);
+                const rawText = await response.text();
+                let data = null;
+                try {
+                    data = rawText ? JSON.parse(rawText) : null;
+                } catch (parseError) {
+                    content.innerHTML = `<p class="empty">Ошибка API: HTTP ${response.status}. Сервер вернул не JSON.</p>`;
+                    charts.innerHTML = '';
+                    nav.innerHTML = '';
+                    return;
+                }
+
+                if (!response.ok || !data || !data.success) {
+                    content.innerHTML = `<p class="empty">Ошибка: ${escapeHtml(data.message || 'Не удалось загрузить статистику')}</p>`;
+                    charts.innerHTML = '';
+                    nav.innerHTML = '';
+                    return;
+                }
+
+                const teams = data.teams || [];
+                const navTeams = data.nav_teams || teams;
+                selectedStatsTeam = data.selected_team || (teams[0] ? teams[0].team : selectedStatsTeam || '');
+                selectedStatsScope = data.scope || selectedStatsScope;
+
+                periodLabel.textContent = `Период: ${data.period_label || 'за день'}`;
+                scopeLabel.textContent = `Срез: ${data.scope_label || 'Вся команда'}`;
+                scopeSelect.value = selectedStatsScope;
+
+                const scopeOptions = data.scope_options || { cores: [] };
+                const cores = scopeOptions.cores || [];
+                coreSelect.innerHTML = '<option value="">Основа...</option>' + cores.map(core => `<option value="${core.id}">Основа ${core.core_index}</option>`).join('');
+
+                if (data.selected_core_id && cores.some(core => String(core.id) === String(data.selected_core_id))) {
+                    selectedStatsCoreId = String(data.selected_core_id);
+                } else if (!cores.some(core => String(core.id) === String(selectedStatsCoreId))) {
+                    selectedStatsCoreId = '';
+                }
+                coreSelect.value = selectedStatsCoreId;
+
+                const selectedCore = cores.find(core => String(core.id) === String(selectedStatsCoreId));
+                const subcores = selectedCore ? (selectedCore.subcores || []) : [];
+                subcoreSelect.innerHTML = '<option value="">Под Основа...</option>' + subcores.map(sub => `<option value="${sub.id}">Под Основа ${selectedCore.core_index}.${sub.subcore_index}</option>`).join('');
+
+                if (data.selected_subcore_id && subcores.some(sub => String(sub.id) === String(data.selected_subcore_id))) {
+                    selectedStatsSubcoreId = String(data.selected_subcore_id);
+                } else if (!subcores.some(sub => String(sub.id) === String(selectedStatsSubcoreId))) {
+                    selectedStatsSubcoreId = '';
+                }
+                subcoreSelect.value = selectedStatsSubcoreId;
+
+                coreSelect.disabled = selectedStatsScope === 'team';
+                subcoreSelect.disabled = selectedStatsScope !== 'subcore';
+
+                if (!teams.length) {
+                    nav.innerHTML = '<p class="empty" style="margin: 0;">Команды не найдены</p>';
+                    charts.innerHTML = '<p class="empty">Нет данных для графиков</p>';
+                    content.innerHTML = '<p class="empty">Нет данных</p>';
+                    return;
+                }
+
+                nav.innerHTML = navTeams.map(team => `
+                    <button class="team-nav-btn ${team.team === selectedStatsTeam ? 'active' : ''}" onclick="selectStatsTeam('${team.team}')">
+                        ${team.emoji || '🎯'} ${team.team}
+                    </button>
+                `).join('');
+
+                const selected = teams.find(team => team.team === selectedStatsTeam) || teams[0];
+                if (!selected) {
+                    content.innerHTML = '<p class="empty">Нет данных по выбранной команде</p>';
+                    return;
+                }
+
+                charts.innerHTML = renderTeamCharts(teams, selectedStatsTeam, data.scope_label || 'Вся команда');
+                content.innerHTML = renderSelectedTeamStats(selected, data.period_label || 'За день', data.scope_label || 'Вся команда');
+            } catch (error) {
+                content.innerHTML = `<p class="empty">Ошибка подключения: ${escapeHtml(error.message || '')}</p>`;
+                charts.innerHTML = '';
+                nav.innerHTML = '';
+            }
+        }
+
+        function renderSelectedTeamStats(team, periodLabel, scopeLabel) {
+            const models = team.models || {};
+            const operators = team.operators || {};
+            const totalApplications = Number(models.total || 0) + Number(operators.total || 0);
+            const approvedApplications = Number(models.approved || 0) + Number(operators.approved || 0);
+            const pendingApplications = Number(models.pending || 0) + Number(operators.pending || 0);
+            const approvalRate = totalApplications ? Math.round((approvedApplications / totalApplications) * 100) : 0;
+
+            return `
+                <div class="team-summary-strip">
+                    <div class="team-summary-title">${team.emoji || '🎯'} ${escapeHtml(team.team || '')} • ${escapeHtml(scopeLabel || 'Вся команда')}</div>
+                    <div class="team-summary-badge"><div class="label">Период</div><div class="value">${escapeHtml(periodLabel || 'За день')}</div></div>
+                    <div class="team-summary-badge"><div class="label">Всего анкет</div><div class="value">${totalApplications}</div></div>
+                    <div class="team-summary-badge"><div class="label">Одобрение</div><div class="value">${approvalRate}%</div></div>
+                    <div class="team-summary-badge"><div class="label">Ожидают</div><div class="value">${pendingApplications}</div></div>
+                </div>
+                ${renderStatsCard('👩‍🎬 Модели', models, 'Модели + стримерши')} 
+                ${renderStatsCard('👨‍💼 Операторы', operators, 'Операторские анкеты')}
+            `;
+        }
+
+        function renderStatsCard(title, stats, note) {
+            const total = Number((stats && stats.total) || 0);
+            const approved = Number((stats && stats.approved) || 0);
+            const rejected = Number((stats && stats.rejected) || 0);
+            const pending = Number((stats && stats.pending) || 0);
+            const approvalRate = total ? Math.round((approved / total) * 100) : 0;
+
+            return `
+                <div class="team-stats-card">
+                    <h3>${title}</h3>
+                    <div class="team-stats-items">
+                        <div class="team-stats-item"><div class="label">Всего</div><div class="value">${total}</div></div>
+                        <div class="team-stats-item"><div class="label">Одобрены</div><div class="value">${approved}</div></div>
+                        <div class="team-stats-item"><div class="label">Неодобрены</div><div class="value">${rejected}</div></div>
+                        <div class="team-stats-item"><div class="label">Ожидают</div><div class="value">${pending}</div></div>
+                        <div class="team-stats-item"><div class="label">Конверсия</div><div class="value">${approvalRate}%</div></div>
+                    </div>
+                    <div class="team-stats-note">${escapeHtml(note || '')}</div>
+                </div>
+            `;
+        }
+
+        function renderTeamCharts(teams, selectedTeam, scopeLabel) {
+            if (!teams.length) {
+                return '<p class="empty">Нет данных для графиков</p>';
+            }
+
+            if (teams.length === 1) {
+                return renderSingleScopeChart(teams[0], scopeLabel);
+            }
+
+            return `
+                ${renderLineChartCard(teams, 'models', '👩‍🎬 Модели по командам', 'Линии: всего, одобрены, не одобрены, ожидают', selectedTeam)}
+                ${renderLineChartCard(teams, 'operators', '👨‍💼 Операторы по командам', 'Сравнение команд в выбранном периоде', selectedTeam)}
+            `;
+        }
+
+        function renderSingleScopeChart(team, scopeLabel) {
+            const categories = ['Всего', 'Одобрены', 'Неодобрены', 'Ожидают'];
+            const series = [
+                {
+                    label: 'Модели',
+                    className: 'models',
+                    values: [
+                        Number((team.models && team.models.total) || 0),
+                        Number((team.models && team.models.approved) || 0),
+                        Number((team.models && team.models.rejected) || 0),
+                        Number((team.models && team.models.pending) || 0)
+                    ]
+                },
+                {
+                    label: 'Операторы',
+                    className: 'operators',
+                    values: [
+                        Number((team.operators && team.operators.total) || 0),
+                        Number((team.operators && team.operators.approved) || 0),
+                        Number((team.operators && team.operators.rejected) || 0),
+                        Number((team.operators && team.operators.pending) || 0)
+                    ]
+                }
+            ];
+
+            return `
+                <div class="team-chart-card">
+                    <div class="team-chart-head">
+                        <div>
+                            <h3>${team.emoji || '🎯'} ${escapeHtml(team.team || '')}</h3>
+                            <div class="team-chart-subtitle">${escapeHtml(scopeLabel || 'Выбранный срез')} • сравнение внутри среза</div>
+                        </div>
+                        <div class="team-chart-legend">
+                            <span><i class="dot models"></i>Модели</span>
+                            <span><i class="dot operators"></i>Операторы</span>
+                        </div>
+                    </div>
+                    ${buildLineChartSvg(categories, series, '')}
+                    <div class="team-chart-focus">Ось X: категории статусов. Ось Y: количество анкет.</div>
+                </div>
+            `;
+        }
+
+        function renderLineChartCard(teams, key, title, subtitle, selectedTeam) {
+            const categories = teams.map(team => `${team.emoji || '🎯'} ${team.team || ''}`);
+            const series = [
+                { label: 'Всего', className: 'total', values: teams.map(team => Number(((team[key] || {}).total) || 0)) },
+                { label: 'Одобрены', className: 'approved', values: teams.map(team => Number(((team[key] || {}).approved) || 0)) },
+                { label: 'Неодобрены', className: 'rejected', values: teams.map(team => Number(((team[key] || {}).rejected) || 0)) },
+                { label: 'Ожидают', className: 'pending', values: teams.map(team => Number(((team[key] || {}).pending) || 0)) }
+            ];
+
+            return `
+                <div class="team-chart-card">
+                    <div class="team-chart-head">
+                        <div>
+                            <h3>${title}</h3>
+                            <div class="team-chart-subtitle">${escapeHtml(subtitle || '')}</div>
+                        </div>
+                        <div class="team-chart-legend">
+                            <span><i class="dot total"></i>Всего</span>
+                            <span><i class="dot approved"></i>Одобрены</span>
+                            <span><i class="dot rejected"></i>Неодобрены</span>
+                            <span><i class="dot pending"></i>Ожидают</span>
+                        </div>
+                    </div>
+                    ${buildLineChartSvg(categories, series, selectedTeam, teams)}
+                </div>
+            `;
+        }
+
+        function buildLineChartSvg(categories, series, selectedTeam, teams) {
+            const width = 640;
+            const height = 260;
+            const padding = { top: 18, right: 16, bottom: 46, left: 34 };
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+            const pointCount = Math.max(categories.length, 1);
+            const stepX = pointCount > 1 ? plotWidth / (pointCount - 1) : 0;
+            const allValues = series.flatMap(item => item.values || []);
+            const maxValue = Math.max(1, ...allValues, 0);
+            const selectedIndex = Array.isArray(teams) ? teams.findIndex(team => team.team === selectedTeam) : -1;
+
+            const gridLines = [];
+            const yLabels = [];
+            for (let index = 0; index <= 5; index += 1) {
+                const value = Math.round((maxValue / 5) * index);
+                const y = padding.top + plotHeight - ((value / maxValue) * plotHeight);
+                gridLines.push(`<line class="team-chart-grid-line" x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}"></line>`);
+                yLabels.push(`<text class="team-chart-y-label" x="${padding.left - 8}" y="${y + 4}" text-anchor="end">${value}</text>`);
+            }
+
+            let selectedBand = '';
+            if (selectedIndex >= 0) {
+                const x = padding.left + (stepX * selectedIndex);
+                const bandWidth = pointCount > 1 ? Math.max(24, stepX * 0.7) : plotWidth;
+                const bandX = pointCount > 1 ? x - (bandWidth / 2) : padding.left;
+                selectedBand = `<rect class="team-chart-selected-band" x="${Math.max(padding.left, bandX)}" y="${padding.top}" width="${Math.min(bandWidth, width - padding.right - Math.max(padding.left, bandX))}" height="${plotHeight}"></rect>`;
+            }
+
+            const seriesMarkup = series.map(item => {
+                const points = (item.values || []).map((value, index) => {
+                    const x = padding.left + (stepX * index);
+                    const y = padding.top + plotHeight - ((Number(value || 0) / maxValue) * plotHeight);
+                    return { x, y, value: Number(value || 0), isSelected: selectedIndex === index };
+                });
+
+                const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+                const circles = points.map(point => `
+                    <circle class="team-chart-point ${item.className} ${point.isSelected ? 'is-selected' : ''}" cx="${point.x}" cy="${point.y}" r="5"></circle>
+                `).join('');
+
+                return `
+                    <path class="team-chart-line ${item.className}" d="${path}"></path>
+                    ${circles}
+                `;
+            }).join('');
+
+            const labelStyle = `grid-template-columns: repeat(${pointCount}, minmax(0, 1fr));`;
+            const labels = categories.map((label, index) => `
+                <div class="team-chart-x-label ${selectedIndex === index ? 'selected' : ''}">${escapeHtml(label)}</div>
+            `).join('');
+
+            return `
+                <div class="team-chart-svg-wrap">
+                    <svg class="team-chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
+                        ${selectedBand}
+                        ${gridLines.join('')}
+                        ${yLabels.join('')}
+                        ${seriesMarkup}
+                    </svg>
+                    <div class="team-chart-x-labels" style="${labelStyle}">${labels}</div>
+                </div>
+            `;
+        }
+
+        async function seedDemoTeamStats() {
+            const button = document.getElementById('seedTeamStatsBtn');
+            const hint = document.getElementById('teamStatsSeedHint');
+            if (!button) return;
+
+            button.disabled = true;
+            const originalText = button.textContent;
+            button.textContent = '⏳ Добавляю...';
+            if (hint) {
+                hint.textContent = 'Создаю демо-пользователей и тестовые анкеты по всем командам...';
+            }
+
+            try {
+                const response = await fetch('/api/admin/team-stats/demo-seed', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                const rawText = await response.text();
+                let data = null;
+                try {
+                    data = rawText ? JSON.parse(rawText) : null;
+                } catch (parseError) {
+                    const looksLikeHtml = rawText && rawText.trim().startsWith('<');
+                    const message = looksLikeHtml
+                        ? 'Сервер вернул HTML вместо JSON. Обычно это значит, что локальный сервер не перезапущен после изменения кода или произошла серверная ошибка.'
+                        : `Сервер вернул неожиданный ответ (HTTP ${response.status}).`;
+                    throw new Error(message);
+                }
+
+                if (!response.ok || !data.success) {
+                    alert('Ошибка: ' + (data.message || 'Не удалось создать демо-анкеты'));
+                    return;
+                }
+
+                if (hint) {
+                    hint.textContent = data.message || 'Демо-анкеты готовы';
+                }
+                alert('✅ ' + (data.message || 'Демо-анкеты добавлены'));
+                loadTeamStats();
+            } catch (error) {
+                const message = error && error.message ? error.message : String(error || 'Неизвестная ошибка');
+                if (hint) {
+                    hint.textContent = message;
+                }
+                alert('Ошибка подключения: ' + message);
+            } finally {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        }
+
+        function selectStatsTeam(teamName) {
+            selectedStatsTeam = teamName;
+            selectedStatsCoreId = '';
+            selectedStatsSubcoreId = '';
+            loadTeamStats(teamName);
+        }
+
+        function onTeamStatsScopeChange() {
+            const scopeSelect = document.getElementById('teamStatsScope');
+            if (!scopeSelect) return;
+            selectedStatsScope = scopeSelect.value || 'team';
+            if (selectedStatsScope === 'team') {
+                selectedStatsCoreId = '';
+                selectedStatsSubcoreId = '';
+            }
+            loadTeamStats();
+        }
+
+        function onTeamStatsCoreChange() {
+            const coreSelect = document.getElementById('teamStatsCore');
+            if (!coreSelect) return;
+            selectedStatsCoreId = coreSelect.value || '';
+            selectedStatsSubcoreId = '';
+            loadTeamStats();
+        }
+
+        function onTeamStatsSubcoreChange() {
+            const subcoreSelect = document.getElementById('teamStatsSubcore');
+            if (!subcoreSelect) return;
+            selectedStatsSubcoreId = subcoreSelect.value || '';
+            loadTeamStats();
         }
 
         async function loadAdminLogs() {
@@ -3401,6 +4167,7 @@
             try {
                 const response = await fetch(`/api/reset-password/${userId}`, {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json' }
                 });
 
@@ -4125,6 +4892,8 @@
                             <p><strong>Может ли кто-то заменить:</strong> ${application.can_stream_change === 'yes' ? 'Да' : application.can_stream_change === 'no' ? 'Нет' : '-'}</p>
                             <p><strong>Модель устройства:</strong> ${application.device_model || '-'}</p>
                             <p><strong>Часы/дни в неделю:</strong> ${application.work_hours_per_week || application.work_time || '-'}</p>
+                            <p><strong>Кто привел:</strong> ${application.referred_by_username ? '@' + application.referred_by_username : '—'}</p>
+                            <p><strong>Реф-код:</strong> ${application.ref_code || '-'}</p>
                             <p><strong>Дата отправки:</strong> ${application.date_added}</p>
                             ${application.reviewed_at ? `<p><strong>Рассмотрено:</strong> ${application.reviewed_at}</p>` : ''}
 
@@ -4627,6 +5396,8 @@
                 loadFullArchive();
             } else if (tabName === 'logs') {
                 loadAdminLogs();
+            } else if (tabName === 'team_stats') {
+                loadTeamStats();
             }
         };
 
@@ -4658,12 +5429,42 @@
             } else if (currentTab && currentTab.id === 'logs-tab') {
                 console.log('📜 Загружаю логи...');
                 loadAdminLogs();
+            } else if (currentTab && currentTab.id === 'team_stats-tab') {
+                console.log('📊 Загружаю статистику команд...');
+                loadTeamStats();
             } else {
                 console.log('⚠️ Неизвестная или нет активной вкладки');
             }
         });
 
         // ============= ФУНКЦИИ ДЛЯ ГЕНЕРАЦИИ ПАРОЛЯ =============
+        function copyPasswordBtn() {
+            const passField = document.getElementById('password');
+            const password = passField.value;
+            
+            if (!password) {
+                alert('⚠️ Сначала сгенерируйте пароль');
+                return;
+            }
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(password).then(() => {
+                    const copyBtn = event.target;
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = '✓';
+                    copyBtn.style.background = '#10b981';
+                    setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                        copyBtn.style.background = '#4f46e5';
+                    }, 1500);
+                }).catch(() => {
+                    copyPasswordFallbackBtn(password, event.target);
+                });
+            } else {
+                copyPasswordFallbackBtn(password, event.target);
+            }
+        }
+
         function generatePassword() {
             const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             const lowercase = 'abcdefghijklmnopqrstuvwxyz';
@@ -4698,37 +5499,7 @@
             }, 500);
         }
         
-        function copyPassword() {
-            const passField = document.getElementById('password');
-            const password = passField.value;
-            
-            if (!password) {
-                alert('⚠️ Сначала сгенерируйте пароль');
-                return;
-            }
-            
-            // Пробуем использовать современный API
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(password).then(() => {
-                    // Визуальное подтверждение копирования
-                    const copyBtn = event.target;
-                    const originalText = copyBtn.textContent;
-                    copyBtn.textContent = '✓';
-                    copyBtn.style.background = '#10b981';
-                    
-                    setTimeout(() => {
-                        copyBtn.textContent = originalText;
-                        copyBtn.style.background = '#4f46e5';
-                    }, 1500);
-                }).catch(() => {
-                    // Fallback на старый метод
-                    copyPasswordFallbackBtn(password, event.target);
-                });
-            } else {
-                // Fallback для локального сервера
-                copyPasswordFallbackBtn(password, event.target);
-            }
-        }
+
         
         function copyPasswordFallbackBtn(password, btn) {
             const textarea = document.createElement('textarea');

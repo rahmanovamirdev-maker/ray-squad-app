@@ -1454,7 +1454,7 @@
                     <span class="faq-icon">+</span>
                 </button>
                 <div class="faq-answer">
-                    <p>Для начала будет достаточно одного мобильного устройства. Если модели iPhone, то от 11 серии. А если у Вас андроид, то модели выпущенные посое 2023 года</p>
+                    <p>Для начала будет достаточно одного мобильного устройства. Если модели iPhone, то от 11 серии. А если у Вас андроид, то модели выпущенные после 2023 года</p>
                 </div>
             </div>
 
@@ -1522,6 +1522,7 @@
             </div>
 
             <form id="scoutJoinForm" class="scout-form">
+                <input type="hidden" id="joinRefCode" name="ref_code" value="">
                 <div class="scout-field">
                     <label for="joinFullName">1. Имя</label>
                     <input id="joinFullName" name="full_name" type="text" placeholder="Введите ваше имя" required>
@@ -1570,7 +1571,7 @@
                 </div>
 
                 <div class="scout-field">
-                    <label>6. Может ли кто-то поменять стриму?</label>
+                    <label>6. Может ли кто-то помешать стриму?</label>
                     <div class="radio-group">
                         <label class="radio-option">
                             <input type="radio" name="can_stream_change" value="yes" required>
@@ -1671,6 +1672,27 @@
         const scoutStatus = document.getElementById('scoutStatus');
         const scoutSubmitBtn = document.getElementById('scoutSubmitBtn');
         const joinAgeInput = document.getElementById('joinAge');
+        const joinRefCode = document.getElementById('joinRefCode');
+
+        function readRefCodeFromUrl() {
+            const params = new URLSearchParams(window.location.search || '');
+            const raw = (params.get('ref') || '').trim();
+            if (!raw) return '';
+            return raw.startsWith('@') ? raw.slice(1) : raw;
+        }
+
+        function initReferralCode() {
+            const fromUrl = readRefCodeFromUrl();
+            if (fromUrl) {
+                localStorage.setItem('lk_ref_code', fromUrl);
+            }
+            const refCode = fromUrl || (localStorage.getItem('lk_ref_code') || '');
+            if (joinRefCode) {
+                joinRefCode.value = refCode;
+            }
+        }
+
+        initReferralCode();
 
         if (joinAgeInput) {
             const today = new Date();
@@ -1775,7 +1797,10 @@
             formData.append('can_stream_change', scoutForm.can_stream_change.value.trim());
             formData.append('device_model', scoutForm.device_model.value.trim());
             formData.append('work_hours_per_week', scoutForm.work_hours_per_week.value.trim());
-            
+            if (joinRefCode && joinRefCode.value) {
+                formData.append('ref_code', joinRefCode.value.trim());
+            }
+
             // Если выбран файл, добавляем его
             if (scoutForm.photo.files.length > 0) {
                 formData.append('photo', scoutForm.photo.files[0]);

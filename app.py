@@ -1,27 +1,45 @@
-from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, session, flash, g
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timezone, timedelta
+
 import os
-import io
-import string
-import random
+try:
+    from pyngrok import ngrok
+except ImportError:
+    ngrok = None
+INSTANCE_DIR = os.path.join(os.path.dirname(__file__), 'instance')
+APP_LOG_PATH = os.path.join(INSTANCE_DIR, 'app.log')
+AUDIT_LOG_PATH = os.path.join(INSTANCE_DIR, 'audit.log')
+VALID_TEAMS = [
+    'Delta', 'Den', 'ХАЦКЕР', '404', 'Bobik', 'Oir', 'Gordon', 'Rey'
+]
+TEAM_EMOJI_MAP = {
+    'Delta': '🔴',
+    'Den': '🔵',
+    'ХАЦКЕР': '🟢',
+    '404': '🟡',
+    'Bobik': '🟣',
+    'Oir': '🟠',
+    'Gordon': '⚫',
+    'Rey': '💎'
+}
+LOGIN_ACCESS_RESTRICTED = True
+LOGIN_ACCESS_RESTRICTED_MESSAGE = 'Доступ временно ограничен. Вход в панель сейчас закрыт.'
+INSTANCE_DIR = os.path.join(os.path.dirname(__file__), 'instance')
+VALID_TEAMS = [
+    'Delta', 'Den', 'ХАЦКЕР', '404', 'Bobik', 'Oir', 'Gordon', 'Rey'
+]
+import re
 import logging
 from logging.handlers import RotatingFileHandler
-import smtplib
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, session, flash, g, make_response
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, timezone, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from email.message import EmailMessage
-from pyngrok import ngrok
-import asyncio
-import re
-from collections import deque
-
 try:
     from telegram import Bot
     from telegram.error import TelegramError
 except Exception:
     Bot = None
-
     class TelegramError(Exception):
         pass
 
@@ -30,487 +48,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.environ.get('SECRET_KEY', 'dev_secret_key')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
-
-INSTANCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance')
-APP_LOG_PATH = os.path.join(INSTANCE_DIR, 'app.log')
-AUDIT_LOG_PATH = os.path.join(INSTANCE_DIR, 'audit.log')
-
-ALLOWED_SCOUT_PHOTO_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp'}
-
-
-def is_allowed_scout_photo(filename):
-    if not filename or '.' not in filename:
-        return False
-    ext = filename.rsplit('.', 1)[1].lower()
-    return ext in ALLOWED_SCOUT_PHOTO_EXTENSIONS
-
-def generate_strong_password(length=12):
-    """Генерирует сложный пароль со спецсимволами, цифрами и буквами"""
-    uppercase = string.ascii_uppercase
-    lowercase = string.ascii_lowercase
-    digits = string.digits
-    special_chars = "!@#$%^&*"
-    
-    # Гарантируем, что пароль содержит все типы символов
-    password = [
-        random.choice(uppercase),
-        random.choice(lowercase),
-        random.choice(digits),
-        random.choice(special_chars)
-    ]
-    
-    # Добавляем остальные символы случайным образом
-    all_chars = uppercase + lowercase + digits + special_chars
-    for _ in range(length - 4):
-        password.append(random.choice(all_chars))
-    
-    # Перемешиваем пароль
-    random.shuffle(password)
-    return ''.join(password)
-
-# ============= MAINTENANCE MODE =============
-DEV_PASSWORD = "vrAynluktEww"  # Пароль для входа разработчика во время техработ
-MAINT_API_KEY = os.environ.get('MAINT_API_KEY', '4H-o8Y52zdmUOhwxyysPwjlDJAHrwnjWqa-d27NsOCE')
-
-def is_maintenance():
-    """Проверяет флаг техработы из файла"""
-    try:
-        with open('maintenance.flag', 'r') as f:
-            return f.read().strip().lower() == 'on'
-    except FileNotFoundError:
-        return False
-
-# ============================================
-
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.jinja_env.auto_reload = True
 db = SQLAlchemy(app)
-
-# Блокировка всех запросов в режиме обслуживания
-@app.before_request
-def check_maintenance():
-    # Проверяем, есть ли у пользователя сессия разработчика
-    allowed_endpoints = {'dev_login', 'dev_logout', 'static', 'toggle_maintenance'}
-    if is_maintenance() and 'dev_session' not in session and request.endpoint not in allowed_endpoints:
-        return '''
-        <!DOCTYPE html>
-        <html lang="ru">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Сайт временно закрыт</title>
-            <link rel="preconnect" href="https://fonts.googleapis.com">
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-            <link href="https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-            <style>
-                :root {
-                    --primary-blue: #0066ff;
-                    --dark-blue: #0047b3;
-                    --accent-blue: #00bfff;
-                    --black: #000000;
-                    --dark-gray: #0a0e1a;
-                    --light-gray: #8a92a6;
-                    --white: #ffffff;
-                }
-
-                * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }
-
-                body {
-                    font-family: 'Inter', sans-serif;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    min-height: 100vh;
-                    margin: 0;
-                    background: var(--black);
-                    color: var(--white);
-                    overflow: hidden;
-                    position: relative;
-                }
-
-                body::before {
-                    content: '';
-                    position: fixed;
-                    inset: 0;
-                    background:
-                        radial-gradient(circle at 20% 50%, rgba(0, 102, 255, 0.14) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(0, 191, 255, 0.09) 0%, transparent 50%);
-                    pointer-events: none;
-                    z-index: 0;
-                }
-
-                body::after {
-                    content: '';
-                    position: fixed;
-                    inset: 0;
-                    background-image:
-                        linear-gradient(rgba(0, 102, 255, 0.03) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(0, 102, 255, 0.03) 1px, transparent 1px);
-                    background-size: 50px 50px;
-                    opacity: 0.3;
-                    pointer-events: none;
-                    z-index: 0;
-                }
-
-                .container {
-                    text-align: center;
-                    width: min(94vw, 720px);
-                    padding: 40px 36px;
-                    background: rgba(10, 14, 26, 0.95);
-                    border: 1px solid rgba(0, 102, 255, 0.2);
-                    border-radius: 24px;
-                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-                    backdrop-filter: blur(30px);
-                    position: relative;
-                    z-index: 1;
-                    animation: riseIn 0.55s ease-out;
-                }
-
-                @keyframes riseIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(22px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                .logo {
-                    font-family: 'Abhaya Libre', serif;
-                    font-size: 34px;
-                    font-weight: 800;
-                    letter-spacing: -1px;
-                    margin-bottom: 18px;
-                }
-
-                .logo-accent {
-                    background: linear-gradient(135deg, var(--primary-blue), var(--accent-blue));
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                    background-clip: text;
-                }
-
-                h1 {
-                    font-size: clamp(1.9rem, 4vw, 3rem);
-                    margin-bottom: 14px;
-                    letter-spacing: -0.02em;
-                    line-height: 1.1;
-                }
-
-                p {
-                    font-size: clamp(1rem, 2.1vw, 1.22rem);
-                    color: var(--light-gray);
-                    line-height: 1.55;
-                    margin-bottom: 8px;
-                }
-
-                .status {
-                    margin: 20px auto 0;
-                    width: fit-content;
-                    padding: 10px 18px;
-                    border-radius: 50px;
-                    border: 1px solid rgba(0, 102, 255, 0.32);
-                    background: rgba(0, 102, 255, 0.15);
-                    color: #8fd1ff;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                }
-
-                .dev-login-btn {
-                    margin-top: 30px;
-                    padding: 12px 24px;
-                    border: none;
-                    border-radius: 10px;
-                    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-                    color: white;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-                }
-
-                .dev-login-btn:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
-                }
-
-                .dev-login-modal {
-                    display: none;
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.8);
-                    z-index: 1000;
-                    justify-content: center;
-                    align-items: center;
-                }
-
-                .dev-login-modal.active {
-                    display: flex;
-                }
-
-                .dev-login-form {
-                    background: rgba(10, 14, 26, 0.98);
-                    border: 1px solid rgba(0, 102, 255, 0.2);
-                    border-radius: 18px;
-                    padding: 32px;
-                    max-width: 400px;
-                    width: 90%;
-                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-                }
-
-                .dev-login-form h2 {
-                    margin-bottom: 20px;
-                    font-size: 1.5rem;
-                }
-
-                .dev-login-form input {
-                    width: 100%;
-                    padding: 12px 16px;
-                    margin-bottom: 16px;
-                    border: 1px solid rgba(0, 102, 255, 0.3);
-                    border-radius: 8px;
-                    background: rgba(0, 102, 255, 0.05);
-                    color: white;
-                    font-size: 1rem;
-                    transition: all 0.3s;
-                }
-
-                .dev-login-form input:focus {
-                    outline: none;
-                    border-color: #0066ff;
-                    background: rgba(0, 102, 255, 0.1);
-                }
-
-                .dev-login-form button {
-                    width: 100%;
-                    padding: 12px;
-                    margin-bottom: 10px;
-                    border: none;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                }
-
-                .dev-login-form .btn-submit {
-                    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-                    color: white;
-                }
-
-                .dev-login-form .btn-submit:hover {
-                    transform: translateY(-2px);
-                }
-
-                .dev-login-form .btn-cancel {
-                    background: #2d2d3d;
-                    color: #e0e0e0;
-                }
-
-                .dev-login-form .btn-cancel:hover {
-                    background: #3d3d4d;
-                }
-
-                .dev-login-form .error {
-                    color: #ff4444;
-                    margin-bottom: 12px;
-                    font-size: 0.9rem;
-                    display: none;
-                }
-
-                @media (max-width: 640px) {
-                    .container {
-                        padding: 28px 22px;
-                        border-radius: 18px;
-                    }
-
-                    .logo {
-                        font-size: 28px;
-                        margin-bottom: 12px;
-                    }
-
-                    .status {
-                        margin-top: 16px;
-                        font-size: 0.88rem;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="logo">LiamKing <span class="logo-accent">Agency</span></div>
-                <h1>Сайт временно закрыт</h1>
-                <p>Проводятся технические работы</p>
-                <p>Приносим извинения за неудобства</p>
-                <div class="status">Скоро снова онлайн</div>
-                <button class="dev-login-btn" onclick="showDevLogin()">🔧 Вход разработчика</button>
-            </div>
-
-            <div class="dev-login-modal" id="devLoginModal">
-                <div class="dev-login-form">
-                    <h2>🔐 Вход разработчика</h2>
-                    <div class="error" id="devLoginError"></div>
-                    <form onsubmit="submitDevLogin(event)">
-                        <input type="password" id="devPassword" placeholder="Введите пароль" required>
-                        <button type="submit" class="btn-submit">Войти</button>
-                        <button type="button" class="btn-cancel" onclick="hideDevLogin()">Закрыть</button>
-                    </form>
-                </div>
-            </div>
-
-            <script>
-                function showDevLogin() {
-                    document.getElementById('devLoginModal').classList.add('active');
-                    document.getElementById('devPassword').focus();
-                }
-
-                function hideDevLogin() {
-                    document.getElementById('devLoginModal').classList.remove('active');
-                    document.getElementById('devPassword').value = '';
-                    document.getElementById('devLoginError').style.display = 'none';
-                }
-
-                async function submitDevLogin(event) {
-                    event.preventDefault();
-                    const password = document.getElementById('devPassword').value;
-
-                    try {
-                        const response = await fetch('/dev-login', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ password: password })
-                        });
-
-                        const data = await response.json();
-
-                        if (data.success) {
-                            window.location.href = '/';
-                        } else {
-                            const errorDiv = document.getElementById('devLoginError');
-                            errorDiv.textContent = data.message || 'Неверный пароль';
-                            errorDiv.style.display = 'block';
-                            document.getElementById('devPassword').value = '';
-                        }
-                    } catch (error) {
-                        console.error('Ошибка:', error);
-                    }
-                }
-
-                // Закрыть модал при клике вне его
-                document.getElementById('devLoginModal').addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        hideDevLogin();
-                    }
-                });
-            </script>
-        </body>
-        </html>
-        ''', 503
-
-# ============= TELEGRAM BOT CONFIGURATION =============
-TELEGRAM_BOT_TOKEN = (os.environ.get('TELEGRAM_BOT_TOKEN') or '').strip()
-telegram_bot = Bot(token=TELEGRAM_BOT_TOKEN) if (Bot and TELEGRAM_BOT_TOKEN) else None
-
-# ============= GMAIL SMTP CONFIGURATION =============
-SMTP_HOST = (os.environ.get('SMTP_HOST') or 'smtp.gmail.com').strip()
-SMTP_PORT = int((os.environ.get('SMTP_PORT') or '587').strip())
-SMTP_USER = (os.environ.get('SMTP_USER') or '').strip()
-SMTP_PASSWORD = (os.environ.get('SMTP_PASSWORD') or '').strip()  # Gmail App Password
-SMTP_FROM = (os.environ.get('SMTP_FROM') or SMTP_USER).strip()
-
-# ============= DEV LOGIN ROUTE =============
-@app.route('/dev-login', methods=['POST'])
-def dev_login():
-    data = request.get_json()
-    password = data.get('password', '')
-    
-    if password == DEV_PASSWORD:
-        session['dev_session'] = True
-        return jsonify({'success': True, 'message': 'Добро пожаловать!'})
-    else:
-        return jsonify({'success': False, 'message': 'Неверный пароль'})
-
-@app.route('/dev-logout', methods=['GET', 'POST'])
-def dev_logout():
-    session.pop('dev_session', None)
-    return redirect(url_for('index'))
-
-@app.route('/api/maintenance/<action>', methods=['POST'])
-def toggle_maintenance(action):
-    """API для включения/выключения техработ"""
-    api_key = request.headers.get('X-Maintenance-Key')
-    if api_key != MAINT_API_KEY:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-    
-    try:
-        if action == 'on':
-            with open('maintenance.flag', 'w') as f:
-                f.write('on')
-            return jsonify({'success': True, 'message': 'Техработы ВКЛЮЧЕНЫ ✅', 'status': 'maintenance_on'})
-        elif action == 'off':
-            with open('maintenance.flag', 'w') as f:
-                f.write('off')
-            return jsonify({'success': True, 'message': 'Техработы ВЫКЛЮЧЕНЫ ✅', 'status': 'maintenance_off'})
-        else:
-            return jsonify({'success': False, 'message': 'Invalid action'}), 400
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-# ===========================================
-
-async def send_telegram_notification(telegram_username, status):
-    """
-    Отправить уведомление в Telegram по username
-    status: 'approved' или 'rejected'
-    """
-def normalize_telegram_username(raw_username):
-    username = (raw_username or '').strip()
-    if not username:
-        return ''
-    return username if username.startswith('@') else f"@{username}"
-
-
-def is_numeric_chat_id(value):
-    value_str = str(value or '').strip()
-    return bool(re.fullmatch(r'-?\d+', value_str))
-
-
-async def resolve_chat_id_by_username(telegram_username):
-    normalized = normalize_telegram_username(telegram_username)
-    if not normalized:
-        return None
-
-    expected = normalized.lstrip('@').lower()
-
-    try:
-        updates = await telegram_bot.get_updates(limit=100, timeout=0)
-        for update in updates:
-            message = update.message or update.edited_message
-            if not message or not message.chat:
-                continue
-            if message.chat.type != 'private':
-                continue
-
-            candidates = []
-            if message.chat.username:
-                candidates.append(message.chat.username.lower())
-            if message.from_user and message.from_user.username:
-                candidates.append(message.from_user.username.lower())
-
-            if expected in candidates:
-                return str(message.chat.id)
-    except Exception as e:
-        logging.error(f"Ошибка при resolve_chat_id_by_username({normalized}): {e}")
-
-    return None
-
 
 async def send_telegram_notification(telegram_username, status, telegram_chat_id=None):
     """
@@ -710,6 +250,7 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=moscow_now)
     last_login_at = db.Column(db.DateTime)
     team = db.Column(db.String(50))  # Команда (Team 1 - Team 8)
+    ref_token = db.Column(db.String(32), unique=True, nullable=True)  # Уникальный реферальный токен
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
@@ -726,6 +267,52 @@ class User(db.Model):
             'created_at': self.created_at.strftime('%d.%m.%Y %H:%M') if self.created_at else None,
             'last_login_at': self.last_login_at.strftime('%d.%m.%Y %H:%M') if self.last_login_at else None
         }
+
+
+class TeamCore(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    team_name = db.Column(db.String(50), nullable=False)
+    core_index = db.Column(db.Integer, nullable=False)
+    title = db.Column(db.String(120), nullable=False)
+    lead_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=moscow_now)
+
+    lead_user = db.relationship('User', foreign_keys=[lead_user_id], lazy='joined')
+
+    __table_args__ = (
+        db.UniqueConstraint('team_name', 'core_index', name='uq_team_core'),
+    )
+
+
+class TeamSubCore(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    core_id = db.Column(db.Integer, db.ForeignKey('team_core.id'), nullable=False)
+    subcore_index = db.Column(db.Integer, nullable=False)
+    title = db.Column(db.String(120), nullable=False)
+    lead_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=moscow_now)
+
+    core = db.relationship('TeamCore', backref=db.backref('subcores', lazy=True, cascade='all, delete-orphan'))
+    lead_user = db.relationship('User', foreign_keys=[lead_user_id], lazy='joined')
+
+    __table_args__ = (
+        db.UniqueConstraint('core_id', 'subcore_index', name='uq_team_subcore'),
+    )
+
+
+class TeamAcademSlot(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    subcore_id = db.Column(db.Integer, db.ForeignKey('team_sub_core.id'), nullable=False)
+    slot_index = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True, unique=True)
+    assigned_at = db.Column(db.DateTime, nullable=True)
+
+    subcore = db.relationship('TeamSubCore', backref=db.backref('academ_slots', lazy=True, cascade='all, delete-orphan'))
+    user = db.relationship('User', lazy='joined')
+
+    __table_args__ = (
+        db.UniqueConstraint('subcore_id', 'slot_index', name='uq_team_academ_slot'),
+    )
 
 # Модель для вопросов отбора
 
@@ -751,6 +338,28 @@ class InterviewSlot(db.Model):
         }
 
 # Модель для анкет моделей/операторов
+
+
+# --- Новые статусы анкет (на русском) ---
+
+# --- Новые статусы анкет (на русском, 2026) ---
+APPLICATION_STATUS_ON_REVIEW = 'На рассмотрении'  # По умолчанию
+APPLICATION_STATUS_TRAINING = 'На обучении'
+APPLICATION_STATUS_REGISTRATION = 'На регистрации'
+APPLICATION_STATUS_DECLINED_CANDIDATE = 'Отказ со стороны кандидата'
+APPLICATION_STATUS_DECLINED_PARTNER = 'Отказ со стороны партнера'
+APPLICATION_STATUS_NO_SHOW = 'Не пришел/ла'
+
+# Список всех новых статусов для справки
+APPLICATION_STATUSES = [
+    APPLICATION_STATUS_ON_REVIEW,
+    APPLICATION_STATUS_TRAINING,
+    APPLICATION_STATUS_REGISTRATION,
+    APPLICATION_STATUS_DECLINED_CANDIDATE,
+    APPLICATION_STATUS_DECLINED_PARTNER,
+    APPLICATION_STATUS_NO_SHOW
+]
+
 class ModelOperatorApplication(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String(100), nullable=False)
@@ -766,7 +375,8 @@ class ModelOperatorApplication(db.Model):
     interview_time = db.Column(db.String(100))  # Время собеседования модели
     photos = db.Column(db.Text)  # Сохраняем пути к фото через запятую или JSON
     owner_username = db.Column(db.String(100))
-    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    # Возможные статусы: На рассмотрении, Одобрена, Отклонена, В команде, Покинул(а) команду
+    status = db.Column(db.String(32), default=APPLICATION_STATUS_ON_REVIEW)
     date_added = db.Column(db.DateTime, default=moscow_now)
     team = db.Column(db.String(50))  # Команда (Team 1 - Team 8)
     is_deleted = db.Column(db.Boolean, default=False)  # Мягкое удаление
@@ -804,7 +414,7 @@ class ChatApplication(db.Model):
     phone = db.Column(db.String(20), nullable=False)
     telegram = db.Column(db.String(100))
     owner_username = db.Column(db.String(100))
-    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    status = db.Column(db.String(32), default=APPLICATION_STATUS_ON_REVIEW)  # На рассмотрении, Одобрена, Отклонена, В команде, Покинул(а) команду
     date_added = db.Column(db.DateTime, default=moscow_now)
     team = db.Column(db.String(50))  # Команда (Team 1 - Team 8)
     is_deleted = db.Column(db.Boolean, default=False)  # Мягкое удаление
@@ -843,13 +453,18 @@ class ScoutJoinApplication(db.Model):
     device_model = db.Column(db.String(200), nullable=True)  # Модель устройства
     work_hours_per_week = db.Column(db.String(200), nullable=True)  # Часы и дни в неделю
     photo_url = db.Column(db.String(500), nullable=True)  # Путь на фото
+    ref_code = db.Column(db.String(120), nullable=True)
+    referred_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    referred_by_username = db.Column(db.String(80), nullable=True)
     date_added = db.Column(db.DateTime, default=moscow_now)
-    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    status = db.Column(db.String(32), default=APPLICATION_STATUS_ON_REVIEW)  # На рассмотрении, Одобрена, Отклонена, В команде, Покинул(а) команду
     approved_by = db.Column(db.String(120), nullable=True)
     rejected_by = db.Column(db.String(120), nullable=True)
     reviewed_at = db.Column(db.DateTime, nullable=True)
     team = db.Column(db.String(50), nullable=True)  # Команда (Team 1 - Team 8)
     is_deleted = db.Column(db.Boolean, default=False)  # Мягкое удаление
+
+    referred_by_user = db.relationship('User', foreign_keys=[referred_by_user_id], lazy='joined')
 
     def to_dict(self):
         return {
@@ -868,14 +483,63 @@ class ScoutJoinApplication(db.Model):
             'device_model': self.device_model,
             'work_hours_per_week': self.work_hours_per_week,
             'photo_url': self.photo_url,
+            'ref_code': self.ref_code,
+            'referred_by_user_id': self.referred_by_user_id,
+            'referred_by_username': self.referred_by_username,
             'date_added': self.date_added.strftime('%d.%m.%Y %H:%M') if self.date_added else None,
-            'status': self.status or 'pending',
+            'status': self.status or APPLICATION_STATUS_ON_REVIEW,
             'approved_by': self.approved_by,
             'rejected_by': self.rejected_by,
             'reviewed_at': self.reviewed_at.strftime('%d.%m.%Y %H:%M') if self.reviewed_at else None,
             'team': self.team,
             'is_deleted': self.is_deleted if hasattr(self, 'is_deleted') else False
         }
+
+
+def ensure_team_structure_seed(team_name=None):
+    """Создает стартовую структуру только если у команды вообще нет основ."""
+    changed = False
+
+    if team_name and team_name in VALID_TEAMS:
+        team_names = [team_name]
+    else:
+        team_names = list(VALID_TEAMS)
+
+    for target_team in team_names:
+        existing_core = TeamCore.query.filter_by(team_name=target_team).first()
+        if existing_core:
+            continue
+
+        core = TeamCore(team_name=target_team, core_index=1, title='Основа 1')
+        db.session.add(core)
+        db.session.flush()
+
+        subcore = TeamSubCore(core_id=core.id, subcore_index=1, title='Под-основа 1.1')
+        db.session.add(subcore)
+        db.session.flush()
+
+        db.session.add(TeamAcademSlot(subcore_id=subcore.id, slot_index=1))
+        changed = True
+
+    if changed:
+        db.session.commit()
+
+
+def renumber_team_structure(team_name):
+    """Нормализует индексы и фиксированные названия после CRUD-операций."""
+    cores = TeamCore.query.filter_by(team_name=team_name).order_by(TeamCore.core_index.asc(), TeamCore.id.asc()).all()
+    for core_position, core in enumerate(cores, start=1):
+        core.core_index = core_position
+        core.title = f'Основа {core_position}'
+
+        subcores = TeamSubCore.query.filter_by(core_id=core.id).order_by(TeamSubCore.subcore_index.asc(), TeamSubCore.id.asc()).all()
+        for subcore_position, subcore in enumerate(subcores, start=1):
+            subcore.subcore_index = subcore_position
+            subcore.title = f'Под-основа {core_position}.{subcore_position}'
+
+            slots = TeamAcademSlot.query.filter_by(subcore_id=subcore.id).order_by(TeamAcademSlot.slot_index.asc(), TeamAcademSlot.id.asc()).all()
+            for slot_position, slot in enumerate(slots, start=1):
+                slot.slot_index = slot_position
 
 # Модель для истории синхронизации статусов с внешним API
 
@@ -936,6 +600,18 @@ with app.app_context():
                 db.session.execute(text("ALTER TABLE user ADD COLUMN team VARCHAR(50)"))
                 db.session.commit()
                 print("[MIGRATION] Столбец team добавлен успешно")
+            if 'ref_token' not in cols:
+                print("[MIGRATION] Добавляю столбец ref_token в таблицу user...")
+                db.session.execute(text("ALTER TABLE user ADD COLUMN ref_token VARCHAR(32)"))
+                db.session.commit()
+                print("[MIGRATION] Столбец ref_token добавлен успешно")
+            # Генерируем токены для существующих пользователей, у которых их нет
+            users_without_token = User.query.filter(User.ref_token == None).all()
+            if users_without_token:
+                for _u in users_without_token:
+                    _u.ref_token = secrets.token_hex(8)
+                db.session.commit()
+                print(f"[MIGRATION] ref_token сгенерирован для {len(users_without_token)} пользователей")
         if 'applicant' in insp.get_table_names():
             cols = [c['name'] for c in insp.get_columns('applicant')]
             if 'team' not in cols:
@@ -994,6 +670,18 @@ with app.app_context():
                 print("[MIGRATION] Добавляю столбец motivation в таблицу scout_join_application...")
                 db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN motivation TEXT"))
                 db.session.commit()
+            if 'ref_code' not in cols:
+                print("[MIGRATION] Добавляю столбец ref_code в таблицу scout_join_application...")
+                db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN ref_code VARCHAR(120)"))
+                db.session.commit()
+            if 'referred_by_user_id' not in cols:
+                print("[MIGRATION] Добавляю столбец referred_by_user_id в таблицу scout_join_application...")
+                db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN referred_by_user_id INTEGER"))
+                db.session.commit()
+            if 'referred_by_username' not in cols:
+                print("[MIGRATION] Добавляю столбец referred_by_username в таблицу scout_join_application...")
+                db.session.execute(text("ALTER TABLE scout_join_application ADD COLUMN referred_by_username VARCHAR(80)"))
+                db.session.commit()
         if 'guest_answer' in insp.get_table_names():
             cols = [c['name'] for c in insp.get_columns('guest_answer')]
             if 'user_id' not in cols:
@@ -1042,6 +730,20 @@ with app.app_context():
                 db.session.execute(text("ALTER TABLE interview_slot ADD COLUMN slot_type VARCHAR(50) DEFAULT 'operator'"))
                 db.session.commit()
                 print("[MIGRATION] Столбец slot_type добавлен успешно")
+        if 'team_core' in insp.get_table_names():
+            cols = [c['name'] for c in insp.get_columns('team_core')]
+            if 'lead_user_id' not in cols:
+                print("[MIGRATION] Добавляю столбец lead_user_id в таблицу team_core...")
+                db.session.execute(text("ALTER TABLE team_core ADD COLUMN lead_user_id INTEGER"))
+                db.session.commit()
+                print("[MIGRATION] Столбец lead_user_id добавлен в team_core")
+        if 'team_sub_core' in insp.get_table_names():
+            cols = [c['name'] for c in insp.get_columns('team_sub_core')]
+            if 'lead_user_id' not in cols:
+                print("[MIGRATION] Добавляю столбец lead_user_id в таблицу team_sub_core...")
+                db.session.execute(text("ALTER TABLE team_sub_core ADD COLUMN lead_user_id INTEGER"))
+                db.session.commit()
+                print("[MIGRATION] Столбец lead_user_id добавлен в team_sub_core")
         # Добавление interview_time для модели
         if 'model_operator_application' in insp.get_table_names():
             cols = [c['name'] for c in insp.get_columns('model_operator_application')]
@@ -1100,6 +802,12 @@ with app.app_context():
         # If anything fails, continue — application can still run, but admin should be informed
         print(f"[MIGRATION ERROR] {str(e)}")
         pass
+
+    try:
+        ensure_team_structure_seed()
+    except Exception as e:
+        print(f"[TEAM STRUCTURE SEED ERROR] {str(e)}")
+        db.session.rollback()
 
     # Ensure admin user exists
     try:
@@ -1327,19 +1035,230 @@ def is_developer_user(user):
 
 
 def is_moderator_user(user):
-    return bool(user and (user.prefix or '').strip().lower() == 'moderator')
+    if not user:
+        return False
+    normalized_prefix = (user.prefix or '').strip().lower()
+    return normalized_prefix in {'moderator', 'модератор'}
 
 
 def can_access_admin_panel(user):
-    return bool(user and (user.is_admin or is_moderator_user(user)))
+    return bool(user and (user.is_admin or is_moderator_user(user) or user.is_owner or is_developer_user(user)))
+
+
+def can_access_team_stats_tab(user):
+    return bool(user and (user.is_owner or is_developer_user(user)))
 
 
 def has_full_admin_access(user):
     return bool(user and user.is_admin and not is_moderator_user(user))
 
 
-def get_user_applications(owner_username):
-    """Возвращает полный список анкет пользователя по всем типам."""
+def is_global_team_manager(user):
+    """Глобальный менеджер может управлять всеми командами."""
+    if not user:
+        return False
+    if user.is_owner or is_developer_user(user):
+        return True
+    # Админ без привязки к команде считается глобальным менеджером для обратной совместимости.
+    return bool(user.is_admin and not is_moderator_user(user) and not user.team)
+
+
+def is_team_admin(user):
+    """Админ команды: не модератор, с привязкой к валидной команде."""
+    return bool(
+        user
+        and user.is_admin
+        and not is_moderator_user(user)
+        and user.team in VALID_TEAMS
+    )
+
+
+def get_user_managed_teams(user):
+    """Список команд, которыми пользователь может управлять в панели структуры."""
+    if not user:
+        return set()
+
+    # Владелец и Developer имеют полный доступ ко всем командам.
+    if user.is_owner or is_developer_user(user):
+        return set(VALID_TEAMS)
+
+    # Админ команды управляет только своей командой.
+    if is_team_admin(user):
+        return {user.team}
+
+    return set()
+
+
+def can_access_team_panel(user):
+    if not user:
+        return False
+    # Владелец, Developer и full-admin имеют безусловный доступ к панели команды.
+    if user.is_owner or is_developer_user(user) or has_full_admin_access(user):
+        return True
+    if is_moderator_user(user):
+        return False
+    return bool(get_user_managed_teams(user))
+
+
+def can_administer_team(user, team_name):
+    """Может полностью администрировать команду (назначения лидов, любые изменения)."""
+    if not user or not team_name:
+        return False
+    if user.is_owner or is_developer_user(user):
+        return True
+    return bool(is_team_admin(user) and user.team == team_name)
+
+
+def can_manage_core(user, core):
+    if not user or not core:
+        return False
+    return bool(can_administer_team(user, core.team_name))
+
+
+def can_manage_subcore(user, subcore):
+    if not user or not subcore:
+        return False
+    core = TeamCore.query.get(subcore.core_id)
+    if not core:
+        return False
+    return bool(can_administer_team(user, core.team_name))
+
+
+def get_user_team_structure_position(user):
+    """Возвращает положение пользователя в командной структуре."""
+    position = {
+        'team_name': (user.team or '').strip() if user else '',
+        'core_title': '',
+        'core_index': None,
+        'subcore_title': '',
+        'subcore_index': None,
+        'slot_index': None,
+        'roles': [],
+        'has_structure': False,
+    }
+
+    if not user:
+        return position
+
+    core_lead = TeamCore.query.filter_by(lead_user_id=user.id).first()
+    subcore_lead = (
+        db.session.query(TeamSubCore)
+        .join(TeamCore, TeamCore.id == TeamSubCore.core_id)
+        .filter(TeamSubCore.lead_user_id == user.id)
+        .first()
+    )
+    slot = (
+        db.session.query(TeamAcademSlot)
+        .join(TeamSubCore, TeamSubCore.id == TeamAcademSlot.subcore_id)
+        .join(TeamCore, TeamCore.id == TeamSubCore.core_id)
+        .filter(TeamAcademSlot.user_id == user.id)
+        .first()
+    )
+
+    if core_lead:
+        position['team_name'] = core_lead.team_name or position['team_name']
+        position['core_title'] = core_lead.title or ''
+        position['core_index'] = core_lead.core_index
+        position['roles'].append('Лид основы')
+        position['has_structure'] = True
+
+    if subcore_lead:
+        position['team_name'] = subcore_lead.core.team_name or position['team_name']
+        position['core_title'] = subcore_lead.core.title or position['core_title']
+        position['core_index'] = subcore_lead.core.core_index
+        position['subcore_title'] = subcore_lead.title or ''
+        position['subcore_index'] = subcore_lead.subcore_index
+        position['roles'].append('Лид подосновы')
+        position['has_structure'] = True
+
+    if slot:
+        position['team_name'] = slot.subcore.core.team_name or position['team_name']
+        position['core_title'] = slot.subcore.core.title or position['core_title']
+        position['core_index'] = slot.subcore.core.core_index
+        position['subcore_title'] = slot.subcore.title or position['subcore_title']
+        position['subcore_index'] = slot.subcore.subcore_index
+        position['slot_index'] = slot.slot_index
+        position['roles'].append('Участник слота')
+        position['has_structure'] = True
+
+    if not position['roles']:
+        if position['team_name']:
+            position['roles'].append('Участник команды')
+        else:
+            position['roles'].append('Без назначения')
+
+    position['roles'] = list(dict.fromkeys(position['roles']))
+    return position
+
+
+def resolve_team_for_panel(actor, requested_team=None):
+    if not actor:
+        return None
+
+    managed_teams = sorted(get_user_managed_teams(actor))
+    if not managed_teams:
+        return None
+
+    team_name = (requested_team or '').strip()
+    if team_name and team_name in managed_teams:
+        return team_name
+
+    if actor.team in managed_teams:
+        return actor.team
+
+    return managed_teams[0]
+
+
+def build_team_structure_payload(team_name):
+    cores = TeamCore.query.filter_by(team_name=team_name).order_by(TeamCore.core_index.asc()).all()
+    payload = []
+
+    for core in cores:
+        subcore_rows = TeamSubCore.query.filter_by(core_id=core.id).order_by(TeamSubCore.subcore_index.asc()).all()
+        subcores_payload = []
+
+        for subcore in subcore_rows:
+            slot_rows = TeamAcademSlot.query.filter_by(subcore_id=subcore.id).order_by(TeamAcademSlot.slot_index.asc()).all()
+            slots_payload = []
+            for slot in slot_rows:
+                slots_payload.append({
+                    'id': slot.id,
+                    'slot_index': slot.slot_index,
+                    'user_id': slot.user_id,
+                    'username': slot.user.username if slot.user else None,
+                    'display_name': slot.user.display_name if slot.user else None,
+                    'prefix': slot.user.prefix if slot.user else None,
+                    'is_admin': bool(slot.user.is_admin) if slot.user else False
+                })
+
+            subcores_payload.append({
+                'id': subcore.id,
+                'subcore_index': subcore.subcore_index,
+                'title': subcore.title,
+                'lead_user_id': subcore.lead_user_id,
+                'lead_username': subcore.lead_user.username if subcore.lead_user else None,
+                'lead_display_name': subcore.lead_user.display_name if subcore.lead_user else None,
+                'slots': slots_payload,
+                'total_slots': len(slots_payload)
+            })
+
+        total_core_slots = sum(len(sc['slots']) for sc in subcores_payload)
+        payload.append({
+            'id': core.id,
+            'core_index': core.core_index,
+            'title': core.title,
+            'lead_user_id': core.lead_user_id,
+            'lead_username': core.lead_user.username if core.lead_user else None,
+            'lead_display_name': core.lead_user.display_name if core.lead_user else None,
+            'subcores': subcores_payload,
+            'total_slots': total_core_slots
+        })
+
+    return payload
+
+
+def get_user_applications(owner_username, user_id=None):
+    """Возвращает полный список анкет пользователя по всем типам, включая реферальные заявки."""
     username = (owner_username or '').strip()
     if not username:
         return []
@@ -1384,6 +1303,30 @@ def get_user_applications(owner_username):
             'status': row.status or 'pending',
             'team': row.team,
             'contact': row.telegram or row.phone or '-',
+            'date_added': row.date_added,
+            'is_deleted': bool(row.is_deleted)
+        })
+
+    # Реферальные заявки стримерш/моделей, привязанные к пользователю
+    if user_id is not None:
+        referred_models = ScoutJoinApplication.query.filter(
+            db.or_(
+                ScoutJoinApplication.referred_by_user_id == user_id,
+                ScoutJoinApplication.referred_by_username == username
+            )
+        ).all()
+    else:
+        referred_models = ScoutJoinApplication.query.filter_by(referred_by_username=username).all()
+
+    for row in referred_models:
+        items.append({
+            'kind': 'model_ref',
+            'kind_label': 'Модель (реферальная)',
+            'id': row.id,
+            'full_name': row.full_name,
+            'status': row.status or 'pending',
+            'team': row.team,
+            'contact': row.telegram_username or row.email or '-',
             'date_added': row.date_added,
             'is_deleted': bool(row.is_deleted)
         })
@@ -1506,6 +1449,7 @@ def manual():
         return redirect(url_for('login'))
     user = User.query.get(session['user_id'])
     return render_template('manual.html', current_user=user)
+
 
 # Функция для проверки занятых слотов между выбранным временем
 def check_conflicting_closed_slots(slot_start, slot_end):
@@ -1915,6 +1859,8 @@ def add_public_scout_application():
         can_stream_change = (request.form.get('can_stream_change') or '').strip()
         device_model = (request.form.get('device_model') or '').strip()
         work_hours_per_week = (request.form.get('work_hours_per_week') or '').strip()
+        ref_code_raw = (request.form.get('ref_code') or '').strip()
+        referrer_user, normalized_ref_code = resolve_referrer_user(ref_code_raw)
 
         # Для совместимости со старой схемой БД, где persuasion_text может быть NOT NULL.
         legacy_persuasion_text = motivation or f"Город: {city}. Опыт: {streaming_experience}."
@@ -1989,36 +1935,20 @@ def add_public_scout_application():
             device_model=device_model,
             work_hours_per_week=work_hours_per_week,
             photo_url=photo_url,
+            ref_code=normalized_ref_code or None,
+            referred_by_user_id=referrer_user.id if referrer_user else None,
+            referred_by_username=referrer_user.username if referrer_user else None,
+            team=referrer_user.team if referrer_user and referrer_user.team else None,
             work_time=f'{work_hours_per_week}'  # Сохраняем для совместимости
         )
 
         db.session.add(application)
         db.session.commit()
         
-        # Отправляем подтверждающее уведомление в Telegram
-        notify_sent = False
-        notify_error = None
-        if telegram_username:
-            notify_sent, resolved_chat_id, notify_error = send_telegram_notification_sync(
-                telegram_username,
-                'submitted',
-                None
-            )
-            if notify_sent and resolved_chat_id:
-                application.telegram_chat_id = resolved_chat_id
-                db.session.commit()
-        
         response_data = {
             'success': True,
             'message': 'Анкета отправлена'
         }
-        
-        # Добавляем информацию о статусе уведомления (для отладки)
-        if notify_sent:
-            response_data['telegram_notified'] = True
-        elif notify_error:
-            response_data['telegram_warning'] = 'Анкета сохранена, но не удалось отправить уведомление. Напишите боту /start.'
-        
         return jsonify(response_data), 201
     except Exception as e:
         print(f'[ERROR] Ошибка при отправке публичной анкеты: {str(e)}')
@@ -2570,7 +2500,7 @@ def admin_get_users():
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     user = User.query.get(session['user_id'])
-    if not has_full_admin_access(user):
+    if not can_access_admin_panel(user):
         return jsonify({'success': False, 'message': 'Forbidden'}), 403
 
     try:
@@ -2635,6 +2565,22 @@ def admin_get_audit_logs():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if LOGIN_ACCESS_RESTRICTED:
+        if request.method == 'POST':
+            audit_logger.warning(
+                'LOGIN_BLOCKED actor=%s action=login_blocked event="%s" ip=%s ua="%s"',
+                request.form.get('username'),
+                _safe_log_text(LOGIN_ACCESS_RESTRICTED_MESSAGE),
+                request.headers.get('X-Forwarded-For', request.remote_addr),
+                _truncate_value(request.user_agent.string, limit=180)
+            )
+            flash(LOGIN_ACCESS_RESTRICTED_MESSAGE, 'error')
+        return render_template(
+            'login.html',
+            access_restricted=True,
+            restricted_message=LOGIN_ACCESS_RESTRICTED_MESSAGE
+        )
+
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -2668,7 +2614,11 @@ def login():
                 _truncate_value(request.user_agent.string, limit=180)
             )
             flash('Неверные учётные данные', 'error')
-    return render_template('login.html')
+    return render_template(
+        'login.html',
+        access_restricted=False,
+        restricted_message=LOGIN_ACCESS_RESTRICTED_MESSAGE
+    )
 
 
 @app.route('/logout')
@@ -2738,28 +2688,39 @@ def profile():
     chatter_approved = ChatApplication.query.filter_by(owner_username=user.username, status='approved').count()
     chatter_rejected = ChatApplication.query.filter_by(owner_username=user.username, status='rejected').count()
 
+    referred_models_total = ScoutJoinApplication.query.filter_by(referred_by_user_id=user.id).count()
+    referred_models_approved = ScoutJoinApplication.query.filter_by(referred_by_user_id=user.id, status='approved').count()
+    referred_models_rejected = ScoutJoinApplication.query.filter_by(referred_by_user_id=user.id, status='rejected').count()
+
     stats = {
-        'applicants_count': operator_total + model_total + chatter_total,
-        'approved_applicants': operator_approved + model_approved + chatter_approved,
-        'rejected_applicants': operator_rejected + model_rejected + chatter_rejected,
+        'applicants_count': operator_total + model_total + referred_models_total + chatter_total,
+        'approved_applicants': operator_approved + model_approved + referred_models_approved + chatter_approved,
+        'rejected_applicants': operator_rejected + model_rejected + referred_models_rejected + chatter_rejected,
         'operators_total': operator_total,
         'operators_approved': operator_approved,
         'operators_rejected': operator_rejected,
-        'models_total': model_total,
-        'models_approved': model_approved,
-        'models_rejected': model_rejected,
+        'models_total': model_total + referred_models_total,
+        'models_approved': model_approved + referred_models_approved,
+        'models_rejected': model_rejected + referred_models_rejected,
         'chatters_total': chatter_total,
         'chatters_approved': chatter_approved,
-        'chatters_rejected': chatter_rejected
+        'chatters_rejected': chatter_rejected,
+        'referred_models_total': referred_models_total,
+        'referred_models_approved': referred_models_approved,
+        'referred_models_rejected': referred_models_rejected
     }
 
-    my_applications = get_user_applications(user.username)
+    my_applications = get_user_applications(user.username, user.id)
+    referral_url = f"{url_for('index', _external=True)}?ref={user.ref_token or user.username}"
+    team_structure = get_user_team_structure_position(user)
     return render_template(
         'profile.html',
         current_user=user,
         stats=stats,
         is_admin_view=False,
-        my_applications=my_applications
+        my_applications=my_applications,
+        referral_url=referral_url,
+        team_structure=team_structure
     )
 
 
@@ -2799,29 +2760,40 @@ def admin_view_user_profile(user_id):
     chatter_approved = ChatApplication.query.filter_by(owner_username=user.username, status='approved').count()
     chatter_rejected = ChatApplication.query.filter_by(owner_username=user.username, status='rejected').count()
 
+    referred_models_total = ScoutJoinApplication.query.filter_by(referred_by_user_id=user.id).count()
+    referred_models_approved = ScoutJoinApplication.query.filter_by(referred_by_user_id=user.id, status='approved').count()
+    referred_models_rejected = ScoutJoinApplication.query.filter_by(referred_by_user_id=user.id, status='rejected').count()
+
     stats = {
-        'applicants_count': operator_total + model_total + chatter_total,
-        'approved_applicants': operator_approved + model_approved + chatter_approved,
-        'rejected_applicants': operator_rejected + model_rejected + chatter_rejected,
+        'applicants_count': operator_total + model_total + referred_models_total + chatter_total,
+        'approved_applicants': operator_approved + model_approved + referred_models_approved + chatter_approved,
+        'rejected_applicants': operator_rejected + model_rejected + referred_models_rejected + chatter_rejected,
         'operators_total': operator_total,
         'operators_approved': operator_approved,
         'operators_rejected': operator_rejected,
-        'models_total': model_total,
-        'models_approved': model_approved,
-        'models_rejected': model_rejected,
+        'models_total': model_total + referred_models_total,
+        'models_approved': model_approved + referred_models_approved,
+        'models_rejected': model_rejected + referred_models_rejected,
         'chatters_total': chatter_total,
         'chatters_approved': chatter_approved,
-        'chatters_rejected': chatter_rejected
+        'chatters_rejected': chatter_rejected,
+        'referred_models_total': referred_models_total,
+        'referred_models_approved': referred_models_approved,
+        'referred_models_rejected': referred_models_rejected
     }
 
-    my_applications = get_user_applications(user.username)
+    my_applications = get_user_applications(user.username, user.id)
+    referral_url = f"{url_for('index', _external=True)}?ref={user.ref_token or user.username}"
+    team_structure = get_user_team_structure_position(user)
     return render_template(
         'profile.html',
         current_user=user,
         stats=stats,
         is_admin_view=True,
         admin_user=admin,
-        my_applications=my_applications
+        my_applications=my_applications,
+        referral_url=referral_url,
+        team_structure=team_structure
     )
 
 
@@ -2844,8 +2816,532 @@ def admin_panel():
     else:
         users = []
         default_tab = 'operators'
-    
+
     return render_template('admin.html', users=users, current_user=user, current_tab=default_tab)
+
+
+def _get_or_create_team_stats_demo_user(team_name, team_index):
+    username = f'demo_stats_team_{team_index}'
+    user = User.query.filter_by(username=username).first()
+    if user:
+        if user.team != team_name:
+            user.team = team_name
+        return user, False
+
+    user = User(
+        username=username,
+        password_hash=generate_password_hash(f'demo-{team_index}-stats'),
+        display_name=f'Демо {team_name}',
+        team=team_name,
+        ref_token=f'demo_stats_{team_index:02d}'
+    )
+    db.session.add(user)
+    db.session.flush()
+    return user, True
+
+
+def _seed_team_stats_demo_data():
+    now = moscow_now()
+    created = {
+        'users': 0,
+        'operators': 0,
+        'models': 0,
+        'scouts': 0
+    }
+
+    for team_index, team_name in enumerate(VALID_TEAMS, start=1):
+        demo_user, user_created = _get_or_create_team_stats_demo_user(team_name, team_index)
+        if user_created:
+            created['users'] += 1
+
+        operator_specs = [
+            ('approved', 0, 'Оператор'),
+            ('pending', 3, 'Оператор'),
+            ('rejected', 15, 'Оператор')
+        ]
+        for item_index, (status, days_ago, role_label) in enumerate(operator_specs, start=1):
+            full_name = f'DEMO {team_name} {role_label} {item_index}'
+            exists = Applicant.query.filter_by(owner_username=demo_user.username, full_name=full_name).first()
+            if exists:
+                continue
+
+            db.session.add(Applicant(
+                full_name=full_name,
+                date_of_birth='01.01.2000',
+                english_level='B1',
+                cpu_model='Ryzen 5',
+                gpu_model='RTX 3060',
+                internet_speed='250 Mbps',
+                work_experience='Демо-запись для статистики',
+                interview_time='18:00',
+                phone=f'+7999000{team_index:02d}{item_index:02d}',
+                telegram=f'@demo_{team_index}_{item_index}_operator',
+                owner_username=demo_user.username,
+                status=status,
+                team=team_name,
+                date_added=now - timedelta(days=days_ago, hours=item_index)
+            ))
+            created['operators'] += 1
+
+        model_specs = [
+            ('approved', 0, 'Модель'),
+            ('pending', 4, 'Модель')
+        ]
+        for item_index, (status, days_ago, role_label) in enumerate(model_specs, start=1):
+            full_name = f'DEMO {team_name} {role_label} {item_index}'
+            exists = ModelOperatorApplication.query.filter_by(owner_username=demo_user.username, full_name=full_name).first()
+            if exists:
+                continue
+
+            db.session.add(ModelOperatorApplication(
+                full_name=full_name,
+                city='Москва',
+                phone=f'+7888000{team_index:02d}{item_index:02d}',
+                age='22',
+                residence='одна',
+                has_dual_devices='да',
+                device_model='iPhone + PC',
+                work_hours='5/2 по 8 часов',
+                has_headphones='да',
+                telegram=f'@demo_{team_index}_{item_index}_model',
+                interview_time='16:30',
+                photos='',
+                owner_username=demo_user.username,
+                status=status,
+                team=team_name,
+                date_added=now - timedelta(days=days_ago, hours=team_index)
+            ))
+            created['models'] += 1
+
+        scout_specs = [
+            ('approved', 1, 'Стримерша'),
+            ('rejected', 12, 'Стримерша')
+        ]
+        for item_index, (status, days_ago, role_label) in enumerate(scout_specs, start=1):
+            full_name = f'DEMO {team_name} {role_label} {item_index}'
+            exists = ScoutJoinApplication.query.filter_by(referred_by_user_id=demo_user.id, full_name=full_name).first()
+            if exists:
+                continue
+
+            db.session.add(ScoutJoinApplication(
+                full_name=full_name,
+                age='21',
+                city='Санкт-Петербург',
+                motivation='Демо-запись для проверки командной статистики',
+                telegram_username=f'demo_{team_index}_{item_index}_scout',
+                work_time='4 часа в день',
+                can_stream_change='yes',
+                device_model='iPhone 14',
+                work_hours_per_week='20',
+                referred_by_user_id=demo_user.id,
+                referred_by_username=demo_user.username,
+                status=status,
+                team=team_name,
+                date_added=now - timedelta(days=days_ago, hours=item_index)
+            ))
+            created['scouts'] += 1
+
+    db.session.commit()
+    return created
+
+
+@app.route('/api/admin/team-stats/demo-seed', methods=['POST'])
+def admin_seed_team_stats_demo():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    user = User.query.get(session['user_id'])
+    if not can_access_team_stats_tab(user):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    try:
+        created = _seed_team_stats_demo_data()
+        total_created = sum(created.values())
+        if total_created == 0:
+            message = 'Демо-анкеты уже существуют, новые записи не добавлялись'
+        else:
+            message = (
+                f"Добавлено: пользователей {created['users']}, операторских анкет {created['operators']}, "
+                f"модельных анкет {created['models']}, стримерских анкет {created['scouts']}"
+            )
+        return jsonify({'success': True, 'message': message, 'created': created}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/admin/team-stats')
+def get_admin_team_stats():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    user = User.query.get(session['user_id'])
+    if not can_access_team_stats_tab(user):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    period_key = (request.args.get('period', 'day') or 'day').strip().lower()
+    period_map = {
+        'day': ('За день', timedelta(days=1)),
+        'week': ('За неделю', timedelta(days=7)),
+        'month': ('За месяц', timedelta(days=30))
+    }
+    if period_key not in period_map:
+        period_key = 'day'
+
+    period_label, period_delta = period_map[period_key]
+    since_dt = moscow_now() - period_delta
+
+    selected_team = (request.args.get('team', '') or '').strip()
+    if selected_team and selected_team not in VALID_TEAMS:
+        return jsonify({'success': False, 'message': 'Неверная команда'}), 400
+
+    scope_key = (request.args.get('scope', 'team') or 'team').strip().lower()
+    if scope_key not in {'team', 'core', 'subcore'}:
+        scope_key = 'team'
+
+    try:
+        selected_core_id = int(request.args.get('core_id')) if request.args.get('core_id') else None
+    except Exception:
+        selected_core_id = None
+    try:
+        selected_subcore_id = int(request.args.get('subcore_id')) if request.args.get('subcore_id') else None
+    except Exception:
+        selected_subcore_id = None
+
+    if not selected_team:
+        selected_team = VALID_TEAMS[0] if VALID_TEAMS else ''
+
+    nav_teams = [
+        {'team': team_name, 'emoji': TEAM_EMOJI_MAP.get(team_name, '🎯')}
+        for team_name in VALID_TEAMS
+    ]
+
+    cores = TeamCore.query.filter_by(team_name=selected_team).order_by(TeamCore.core_index.asc()).all()
+    scope_options = {
+        'cores': [
+            {
+                'id': core.id,
+                'core_index': core.core_index,
+                'title': core.title,
+                'subcores': [
+                    {
+                        'id': sub.id,
+                        'subcore_index': sub.subcore_index,
+                        'title': sub.title
+                    }
+                    for sub in TeamSubCore.query.filter_by(core_id=core.id).order_by(TeamSubCore.subcore_index.asc()).all()
+                ]
+            }
+            for core in cores
+        ]
+    }
+
+    def _to_team_payload(team_name, stats):
+        operators_total = int((stats or {}).get('operators_total', 0))
+        operators_approved = int((stats or {}).get('operators_approved', 0))
+        operators_rejected = int((stats or {}).get('operators_rejected', 0))
+        operators_pending = int((stats or {}).get('operators_pending', max(operators_total - operators_approved - operators_rejected, 0)))
+
+        models_total = int((stats or {}).get('models_total', 0))
+        models_approved = int((stats or {}).get('models_approved', 0))
+        models_rejected = int((stats or {}).get('models_rejected', 0))
+        models_pending = int((stats or {}).get('models_pending', max(models_total - models_approved - models_rejected, 0)))
+
+        return {
+            'team': team_name,
+            'emoji': TEAM_EMOJI_MAP.get(team_name, '🎯'),
+            'operators': {
+                'total': operators_total,
+                'approved': operators_approved,
+                'rejected': operators_rejected,
+                'pending': max(operators_pending, 0)
+            },
+            'models': {
+                'total': models_total,
+                'approved': models_approved,
+                'rejected': models_rejected,
+                'pending': max(models_pending, 0)
+            }
+        }
+
+    teams_payload = []
+    scope_label = 'Вся команда'
+
+    if scope_key == 'team':
+        for team_name in VALID_TEAMS:
+            team_stats = _calculate_team_panel_stats(
+                team_name=team_name,
+                scope='team',
+                since_dt=since_dt
+            )
+            teams_payload.append(_to_team_payload(team_name, team_stats))
+        scope_label = 'Вся команда'
+    else:
+        selected_stats = _calculate_team_panel_stats(
+            team_name=selected_team,
+            scope=scope_key,
+            core_id=selected_core_id,
+            subcore_id=selected_subcore_id,
+            since_dt=since_dt
+        )
+        scope_label = selected_stats.get('scope_label', 'Вся команда')
+        teams_payload.append(_to_team_payload(selected_team, selected_stats))
+
+    return jsonify({
+        'success': True,
+        'period': period_key,
+        'period_label': period_label,
+        'scope': scope_key,
+        'scope_label': scope_label,
+        'selected_team': selected_team,
+        'selected_core_id': selected_core_id,
+        'selected_subcore_id': selected_subcore_id,
+        'scope_options': scope_options,
+        'nav_teams': nav_teams,
+        'teams': teams_payload
+    })
+
+
+@app.route('/team-panel')
+def team_panel():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.pop('user_id', None)
+        return redirect(url_for('login'))
+
+    # Fail-safe: владелец и developer всегда проходят в панель команды.
+    force_full_team_panel_access = bool(user.is_owner or is_developer_user(user))
+
+    can_access = can_access_team_panel(user)
+    managed_teams = sorted(get_user_managed_teams(user))
+    audit_logger.info(
+        'TEAM_PANEL_ACCESS_CHECK actor=%s user_id=%s is_admin=%s is_owner=%s prefix=%s team=%s can_access=%s force_access=%s managed_teams=%s',
+        user.username,
+        user.id,
+        bool(user.is_admin),
+        bool(user.is_owner),
+        (user.prefix or ''),
+        (user.team or ''),
+        bool(can_access),
+        bool(force_full_team_panel_access),
+        ','.join(managed_teams)
+    )
+
+    if not (can_access or force_full_team_panel_access):
+        flash('Нет доступа к панели команды для текущего аккаунта', 'error')
+        return redirect(url_for('dashboard'))
+
+    requested_team = request.args.get('team', '')
+    team_name = resolve_team_for_panel(user, requested_team=requested_team)
+    if not team_name:
+        flash('Назначьте команду администратору, чтобы открыть панель команды', 'error')
+        return redirect(url_for('admin_panel'))
+
+    can_edit_structure = can_access or force_full_team_panel_access
+
+    ensure_team_structure_seed(team_name=team_name)
+
+    team_users = User.query.filter_by(team=team_name).order_by(User.username.asc()).all()
+    structure = build_team_structure_payload(team_name)
+
+    stats = _calculate_team_panel_stats(team_name=team_name, scope='team')
+
+    response = make_response(render_template(
+        'team_panel.html',
+        current_user=user,
+        team_name=team_name,
+        valid_teams=sorted(get_user_managed_teams(user)),
+        can_edit_structure=can_edit_structure,
+        stats=stats,
+        structure=structure,
+        team_users=team_users,
+        team_users_json=[u.to_dict() for u in team_users]
+    ))
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+
+def _calculate_team_panel_stats(team_name, scope='team', core_id=None, subcore_id=None, since_dt=None):
+    """Считает статистику панели по уровню: вся команда / основа / под-основа."""
+    scope_key = (scope or 'team').strip().lower()
+    scope_label = 'Вся команда'
+
+    core = None
+    subcore = None
+
+    if scope_key == 'core':
+        core = TeamCore.query.filter_by(id=core_id, team_name=team_name).first()
+        if not core:
+            scope_key = 'team'
+        else:
+            scope_label = f'Основа {core.core_index}'
+
+    if scope_key == 'subcore':
+        subcore = TeamSubCore.query.join(TeamCore, TeamCore.id == TeamSubCore.core_id).filter(
+            TeamSubCore.id == subcore_id,
+            TeamCore.team_name == team_name
+        ).first()
+        if not subcore:
+            scope_key = 'team'
+        else:
+            core = TeamCore.query.get(subcore.core_id)
+            scope_label = f'Под-основа {core.core_index}.{subcore.subcore_index}' if core else 'Под-основа'
+
+    slots_query = TeamAcademSlot.query.join(TeamSubCore, TeamSubCore.id == TeamAcademSlot.subcore_id).join(
+        TeamCore, TeamCore.id == TeamSubCore.core_id
+    ).filter(TeamCore.team_name == team_name)
+
+    if scope_key == 'core' and core:
+        slots_query = slots_query.filter(TeamCore.id == core.id)
+    elif scope_key == 'subcore' and subcore:
+        slots_query = slots_query.filter(TeamSubCore.id == subcore.id)
+
+    total_slots = slots_query.count()
+    assigned_slots = slots_query.filter(TeamAcademSlot.user_id.isnot(None)).count()
+
+    if scope_key == 'team':
+        member_users = User.query.filter_by(team=team_name).all()
+    elif scope_key == 'core' and core:
+        member_ids = set()
+        if core.lead_user_id:
+            member_ids.add(core.lead_user_id)
+        subcores = TeamSubCore.query.filter_by(core_id=core.id).all()
+        for sub in subcores:
+            if sub.lead_user_id:
+                member_ids.add(sub.lead_user_id)
+        slot_user_ids = db.session.query(TeamAcademSlot.user_id).join(
+            TeamSubCore, TeamSubCore.id == TeamAcademSlot.subcore_id
+        ).filter(
+            TeamSubCore.core_id == core.id,
+            TeamAcademSlot.user_id.isnot(None)
+        ).all()
+        for (uid,) in slot_user_ids:
+            if uid:
+                member_ids.add(uid)
+        member_users = User.query.filter(User.id.in_(list(member_ids))).all() if member_ids else []
+    elif scope_key == 'subcore' and subcore:
+        member_ids = set()
+        if subcore.lead_user_id:
+            member_ids.add(subcore.lead_user_id)
+        slot_user_ids = db.session.query(TeamAcademSlot.user_id).filter(
+            TeamAcademSlot.subcore_id == subcore.id,
+            TeamAcademSlot.user_id.isnot(None)
+        ).all()
+        for (uid,) in slot_user_ids:
+            if uid:
+                member_ids.add(uid)
+        member_users = User.query.filter(User.id.in_(list(member_ids))).all() if member_ids else []
+    else:
+        member_users = User.query.filter_by(team=team_name).all()
+        scope_key = 'team'
+        scope_label = 'Вся команда'
+
+    member_usernames = [u.username for u in member_users if u and u.username]
+    member_user_ids = [u.id for u in member_users if u and u.id]
+
+    if member_usernames:
+        operators_query = Applicant.query.filter(
+            Applicant.owner_username.in_(member_usernames),
+            Applicant.is_deleted == False
+        )
+        if since_dt is not None:
+            operators_query = operators_query.filter(Applicant.date_added >= since_dt)
+
+        operators_total = operators_query.count()
+        operators_approved = operators_query.filter(Applicant.status == 'approved').count()
+        operators_rejected = operators_query.filter(Applicant.status == 'rejected').count()
+
+        models_regular_query = ModelOperatorApplication.query.filter(
+            ModelOperatorApplication.owner_username.in_(member_usernames),
+            ModelOperatorApplication.is_deleted != True
+        )
+        if since_dt is not None:
+            models_regular_query = models_regular_query.filter(ModelOperatorApplication.date_added >= since_dt)
+
+        models_regular_total = models_regular_query.count()
+        models_regular_approved = models_regular_query.filter(ModelOperatorApplication.status == 'approved').count()
+        models_regular_rejected = models_regular_query.filter(ModelOperatorApplication.status == 'rejected').count()
+
+        chatters_query = ChatApplication.query.filter(
+            ChatApplication.owner_username.in_(member_usernames),
+            ChatApplication.is_deleted != True
+        )
+        if since_dt is not None:
+            chatters_query = chatters_query.filter(ChatApplication.date_added >= since_dt)
+
+        chatters_total = chatters_query.count()
+        chatters_approved = chatters_query.filter(ChatApplication.status == 'approved').count()
+        chatters_rejected = chatters_query.filter(ChatApplication.status == 'rejected').count()
+    else:
+        operators_total = 0
+        operators_approved = 0
+        operators_rejected = 0
+        models_regular_total = 0
+        models_regular_approved = 0
+        models_regular_rejected = 0
+        chatters_total = 0
+        chatters_approved = 0
+        chatters_rejected = 0
+
+    if member_user_ids or member_usernames:
+        scout_filter = [ScoutJoinApplication.is_deleted != True]
+        if member_user_ids and member_usernames:
+            scout_filter.append(db.or_(
+                ScoutJoinApplication.referred_by_user_id.in_(member_user_ids),
+                ScoutJoinApplication.referred_by_username.in_(member_usernames)
+            ))
+        elif member_user_ids:
+            scout_filter.append(ScoutJoinApplication.referred_by_user_id.in_(member_user_ids))
+        else:
+            scout_filter.append(ScoutJoinApplication.referred_by_username.in_(member_usernames))
+
+        if since_dt is not None:
+            scout_filter.append(ScoutJoinApplication.date_added >= since_dt)
+
+        scout_total = ScoutJoinApplication.query.filter(*scout_filter).count()
+        scout_approved = ScoutJoinApplication.query.filter(*scout_filter, ScoutJoinApplication.status == 'approved').count()
+        scout_rejected = ScoutJoinApplication.query.filter(*scout_filter, ScoutJoinApplication.status == 'rejected').count()
+    else:
+        scout_total = 0
+        scout_approved = 0
+        scout_rejected = 0
+
+    operators_pending = max(operators_total - operators_approved - operators_rejected, 0)
+    models_total = models_regular_total + scout_total
+    models_approved = models_regular_approved + scout_approved
+    models_rejected = models_regular_rejected + scout_rejected
+    models_pending = max(models_total - models_approved - models_rejected, 0)
+    chatters_pending = max(chatters_total - chatters_approved - chatters_rejected, 0)
+
+    return {
+        'team_name': team_name,
+        'team_emoji': TEAM_EMOJI_MAP.get(team_name, '🎯'),
+        'scope': scope_key,
+        'scope_label': scope_label,
+        'total_slots': total_slots,
+        'assigned_slots': assigned_slots,
+        'free_slots': max(0, total_slots - assigned_slots),
+        'team_users_count': len(member_users),
+        'admins_count': sum(1 for u in member_users if u.is_admin),
+        'workers_count': sum(1 for u in member_users if not u.is_admin),
+        'operators_total': operators_total,
+        'operators_approved': operators_approved,
+        'operators_rejected': operators_rejected,
+        'operators_pending': operators_pending,
+        'models_total': models_total,
+        'models_approved': models_approved,
+        'models_rejected': models_rejected,
+        'models_pending': models_pending,
+        'chatters_total': chatters_total,
+        'chatters_approved': chatters_approved,
+        'chatters_rejected': chatters_rejected,
+        'chatters_pending': chatters_pending
+    }
 
 
 @app.route('/admin/create-user', methods=['POST'])
@@ -2888,7 +3384,8 @@ def admin_create_user():
         password_hash=generate_password_hash(password),
         is_admin=is_admin_role,
         prefix=new_prefix,
-        team=team
+        team=team,
+        ref_token=secrets.token_hex(8)
     )
     db.session.add(new_user)
     db.session.commit()
@@ -2973,7 +3470,7 @@ def update_user_team(user_id):
         new_team = data.get('team', '')
         
         # Валидация команды
-        valid_teams = ['Delta', 'Den', 'ХАЦКЕР', '404', 'Bobik', 'Oir', 'Gordon', 'Rey', '']
+        valid_teams = VALID_TEAMS + ['']
         if new_team not in valid_teams:
             return jsonify({'success': False, 'message': 'Неверная команда'}), 400
         
@@ -2991,6 +3488,546 @@ def update_user_team(user_id):
         }), 200
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
+
+
+@app.route('/api/team-panel/data')
+def team_panel_data():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    actor = User.query.get(session['user_id'])
+    if not can_access_team_panel(actor):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    team_name = resolve_team_for_panel(actor, requested_team=request.args.get('team', ''))
+    if not team_name:
+        return jsonify({'success': False, 'message': 'Команда не назначена'}), 400
+
+    ensure_team_structure_seed(team_name=team_name)
+
+    structure = build_team_structure_payload(team_name)
+    team_users = User.query.filter_by(team=team_name).order_by(User.username.asc()).all()
+
+    return jsonify({
+        'success': True,
+        'team_name': team_name,
+        'structure': structure,
+        'team_users': [u.to_dict() for u in team_users],
+        'can_edit_structure': can_access_team_panel(actor)
+    }), 200
+
+
+@app.route('/api/team-panel/stats')
+def team_panel_stats():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    actor = User.query.get(session['user_id'])
+    if not can_access_team_panel(actor):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    team_name = resolve_team_for_panel(actor, requested_team=request.args.get('team', ''))
+    if not team_name:
+        return jsonify({'success': False, 'message': 'Команда не назначена'}), 400
+
+    scope = (request.args.get('scope') or 'team').strip().lower()
+    core_id_raw = request.args.get('core_id')
+    subcore_id_raw = request.args.get('subcore_id')
+
+    try:
+        core_id = int(core_id_raw) if core_id_raw else None
+    except Exception:
+        core_id = None
+    try:
+        subcore_id = int(subcore_id_raw) if subcore_id_raw else None
+    except Exception:
+        subcore_id = None
+
+    stats = _calculate_team_panel_stats(
+        team_name=team_name,
+        scope=scope,
+        core_id=core_id,
+        subcore_id=subcore_id
+    )
+
+    return jsonify({
+        'success': True,
+        'team_name': team_name,
+        'stats': stats
+    }), 200
+
+
+@app.route('/api/team-panel/slot/assign', methods=['POST'])
+def assign_team_panel_slot():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    actor = User.query.get(session['user_id'])
+    if not can_access_team_panel(actor):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    data = request.get_json() or {}
+    slot_id = data.get('slot_id')
+    user_id = data.get('user_id')
+
+    if not slot_id or not user_id:
+        return jsonify({'success': False, 'message': 'slot_id и user_id обязательны'}), 400
+
+    slot = TeamAcademSlot.query.get(slot_id)
+    target_user = User.query.get(user_id)
+    if not slot or not target_user:
+        return jsonify({'success': False, 'message': 'Слот или пользователь не найден'}), 404
+
+    subcore = TeamSubCore.query.get(slot.subcore_id)
+    core = TeamCore.query.get(subcore.core_id) if subcore else None
+    if not core:
+        return jsonify({'success': False, 'message': 'Структура команды повреждена'}), 400
+
+    if not can_manage_subcore(actor, subcore):
+        return jsonify({'success': False, 'message': 'Нет прав управлять этой под-основой'}), 403
+
+    if target_user.team != core.team_name:
+        return jsonify({'success': False, 'message': 'Пользователь должен состоять в этой команде'}), 400
+
+    busy_message = _find_busy_assignment_in_team(
+        team_name=core.team_name,
+        user_id=target_user.id,
+        exclude_slot_id=slot.id
+    )
+    if busy_message:
+        return jsonify({'success': False, 'message': busy_message}), 400
+
+    slot.user_id = target_user.id
+    slot.assigned_at = moscow_now()
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Пользователь назначен в слот'}), 200
+
+
+@app.route('/api/team-panel/slot/clear', methods=['POST'])
+def clear_team_panel_slot():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    actor = User.query.get(session['user_id'])
+    if not can_access_team_panel(actor):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    data = request.get_json() or {}
+    slot_id = data.get('slot_id')
+    if not slot_id:
+        return jsonify({'success': False, 'message': 'slot_id обязателен'}), 400
+
+    slot = TeamAcademSlot.query.get(slot_id)
+    if not slot:
+        return jsonify({'success': False, 'message': 'Слот не найден'}), 404
+
+    subcore = TeamSubCore.query.get(slot.subcore_id)
+    core = TeamCore.query.get(subcore.core_id) if subcore else None
+    if not core:
+        return jsonify({'success': False, 'message': 'Структура команды повреждена'}), 400
+
+    if not can_manage_subcore(actor, subcore):
+        return jsonify({'success': False, 'message': 'Нет прав управлять этой под-основой'}), 403
+
+    slot.user_id = None
+    slot.assigned_at = None
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Слот очищен'}), 200
+
+
+def _validate_team_panel_target_user(actor, team_name, user_id):
+    target_user = User.query.get(user_id)
+    if not target_user:
+        return None, (jsonify({'success': False, 'message': 'Пользователь не найден'}), 404)
+
+    if team_name not in get_user_managed_teams(actor):
+        return None, (jsonify({'success': False, 'message': 'Нет доступа к этой команде'}), 403)
+
+    if target_user.team != team_name:
+        return None, (jsonify({'success': False, 'message': 'Пользователь должен состоять в этой команде'}), 400)
+
+    return target_user, None
+
+
+def _find_busy_assignment_in_team(team_name, user_id, exclude_slot_id=None, exclude_core_id=None, exclude_subcore_id=None):
+    slot_query = TeamAcademSlot.query.join(TeamSubCore, TeamSubCore.id == TeamAcademSlot.subcore_id).join(
+        TeamCore, TeamCore.id == TeamSubCore.core_id
+    ).filter(
+        TeamCore.team_name == team_name,
+        TeamAcademSlot.user_id == user_id
+    )
+    if exclude_slot_id:
+        slot_query = slot_query.filter(TeamAcademSlot.id != exclude_slot_id)
+    if slot_query.first():
+        return 'Пользователь уже назначен в другой слот'
+
+    core_query = TeamCore.query.filter(
+        TeamCore.team_name == team_name,
+        TeamCore.lead_user_id == user_id
+    )
+    if exclude_core_id:
+        core_query = core_query.filter(TeamCore.id != exclude_core_id)
+    if core_query.first():
+        return 'Пользователь уже назначен ответственным за основу'
+
+    subcore_query = TeamSubCore.query.join(TeamCore, TeamCore.id == TeamSubCore.core_id).filter(
+        TeamCore.team_name == team_name,
+        TeamSubCore.lead_user_id == user_id
+    )
+    if exclude_subcore_id:
+        subcore_query = subcore_query.filter(TeamSubCore.id != exclude_subcore_id)
+    if subcore_query.first():
+        return 'Пользователь уже назначен ответственным за под-основу'
+
+    return None
+
+
+@app.route('/api/team-panel/core/assign', methods=['POST'])
+def assign_team_panel_core_lead():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    actor = User.query.get(session['user_id'])
+    if not can_access_team_panel(actor):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    data = request.get_json() or {}
+    core_id = data.get('core_id')
+    user_id = data.get('user_id')
+    if not core_id or not user_id:
+        return jsonify({'success': False, 'message': 'core_id и user_id обязательны'}), 400
+
+    core = TeamCore.query.get(core_id)
+    if not core:
+        return jsonify({'success': False, 'message': 'Основа не найдена'}), 404
+
+    if not can_administer_team(actor, core.team_name):
+        return jsonify({'success': False, 'message': 'Только админ команды может назначать лидера основы'}), 403
+
+    target_user, error_response = _validate_team_panel_target_user(actor, core.team_name, user_id)
+    if error_response:
+        return error_response
+
+    busy_message = _find_busy_assignment_in_team(
+        team_name=core.team_name,
+        user_id=target_user.id,
+        exclude_core_id=core.id
+    )
+    if busy_message:
+        return jsonify({'success': False, 'message': busy_message}), 400
+
+    core.lead_user_id = target_user.id
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Ответственный за основу назначен'}), 200
+
+
+@app.route('/api/team-panel/core/clear', methods=['POST'])
+def clear_team_panel_core_lead():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    actor = User.query.get(session['user_id'])
+    if not can_access_team_panel(actor):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    data = request.get_json() or {}
+    core_id = data.get('core_id')
+    if not core_id:
+        return jsonify({'success': False, 'message': 'core_id обязателен'}), 400
+
+    core = TeamCore.query.get(core_id)
+    if not core:
+        return jsonify({'success': False, 'message': 'Основа не найдена'}), 404
+
+    if not can_administer_team(actor, core.team_name):
+        return jsonify({'success': False, 'message': 'Только админ команды может снимать лидера основы'}), 403
+
+    core.lead_user_id = None
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Ответственный за основу снят'}), 200
+
+
+@app.route('/api/team-panel/subcore/assign', methods=['POST'])
+def assign_team_panel_subcore_lead():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    actor = User.query.get(session['user_id'])
+    if not can_access_team_panel(actor):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    data = request.get_json() or {}
+    subcore_id = data.get('subcore_id')
+    user_id = data.get('user_id')
+    if not subcore_id or not user_id:
+        return jsonify({'success': False, 'message': 'subcore_id и user_id обязательны'}), 400
+
+    subcore = TeamSubCore.query.get(subcore_id)
+    if not subcore:
+        return jsonify({'success': False, 'message': 'Под-основа не найдена'}), 404
+
+    core = TeamCore.query.get(subcore.core_id)
+    if not core:
+        return jsonify({'success': False, 'message': 'Основа не найдена'}), 404
+
+    if not can_manage_core(actor, core):
+        return jsonify({'success': False, 'message': 'Нет прав управлять этой основой'}), 403
+
+    target_user, error_response = _validate_team_panel_target_user(actor, core.team_name, user_id)
+    if error_response:
+        return error_response
+
+    busy_message = _find_busy_assignment_in_team(
+        team_name=core.team_name,
+        user_id=target_user.id,
+        exclude_subcore_id=subcore.id
+    )
+    if busy_message:
+        return jsonify({'success': False, 'message': busy_message}), 400
+
+    subcore.lead_user_id = target_user.id
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Ответственный за под-основу назначен'}), 200
+
+
+@app.route('/api/team-panel/subcore/clear', methods=['POST'])
+def clear_team_panel_subcore_lead():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    actor = User.query.get(session['user_id'])
+    if not can_access_team_panel(actor):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    data = request.get_json() or {}
+    subcore_id = data.get('subcore_id')
+    if not subcore_id:
+        return jsonify({'success': False, 'message': 'subcore_id обязателен'}), 400
+
+    subcore = TeamSubCore.query.get(subcore_id)
+    if not subcore:
+        return jsonify({'success': False, 'message': 'Под-основа не найдена'}), 404
+
+    core = TeamCore.query.get(subcore.core_id)
+    if not core:
+        return jsonify({'success': False, 'message': 'Основа не найдена'}), 404
+
+    if not can_manage_core(actor, core):
+        return jsonify({'success': False, 'message': 'Нет прав управлять этой основой'}), 403
+
+    subcore.lead_user_id = None
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Ответственный за под-основу снят'}), 200
+
+
+@app.route('/api/team-panel/core/create', methods=['POST'])
+def create_team_panel_core():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    actor = User.query.get(session['user_id'])
+    if not can_access_team_panel(actor):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    team_name = resolve_team_for_panel(actor, requested_team=(request.get_json(silent=True) or {}).get('team'))
+    if not team_name:
+        return jsonify({'success': False, 'message': 'Команда не найдена'}), 400
+    if not can_administer_team(actor, team_name):
+        return jsonify({'success': False, 'message': 'Только админ команды может создавать основу'}), 403
+
+    max_core_index = db.session.query(db.func.max(TeamCore.core_index)).filter_by(team_name=team_name).scalar() or 0
+    next_core_index = int(max_core_index) + 1
+
+    core = TeamCore(team_name=team_name, core_index=next_core_index, title=f'Основа {next_core_index}')
+    db.session.add(core)
+    db.session.flush()
+
+    subcore = TeamSubCore(core_id=core.id, subcore_index=1, title=f'Под-основа {next_core_index}.1')
+    db.session.add(subcore)
+    db.session.flush()
+
+    db.session.add(TeamAcademSlot(subcore_id=subcore.id, slot_index=1))
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': f'Основа {next_core_index} создана'}), 200
+
+
+@app.route('/api/team-panel/core/delete', methods=['POST'])
+def delete_team_panel_core():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    actor = User.query.get(session['user_id'])
+    if not can_access_team_panel(actor):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    data = request.get_json() or {}
+    core_id = data.get('core_id')
+    if not core_id:
+        return jsonify({'success': False, 'message': 'core_id обязателен'}), 400
+
+    core = TeamCore.query.get(core_id)
+    if not core:
+        return jsonify({'success': False, 'message': 'Основа не найдена'}), 404
+    if not can_administer_team(actor, core.team_name):
+        return jsonify({'success': False, 'message': 'Только админ команды может удалять основу'}), 403
+
+    cores_count = TeamCore.query.filter_by(team_name=core.team_name).count()
+    if cores_count <= 1:
+        return jsonify({'success': False, 'message': 'Нельзя удалить последнюю основу в команде'}), 400
+
+    team_name = core.team_name
+    db.session.delete(core)
+    db.session.flush()
+    renumber_team_structure(team_name)
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Основа удалена'}), 200
+
+
+@app.route('/api/team-panel/subcore/create', methods=['POST'])
+def create_team_panel_subcore():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    actor = User.query.get(session['user_id'])
+    if not can_access_team_panel(actor):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    data = request.get_json() or {}
+    core_id = data.get('core_id')
+    if not core_id:
+        return jsonify({'success': False, 'message': 'core_id обязателен'}), 400
+
+    core = TeamCore.query.get(core_id)
+    if not core:
+        return jsonify({'success': False, 'message': 'Основа не найдена'}), 404
+    if not can_administer_team(actor, core.team_name):
+        return jsonify({'success': False, 'message': 'Только админ команды может создавать под-основы'}), 403
+
+    max_subcore_index = db.session.query(db.func.max(TeamSubCore.subcore_index)).filter_by(core_id=core.id).scalar() or 0
+    next_subcore_index = int(max_subcore_index) + 1
+    subcore = TeamSubCore(
+        core_id=core.id,
+        subcore_index=next_subcore_index,
+        title=f'Под-основа {core.core_index}.{next_subcore_index}'
+    )
+    db.session.add(subcore)
+    db.session.flush()
+
+    db.session.add(TeamAcademSlot(subcore_id=subcore.id, slot_index=1))
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': f'Под-основа {core.core_index}.{next_subcore_index} создана'}), 200
+
+
+@app.route('/api/team-panel/subcore/delete', methods=['POST'])
+def delete_team_panel_subcore():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    actor = User.query.get(session['user_id'])
+    if not can_access_team_panel(actor):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    data = request.get_json() or {}
+    subcore_id = data.get('subcore_id')
+    if not subcore_id:
+        return jsonify({'success': False, 'message': 'subcore_id обязателен'}), 400
+
+    subcore = TeamSubCore.query.get(subcore_id)
+    if not subcore:
+        return jsonify({'success': False, 'message': 'Под-основа не найдена'}), 404
+
+    core = TeamCore.query.get(subcore.core_id)
+    if not core:
+        return jsonify({'success': False, 'message': 'Основа не найдена'}), 404
+    if not can_administer_team(actor, core.team_name):
+        return jsonify({'success': False, 'message': 'Только админ команды может удалять под-основу'}), 403
+
+    subcores_count = TeamSubCore.query.filter_by(core_id=core.id).count()
+    if subcores_count <= 1:
+        return jsonify({'success': False, 'message': 'Нельзя удалить последнюю под-основу в основе'}), 400
+
+    db.session.delete(subcore)
+    db.session.flush()
+    renumber_team_structure(core.team_name)
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Под-основа удалена'}), 200
+
+
+@app.route('/api/team-panel/slot/create', methods=['POST'])
+def create_team_panel_slot():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    actor = User.query.get(session['user_id'])
+    if not can_access_team_panel(actor):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    data = request.get_json() or {}
+    subcore_id = data.get('subcore_id')
+    if not subcore_id:
+        return jsonify({'success': False, 'message': 'subcore_id обязателен'}), 400
+
+    subcore = TeamSubCore.query.get(subcore_id)
+    if not subcore:
+        return jsonify({'success': False, 'message': 'Под-основа не найдена'}), 404
+
+    core = TeamCore.query.get(subcore.core_id)
+    if not core:
+        return jsonify({'success': False, 'message': 'Основа не найдена'}), 404
+    if not can_administer_team(actor, core.team_name):
+        return jsonify({'success': False, 'message': 'Только админ команды может создавать академ-слоты'}), 403
+
+    max_slot_index = db.session.query(db.func.max(TeamAcademSlot.slot_index)).filter_by(subcore_id=subcore.id).scalar() or 0
+    next_slot_index = int(max_slot_index) + 1
+    db.session.add(TeamAcademSlot(subcore_id=subcore.id, slot_index=next_slot_index))
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': f'Академ {next_slot_index} создан'}), 200
+
+
+@app.route('/api/team-panel/slot/delete', methods=['POST'])
+def delete_team_panel_slot():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    actor = User.query.get(session['user_id'])
+    if not can_access_team_panel(actor):
+        return jsonify({'success': False, 'message': 'Forbidden'}), 403
+
+    data = request.get_json() or {}
+    slot_id = data.get('slot_id')
+    if not slot_id:
+        return jsonify({'success': False, 'message': 'slot_id обязателен'}), 400
+
+    slot = TeamAcademSlot.query.get(slot_id)
+    if not slot:
+        return jsonify({'success': False, 'message': 'Слот не найден'}), 404
+
+    subcore = TeamSubCore.query.get(slot.subcore_id)
+    if not subcore:
+        return jsonify({'success': False, 'message': 'Под-основа не найдена'}), 404
+    core = TeamCore.query.get(subcore.core_id)
+    if not core:
+        return jsonify({'success': False, 'message': 'Основа не найдена'}), 404
+    if not can_administer_team(actor, core.team_name):
+        return jsonify({'success': False, 'message': 'Только админ команды может удалять академ-слоты'}), 403
+
+    slots_count = TeamAcademSlot.query.filter_by(subcore_id=subcore.id).count()
+    if slots_count <= 1:
+        return jsonify({'success': False, 'message': 'Нельзя удалить последний академ-слот в под-основе'}), 400
+
+    db.session.delete(slot)
+    db.session.flush()
+    renumber_team_structure(core.team_name)
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Академ-слот удален'}), 200
 
 @app.route('/api/delete/<int:applicant_id>', methods=['DELETE'])
 def delete_applicant(applicant_id):

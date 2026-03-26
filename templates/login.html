@@ -252,6 +252,30 @@
             border-color: rgba(239, 68, 68, 0.4);
         }
 
+        .restricted-panel {
+            margin-top: 8px;
+            padding: 24px 22px;
+            border-radius: 18px;
+            border: 1px solid rgba(0, 191, 255, 0.22);
+            background:
+                linear-gradient(180deg, rgba(0, 102, 255, 0.14) 0%, rgba(10, 14, 26, 0.92) 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            text-align: center;
+        }
+
+        .restricted-panel-title {
+            font-size: 1.15em;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 10px;
+        }
+
+        .restricted-panel-text {
+            color: #c1c9da;
+            line-height: 1.6;
+            font-size: 0.98em;
+        }
+
         .back-link {
             display: inline-flex;
             align-items: center;
@@ -284,7 +308,7 @@
         <div class="login-card">
             <div class="login-header">
                 <div class="logo">LIAM<span class="logo-accent">KING</span></div>
-                <p class="login-subtitle">Вход в систему</p>
+                <p class="login-subtitle">{% if access_restricted %}Доступ к панели временно закрыт{% else %}Вход в систему{% endif %}</p>
             </div>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -295,21 +319,35 @@
               {% endif %}
             {% endwith %}
 
-            <form method="post" action="{{ url_for('login') }}">
-                <div class="form-group">
-                    <label for="username">Логин</label>
-                    <input type="text" id="username" name="username" placeholder="Введите ваш логин" required autofocus>
-                </div>
-                <div class="form-group">
-                    <label for="password">Пароль</label>
-                    <input type="password" id="password" name="password" placeholder="Введите пароль" required>
-                </div>
-                <div class="remember-row">
-                    <input type="checkbox" id="remember_me" name="remember_me">
-                    <label for="remember_me">Запомнить меня на 30 дней</label>
-                </div>
-                <button type="submit" class="btn btn-primary">Войти</button>
-            </form>
+                        {% if access_restricted %}
+                            <div class="message error">{{ restricted_message }}</div>
+                        {% endif %}
+
+            {% if access_restricted %}
+              <div class="restricted-panel">
+                  <div class="restricted-panel-title">Вход временно недоступен</div>
+                  <div class="restricted-panel-text">
+                      {{ restricted_message }}<br>
+                      Попробуйте зайти позже или дождитесь отдельного уведомления об открытии доступа.
+                  </div>
+              </div>
+            {% else %}
+              <form method="post" action="{{ url_for('login') }}">
+                  <div class="form-group">
+                      <label for="username">Логин</label>
+                      <input type="text" id="username" name="username" placeholder="Введите ваш логин" required autofocus>
+                  </div>
+                  <div class="form-group">
+                      <label for="password">Пароль</label>
+                      <input type="password" id="password" name="password" placeholder="Введите пароль" required>
+                  </div>
+                  <div class="remember-row">
+                      <input type="checkbox" id="remember_me" name="remember_me">
+                      <label for="remember_me">Запомнить меня на 30 дней</label>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Войти</button>
+              </form>
+            {% endif %}
 
             <a href="/" class="back-link">
                 ← Вернуться на главную

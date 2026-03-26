@@ -66,6 +66,184 @@
             backdrop-filter: blur(10px);
         }
 
+        .stats-panel {
+            display: grid;
+            gap: 14px;
+        }
+
+        .stats-hero {
+            position: relative;
+            overflow: hidden;
+            border-radius: 22px;
+            border: 1px solid rgba(0, 191, 255, 0.22);
+            background:
+                radial-gradient(circle at top right, rgba(0, 191, 255, 0.16), transparent 38%),
+                linear-gradient(135deg, rgba(0, 102, 255, 0.18), rgba(10, 14, 26, 0.92));
+            padding: 22px;
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+        }
+
+        .stats-hero::after {
+            content: '';
+            position: absolute;
+            inset: auto -40px -40px auto;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.12), transparent 70%);
+            pointer-events: none;
+        }
+
+        .stats-hero-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 18px;
+        }
+
+        .stats-hero-title {
+            display: grid;
+            gap: 6px;
+        }
+
+        .stats-kicker {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: rgba(138, 146, 166, 0.88);
+        }
+
+        .stats-hero-title strong {
+            font-size: clamp(1.6rem, 3vw, 2.2rem);
+            letter-spacing: -0.04em;
+            color: var(--white);
+            line-height: 1;
+        }
+
+        .stats-hero-title span {
+            color: rgba(219, 234, 254, 0.8);
+            font-size: 0.95rem;
+        }
+
+        .stats-hero-total {
+            min-width: 132px;
+            text-align: right;
+        }
+
+        .stats-hero-total .value {
+            display: block;
+            font-size: clamp(2.1rem, 4vw, 3rem);
+            line-height: 0.95;
+            font-weight: 800;
+            color: var(--white);
+            text-shadow: 0 0 20px rgba(0, 191, 255, 0.2);
+        }
+
+        .stats-hero-total .label {
+            display: block;
+            margin-top: 6px;
+            color: rgba(191, 219, 254, 0.76);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .stats-hero-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .stats-hero-pill {
+            border-radius: 16px;
+            padding: 14px 16px;
+            background: rgba(10, 14, 26, 0.46);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .stats-hero-pill .label {
+            display: block;
+            color: rgba(138, 146, 166, 0.88);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+        }
+
+        .stats-hero-pill .value {
+            display: block;
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: var(--white);
+        }
+
+        .stats-hero-pill.approved .value { color: #4ade80; }
+        .stats-hero-pill.rejected .value { color: #fb7185; }
+        .stats-hero-pill.revenue .value { color: #fbbf24; }
+
+        .stats-group {
+            display: grid;
+            gap: 10px;
+        }
+
+        .profile-structure-line {
+            margin-top: 8px;
+            color: rgba(191, 219, 254, 0.82);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .profile-structure-line strong {
+            color: var(--white);
+            font-weight: 700;
+        }
+
+        .stats-sections {
+            display: grid;
+            gap: 12px;
+        }
+
+        .stats-section {
+            border: 1px solid rgba(0, 102, 255, 0.14);
+            border-radius: 18px;
+            background: rgba(8, 12, 24, 0.38);
+            padding: 12px;
+        }
+
+        .stats-section-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .stats-group-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: baseline;
+            padding: 0 2px;
+            margin-bottom: 8px;
+        }
+
+        .stats-group-head h3 {
+            margin: 0;
+            font-size: 0.95rem;
+            color: var(--white);
+            letter-spacing: -0.02em;
+        }
+
+        .stats-group-head span {
+            color: rgba(138, 146, 166, 0.82);
+            font-size: 0.78rem;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
         .stat-label {
             color: rgba(138, 146, 166, 0.9) !important;
             letter-spacing: 0.7px;
@@ -89,6 +267,132 @@
         .stat-value[style*="#f59e0b"] {
             color: #fbbf24 !important;
             text-shadow: 0 0 14px rgba(251, 191, 36, 0.25);
+        }
+
+        .stat-card {
+            position: relative;
+            padding: 12px 12px 14px;
+            border-radius: 16px;
+            overflow: hidden;
+            min-height: 98px;
+            display: grid;
+            align-content: space-between;
+            gap: 10px;
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 3px;
+            background: linear-gradient(90deg, rgba(0, 102, 255, 0.8), rgba(0, 191, 255, 0.7));
+            opacity: 0.8;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(0, 191, 255, 0.32) !important;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.24);
+        }
+
+        .stat-card.operator::before {
+            background: linear-gradient(90deg, rgba(96, 165, 250, 0.95), rgba(0, 191, 255, 0.75));
+        }
+
+        .stat-card.model::before {
+            background: linear-gradient(90deg, rgba(244, 114, 182, 0.95), rgba(248, 113, 113, 0.7));
+        }
+
+        .stat-card.chatter::before {
+            background: linear-gradient(90deg, rgba(168, 85, 247, 0.7), rgba(0, 191, 255, 0.65));
+        }
+
+        .stat-card.finance::before {
+            background: linear-gradient(90deg, rgba(251, 191, 36, 0.95), rgba(245, 158, 11, 0.72));
+        }
+
+        .stat-card.summary::before {
+            background: linear-gradient(90deg, rgba(52, 211, 153, 0.95), rgba(0, 191, 255, 0.72));
+        }
+
+        .stat-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .stat-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            color: #dbeafe;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            flex: 0 0 auto;
+        }
+
+        .stat-label-wrap {
+            display: grid;
+            gap: 4px;
+        }
+
+        .stat-sub {
+            font-size: 0.68rem;
+            color: rgba(138, 146, 166, 0.75);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .stat-label {
+            font-size: 0.92rem;
+            line-height: 1.15;
+        }
+
+        .stat-value-wrap {
+            display: grid;
+            gap: 4px;
+            align-items: start;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            line-height: 1;
+        }
+
+        .stat-trend {
+            color: rgba(138, 146, 166, 0.74);
+            font-size: 0.74rem;
+            line-height: 1.1;
+        }
+
+        @media (max-width: 720px) {
+            .stats-hero-head {
+                grid-template-columns: 1fr;
+                display: grid;
+            }
+
+            .stats-hero-total {
+                text-align: left;
+            }
+
+            .stats-hero-metrics {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-section-grid {
+                grid-template-columns: 1fr;
+            }
+
         }
 
         .btn-primary {
@@ -223,6 +527,16 @@
     </style>
 </head>
 <body class="profile-page">
+    {% set team_structure = team_structure|default({
+        'team_name': '',
+        'core_title': '',
+        'core_index': none,
+        'subcore_title': '',
+        'subcore_index': none,
+        'slot_index': none,
+        'roles': ['Без назначения'],
+        'has_structure': false
+    }) %}
     <div class="profile-shell">
         <header>
             <div class="header-row">
@@ -241,6 +555,9 @@
                         <a href="{{ url_for('profile') }}" class="nav-link active">Профиль</a>
                         {% if current_user.is_admin or (current_user.prefix and current_user.prefix|lower == 'moderator') %}
                             <a href="{{ url_for('admin_panel') }}" class="nav-link">Админка</a>
+                            {% if (current_user.is_admin or current_user.is_owner or (current_user.prefix or '')|lower == 'developer') and (current_user.prefix or '')|lower != 'moderator' and (current_user.prefix or '')|lower != 'модератор' %}
+                            <a href="{{ url_for('team_panel') }}" class="nav-link">Панель команды</a>
+                            {% endif %}
                         {% endif %}
                     {% endif %}
                     <a href="{{ url_for('logout') }}" class="nav-link danger">Выйти</a>
@@ -260,6 +577,13 @@
                 <div class="profile-title">
                     <h1>{{ current_user.display_name if current_user.display_name else current_user.username }}</h1>
                     <p>@{{ current_user.username }}</p>
+                    <div class="profile-structure-line">
+                        <strong>Структура:</strong>
+                        {{ team_structure.team_name if team_structure.team_name else 'Без команды' }}
+                        {% if team_structure.core_title %} • Основа: {{ team_structure.core_title }}{% endif %}
+                        {% if team_structure.subcore_title %} • Подоснова: {{ team_structure.subcore_title }}{% endif %}
+                        {% if team_structure.slot_index is not none %} • Слот №{{ team_structure.slot_index }}{% endif %}
+                    </div>
                     <div class="profile-badges">
                         {% if current_user.prefix %}
                             <span class="badge owner">{{ current_user.prefix }}</span>
@@ -291,88 +615,186 @@
         <section class="profile-grid">
             <div class="profile-card">
                 <h2>Статистика</h2>
-                <div class="stat-grid">
-                    {% if not current_user.is_admin and not current_user.is_owner %}
-                        <!-- Статистика для рабочих -->
-                        <div class="stat-card">
-                            <span class="stat-label">Всего анкет</span>
-                            <span class="stat-value">{{ stats.applicants_count }}</span>
+                <div class="stats-panel">
+                    <div class="stats-hero">
+                        <div class="stats-hero-head">
+                            <div class="stats-hero-title">
+                                <span class="stats-kicker">Личный результат</span>
+                                <strong>{{ current_user.display_name if current_user.display_name else current_user.username }}</strong>
+                                <span>Все цифры собираются по вашим анкетам и приглашённым моделям.</span>
+                            </div>
+                            <div class="stats-hero-total">
+                                <span class="value">{{ stats.applicants_count }}</span>
+                                <span class="label">Всего анкет</span>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <span class="stat-label">✅ Одобрено</span>
-                            <span class="stat-value" style="color: #22c55e;">{{ stats.approved_applicants }}</span>
+                        <div class="stats-hero-metrics">
+                            <div class="stats-hero-pill approved">
+                                <span class="label">Одобрено</span>
+                                <span class="value">{{ stats.approved_applicants }}</span>
+                            </div>
+                            <div class="stats-hero-pill rejected">
+                                <span class="label">Отклонено</span>
+                                <span class="value">{{ stats.rejected_applicants }}</span>
+                            </div>
+                            <div class="stats-hero-pill revenue">
+                                <span class="label">Заработано</span>
+                                <span class="value">${{ current_user.earned_amount if current_user.earned_amount else 0 }}</span>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <span class="stat-label">❌ Отклонено</span>
-                            <span class="stat-value" style="color: #ef4444;">{{ stats.rejected_applicants }}</span>
+                    </div>
+
+                    <div class="stats-group">
+                        <div class="stats-group-head">
+                            <h3>По направлениям</h3>
+                            <span>Разбивка по типам анкет</span>
                         </div>
-                        <div class="stat-card">
-                            <span class="stat-label">👨‍💻 Операторы: всего</span>
-                            <span class="stat-value">{{ stats.operators_total }}</span>
+                        <div class="stats-sections">
+                            <section class="stats-section">
+                                <div class="stats-group-head">
+                                    <h3>👨‍💻 Операторы</h3>
+                                    <span>Текущий срез</span>
+                                </div>
+                                <div class="stats-section-grid">
+                                    <div class="stat-card operator">
+                                        <div class="stat-card-head">
+                                            <div class="stat-label-wrap">
+                                                <span class="stat-sub">Направление</span>
+                                                <span class="stat-label">Всего</span>
+                                            </div>
+                                            <span class="stat-icon">👨‍💻</span>
+                                        </div>
+                                        <div class="stat-value-wrap">
+                                            <span class="stat-value">{{ stats.operators_total }}</span>
+                                            <span class="stat-trend">анкет</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card operator">
+                                        <div class="stat-card-head">
+                                            <div class="stat-label-wrap">
+                                                <span class="stat-sub">Статус</span>
+                                                <span class="stat-label">Одобрены</span>
+                                            </div>
+                                            <span class="stat-icon">✅</span>
+                                        </div>
+                                        <div class="stat-value-wrap">
+                                            <span class="stat-value" style="color: #22c55e;">{{ stats.operators_approved }}</span>
+                                            <span class="stat-trend">прошли</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card operator">
+                                        <div class="stat-card-head">
+                                            <div class="stat-label-wrap">
+                                                <span class="stat-sub">Статус</span>
+                                                <span class="stat-label">Отклонены</span>
+                                            </div>
+                                            <span class="stat-icon">❌</span>
+                                        </div>
+                                        <div class="stat-value-wrap">
+                                            <span class="stat-value" style="color: #ef4444;">{{ stats.operators_rejected }}</span>
+                                            <span class="stat-trend">отказ</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="stats-section">
+                                <div class="stats-group-head">
+                                    <h3>💃 Модели</h3>
+                                    <span>С учётом реферальных</span>
+                                </div>
+                                <div class="stats-section-grid">
+                                    <div class="stat-card model">
+                                        <div class="stat-card-head">
+                                            <div class="stat-label-wrap">
+                                                <span class="stat-sub">Направление</span>
+                                                <span class="stat-label">Всего</span>
+                                            </div>
+                                            <span class="stat-icon">💃</span>
+                                        </div>
+                                        <div class="stat-value-wrap">
+                                            <span class="stat-value">{{ stats.models_total }}</span>
+                                            <span class="stat-trend">анкет</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card model">
+                                        <div class="stat-card-head">
+                                            <div class="stat-label-wrap">
+                                                <span class="stat-sub">Статус</span>
+                                                <span class="stat-label">Одобрены</span>
+                                            </div>
+                                            <span class="stat-icon">✅</span>
+                                        </div>
+                                        <div class="stat-value-wrap">
+                                            <span class="stat-value" style="color: #22c55e;">{{ stats.models_approved }}</span>
+                                            <span class="stat-trend">прошли</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card model">
+                                        <div class="stat-card-head">
+                                            <div class="stat-label-wrap">
+                                                <span class="stat-sub">Статус</span>
+                                                <span class="stat-label">Отклонены</span>
+                                            </div>
+                                            <span class="stat-icon">❌</span>
+                                        </div>
+                                        <div class="stat-value-wrap">
+                                            <span class="stat-value" style="color: #ef4444;">{{ stats.models_rejected }}</span>
+                                            <span class="stat-trend">отказ</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="stats-section">
+                                <div class="stats-group-head">
+                                    <h3>💬 Чаттеры</h3>
+                                    <span>Текущий срез</span>
+                                </div>
+                                <div class="stats-section-grid">
+                                    <div class="stat-card chatter">
+                                        <div class="stat-card-head">
+                                            <div class="stat-label-wrap">
+                                                <span class="stat-sub">Направление</span>
+                                                <span class="stat-label">Всего</span>
+                                            </div>
+                                            <span class="stat-icon">💬</span>
+                                        </div>
+                                        <div class="stat-value-wrap">
+                                            <span class="stat-value">{{ stats.chatters_total }}</span>
+                                            <span class="stat-trend">анкет</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card chatter">
+                                        <div class="stat-card-head">
+                                            <div class="stat-label-wrap">
+                                                <span class="stat-sub">Статус</span>
+                                                <span class="stat-label">Одобрены</span>
+                                            </div>
+                                            <span class="stat-icon">✅</span>
+                                        </div>
+                                        <div class="stat-value-wrap">
+                                            <span class="stat-value" style="color: #22c55e;">{{ stats.chatters_approved }}</span>
+                                            <span class="stat-trend">прошли</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card chatter">
+                                        <div class="stat-card-head">
+                                            <div class="stat-label-wrap">
+                                                <span class="stat-sub">Статус</span>
+                                                <span class="stat-label">Отклонены</span>
+                                            </div>
+                                            <span class="stat-icon">❌</span>
+                                        </div>
+                                        <div class="stat-value-wrap">
+                                            <span class="stat-value" style="color: #ef4444;">{{ stats.chatters_rejected }}</span>
+                                            <span class="stat-trend">отказ</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
                         </div>
-                        <div class="stat-card">
-                            <span class="stat-label">👨‍💻 Операторы: ✅</span>
-                            <span class="stat-value" style="color: #22c55e;">{{ stats.operators_approved }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">👨‍💻 Операторы: ❌</span>
-                            <span class="stat-value" style="color: #ef4444;">{{ stats.operators_rejected }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">💃 Модели: всего</span>
-                            <span class="stat-value">{{ stats.models_total }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">💃 Модели: ✅</span>
-                            <span class="stat-value" style="color: #22c55e;">{{ stats.models_approved }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">💃 Модели: ❌</span>
-                            <span class="stat-value" style="color: #ef4444;">{{ stats.models_rejected }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">💬 Чаттеры: всего</span>
-                            <span class="stat-value">{{ stats.chatters_total }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">💬 Чаттеры: ✅</span>
-                            <span class="stat-value" style="color: #22c55e;">{{ stats.chatters_approved }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">💬 Чаттеры: ❌</span>
-                            <span class="stat-value" style="color: #ef4444;">{{ stats.chatters_rejected }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">💰 Вы заработали</span>
-                            <span class="stat-value" style="color: #f59e0b; font-size: 1.5em;">${{ current_user.earned_amount if current_user.earned_amount else 0 }}</span>
-                        </div>
-                    {% else %}
-                        <!-- Общая статистика -->
-                        <div class="stat-card">
-                            <span class="stat-label">Анкеты</span>
-                            <span class="stat-value">{{ stats.applicants_count }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">Ответы</span>
-                            <span class="stat-value">{{ stats.guest_answers_count }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">Одобрено</span>
-                            <span class="stat-value">{{ stats.approved_answers_count }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">Сообщения</span>
-                            <span class="stat-value">{{ stats.messages_sent_count }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">Входящие</span>
-                            <span class="stat-value">{{ stats.messages_received_count }}</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">Последнее сообщение</span>
-                            <span class="stat-value small">{{ stats.last_message_at if stats.last_message_at else '—' }}</span>
-                        </div>
-                    {% endif %}
+                    </div>
                 </div>
             </div>
 
@@ -437,6 +859,15 @@
                         <button type="submit" class="btn btn-primary">Сохранить</button>
                     </form>
                 {% endif %}
+
+                <div style="margin-top: 16px; padding: 12px; border: 1px solid rgba(0, 102, 255, 0.25); border-radius: 10px; background: rgba(0, 102, 255, 0.06);">
+                    <p style="margin: 0 0 8px 0; color: #dbeafe; font-weight: 600;">🔗 Реферальная ссылка для модели</p>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <input id="referralLinkInput" type="text" readonly value="{{ referral_url if referral_url else '' }}" style="flex: 1; min-width: 240px; background: rgba(10,14,26,0.75); border: 1px solid rgba(0,102,255,0.3); color: #e5edff; border-radius: 8px; padding: 10px;">
+                        <button type="button" class="btn btn-primary" style="min-width: 120px;" onclick="copyReferralLink()">Скопировать</button>
+                    </div>
+                    <p style="margin: 8px 0 0 0; color: #9ca3af; font-size: 0.85em;">Модель заполняет анкету по этой ссылке, и заявка привяжется к вашему аккаунту.</p>
+                </div>
             </div>
         </section>
         </div>
@@ -493,6 +924,19 @@
             const targetBtn = document.querySelector(`.profile-tab-btn[data-tab="${tabName}"]`);
             if (targetBtn) {
                 targetBtn.classList.add('active');
+            }
+        }
+
+        function copyReferralLink() {
+            const input = document.getElementById('referralLinkInput');
+            if (!input || !input.value) return;
+
+            input.select();
+            input.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+            } catch (err) {
+                console.error('Не удалось скопировать ссылку:', err);
             }
         }
     </script>
